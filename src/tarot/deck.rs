@@ -90,7 +90,7 @@ fn generate_cards(n_cards: u8, source: Vec<(&str, char)>) -> Vec<Card> {
     cards
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Deck {
     pub cards: Vec<Card>,
     pub dealer: Option<u8>,
@@ -119,6 +119,12 @@ impl Deck {
         let first_slice = &self.cards[..split_index];
         let second_slice = &self.cards[split_index..];
         self.cards = [second_slice, first_slice].concat();
+    }
+    pub fn draw_kitty(&self, size: u8) -> Vec<Card> {
+        self.cards
+            .choose_multiple(&mut thread_rng(), size as usize)
+            .cloned()
+            .collect()
     }
     pub fn deal(&self, players: Vec<Player>, kitty: Vec<Card>) {
         println!("{:?}", players);

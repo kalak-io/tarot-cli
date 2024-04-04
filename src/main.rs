@@ -43,8 +43,10 @@ fn main() {
     deck.update_dealer(n_players);
     loop {
         game.reorder_players(deck.dealer);
-        let mut hand = Hand::new(game.players);
-        deck.deal(hand.players, hand.kitty);
+        let kitty = deck.draw_kitty(6);
+        let mut hand = Hand::new(game.players, deck.clone(), kitty);
+        //deck.deal(hand.players, kitty.clone());
+        println!("{:?}", hand);
         // hand.show();
         // hand.split();
         // hand.deal();
