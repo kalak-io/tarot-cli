@@ -5,8 +5,8 @@ use std::env;
 //use tarot_cli::*;
 
 mod tarot;
-use crate::tarot::game::Game;
 use crate::tarot::deck::Deck;
+use crate::tarot::game::Game;
 use crate::tarot::hand::Hand;
 
 // The user is always the player named A (you)

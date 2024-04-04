@@ -1,5 +1,5 @@
-use crate::tarot::game::Player;
 use crate::tarot::deck::Card;
+use crate::tarot::game::Player;
 
 #[derive(Debug)]
 pub struct Hand {

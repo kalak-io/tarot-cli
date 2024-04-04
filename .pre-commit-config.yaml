@@ -13,4 +13,4 @@ repos:
       - id: cargofmt
         name: cargofmt
         language: system
-        entry: bash -c 'cargo fmt --all -- --check'
+        entry: bash -c 'cargo fmt'
