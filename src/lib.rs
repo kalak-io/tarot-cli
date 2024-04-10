@@ -165,15 +165,15 @@ fn generate_cards<const N: usize, T: CardGetters + std::marker::Copy>(
 
 fn build_deck() -> Vec<Card> {
     let mut deck = Vec::new();
-    let SUITS: [Suit; 4] = [
+    let suits: [Suit; 4] = [
         Suit::new(CardSuits::Spades),
         Suit::new(CardSuits::Hearts),
         Suit::new(CardSuits::Diamonds),
         Suit::new(CardSuits::Clubs),
     ];
-    deck.extend(generate_cards(CardSuit, 14, SUITS));
-    let TRUMPS: [Suit; 1] = [Suit::new(CardSuits::Trumps)];
-    deck.extend(generate_cards(CardTrump, 22, TRUMPS));
+    deck.extend(generate_cards(CardSuit, 14, suits));
+    let trumps: [Suit; 1] = [Suit::new(CardSuits::Trumps)];
+    deck.extend(generate_cards(CardTrump, 22, trumps));
     // deck.shuffle(&mut rand::thread_rng())
     deck
 }
