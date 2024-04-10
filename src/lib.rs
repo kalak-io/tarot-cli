@@ -1,4 +1,5 @@
-use rand::prelude::SliceRandom;
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 #[derive(Debug)]
 pub struct Config {
@@ -174,8 +175,8 @@ fn build_deck() -> Vec<Card> {
     deck.extend(generate_cards(CardSuit, 14, suits));
     let trumps: [Suit; 1] = [Suit::new(CardSuits::Trumps)];
     deck.extend(generate_cards(CardTrump, 22, trumps));
-    // deck.shuffle(&mut rand::thread_rng())
-    deck
+    deck.shuffle(&mut thread_rng());
+    deck.to_vec()
 }
 
 pub fn run(config: Config) {
