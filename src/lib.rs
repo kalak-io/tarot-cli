@@ -1,3 +1,7 @@
+#[cfg(test)]
+#[path = "lib_tests.rs"]
+mod tests;
+
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
@@ -149,7 +153,7 @@ impl CardGetters for CardTrump {
     }
 }
 
-fn generate_cards<const N: usize, T: CardGetters + std::marker::Copy>(
+fn _generate_cards<const N: usize, T: CardGetters + std::marker::Copy>(
     card_type: T,
     n_cards: u8,
     suits: [Suit; N],
@@ -172,11 +176,31 @@ fn build_deck() -> Vec<Card> {
         Suit::new(CardSuits::Diamonds),
         Suit::new(CardSuits::Clubs),
     ];
-    deck.extend(generate_cards(CardSuit, 14, suits));
+    deck.extend(_generate_cards(CardSuit, 14, suits));
     let trumps: [Suit; 1] = [Suit::new(CardSuits::Trumps)];
-    deck.extend(generate_cards(CardTrump, 22, trumps));
+    deck.extend(_generate_cards(CardTrump, 22, trumps));
     deck.shuffle(&mut thread_rng());
     deck.to_vec()
+}
+
+fn kitty_size(n_players: u8) -> u8 {
+    match n_players {
+        2..=4 => 6,
+        5..=6 => 3,
+        7.. => 3,
+        _ => 0, // maybe raise an error
+    }
+}
+// write test
+
+fn draw_cards(deck: &mut Vec<Card>, players: &mut Vec<Player>) {
+    // slice deck between all players and the kitty
+    // if 3 or 4 players, the kitty length is 6 cards
+    // if 5 or 6 players, the kitty length is 3 cards
+}
+
+fn compute_score(cards: &Vec<Card>) -> f64 {
+    cards.into_iter().fold(0.0, |acc, card| acc + card.score)
 }
 
 pub fn run(config: Config) {
