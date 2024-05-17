@@ -16,14 +16,17 @@ impl Default for Config {
 }
 impl Config {
     pub fn build(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 2 {
-            return Ok(Config::default());
-        }
-
-        let n_players = args[1].clone().trim().parse::<u8>();
-        match n_players {
-            Ok(n_players) => Ok(Config { n_players }),
-            Err(_) => Err("Could not parse the number of players"),
+        let len = args.len();
+        match len {
+            1 => Ok(Config::default()),
+            2 => match args[1].clone().trim().parse::<u8>() {
+                Ok(n_players) => match n_players {
+                    2 | 3 | 4 | 5 => Ok(Config { n_players }),
+                    _ => Err("Invalid number of players"),
+                },
+                Err(_) => Err("Could not parse the number of players"),
+            },
+            _ => todo!(),
         }
     }
 }
