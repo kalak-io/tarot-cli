@@ -194,7 +194,6 @@ fn kitty_size(n_players: u8) -> u8 {
         _ => 0, // maybe raise an error
     }
 }
-// write test
 
 fn draw_cards(deck: &mut Vec<Card>, players: &mut Vec<Player>) {
     // slice deck between all players and the kitty
@@ -202,7 +201,7 @@ fn draw_cards(deck: &mut Vec<Card>, players: &mut Vec<Player>) {
     // if 5 or 6 players, the kitty length is 3 cards
 }
 
-fn compute_score(cards: &Vec<Card>) -> f64 {
+fn compute_score(cards: &Vec<&Card>) -> f64 {
     cards.into_iter().fold(0.0, |acc, card| acc + card.score)
 }
 

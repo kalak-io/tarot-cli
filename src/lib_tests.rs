@@ -54,7 +54,37 @@ mod deck {
     #[test]
     fn deck_score_equals_91() {
         let deck = build_deck();
-        assert_eq!(compute_score(&deck), 91.0);
+        let pdeck = deck.iter().collect::<Vec<&Card>>();
+        assert_eq!(compute_score(&pdeck), 91.0);
+    }
+
+    #[test]
+    fn trumps_score_equals_23() {
+        let deck = build_deck();
+        let trump_cards = deck
+            .iter()
+            .filter(|c| c.suit.name == "Trumps")
+            .collect::<Vec<&Card>>();
+        assert_eq!(compute_score(&trump_cards), 23.0);
+    }
+
+    #[test]
+    fn suit_score_equals_17() {
+        let deck = build_deck();
+        let mut suits = deck
+            .iter()
+            .map(|c| c.suit.name.clone())
+            .collect::<Vec<String>>();
+        suits.sort();
+        suits.dedup();
+        suits.retain(|suit| *suit != "Trumps");
+        for suit in suits {
+            let suit_cards = deck
+                .iter()
+                .filter(|c| c.suit.name == suit)
+                .collect::<Vec<&Card>>();
+            assert_eq!(compute_score(&suit_cards), 17.0);
+        }
     }
 }
 
