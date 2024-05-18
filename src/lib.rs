@@ -4,6 +4,7 @@ mod tests;
 
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+use rand::Rng;
 
 #[derive(Debug)]
 pub struct Config {
@@ -35,10 +36,15 @@ impl Config {
 struct Player {
     name: String,
     score: u8,
+    is_dealer: bool,
 }
 impl Player {
     fn new(name: String) -> Player {
-        Player { name, score: 0 }
+        Player {
+            name,
+            score: 0,
+            is_dealer: false,
+        }
     }
 }
 
@@ -189,13 +195,12 @@ fn build_deck() -> Vec<Card> {
 fn kitty_size(n_players: u8) -> u8 {
     match n_players {
         2..=4 => 6,
-        5..=6 => 3,
-        7.. => 3,
+        5.. => 3,
         _ => 0, // maybe raise an error
     }
 }
 
-fn draw_cards(deck: &mut Vec<Card>, players: &mut Vec<Player>) {
+fn draw_cards(deck: &Vec<Card>, players: &mut Vec<Player>) {
     // slice deck between all players and the kitty
     // if 3 or 4 players, the kitty length is 6 cards
     // if 5 or 6 players, the kitty length is 3 cards
@@ -205,9 +210,41 @@ fn compute_score(cards: &Vec<&Card>) -> f64 {
     cards.into_iter().fold(0.0, |acc, card| acc + card.score)
 }
 
+fn create_players(config: &Config) -> Vec<Player> {
+    let mut players = Vec::new();
+    for i in 1..=config.n_players {
+        let player = Player::new(format!("Player {}", i));
+        players.push(player);
+    }
+    choose_first_dealer(&mut players);
+    players
+}
+
+fn choose_first_dealer(players: &mut Vec<Player>) {
+    let mut rng = rand::thread_rng();
+    let index = rng.gen_range(0..players.len());
+    players[index].is_dealer = true;
+}
+
+fn update_dealer(players: &mut Vec<Player>) {
+    dbg!(&players);
+    let index = players.iter().position(|player| player.is_dealer).unwrap();
+    players[index].is_dealer = false;
+    let new_index = if index >= players.len() - 1 {
+        0
+    } else {
+        index + 1
+    };
+    players[new_index].is_dealer = true;
+}
+
 pub fn run(config: Config) {
-    dbg!(&config);
     println!("There are {} players.", config.n_players);
     let deck = build_deck();
-    println!("Deck: {:?}", deck);
+    let mut players = create_players(&config);
+    loop {
+        update_dealer(&mut players);
+        draw_cards(&deck, &mut players);
+        break;
+    }
 }
