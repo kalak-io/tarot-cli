@@ -22,7 +22,7 @@ mod deck {
     #[test]
     fn deck_contains_5_different_suits() {
         // Four suits + Trumps
-        let mut deck = build_deck();
+        let deck = build_deck();
         let mut suits = deck
             .iter()
             .map(|c| c.suit.name.clone())
@@ -43,10 +43,6 @@ mod deck {
         suits.dedup();
         suits.retain(|suit| *suit != "Trumps");
         for suit in suits {
-            let suit_cards = deck
-                .iter()
-                .filter(|c| c.suit.name == suit)
-                .collect::<Vec<&Card>>();
             assert_eq!(deck.iter().filter(|c| c.suit.name == suit).count(), 14);
         }
     }
@@ -85,6 +81,24 @@ mod deck {
                 .collect::<Vec<&Card>>();
             assert_eq!(compute_score(&suit_cards), 17.0);
         }
+    }
+
+    #[test]
+    fn split_deck_conserves_original_size_of_deck() {
+        let mut deck = build_deck();
+        let original_len = deck.len();
+        split_deck(&mut deck);
+        assert_eq!(original_len, deck.len());
+    }
+
+    #[test]
+    fn split_deck_changes_the_order_of_cards() {
+        let mut deck = build_deck();
+        let fisrt_card = deck.first().cloned().unwrap();
+        let last_card = deck.last().cloned().unwrap();
+        split_deck(&mut deck);
+        assert_ne!(fisrt_card.name, deck.first().unwrap().name);
+        assert_ne!(last_card.name, deck.last().unwrap().name);
     }
 }
 

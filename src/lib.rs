@@ -6,6 +6,10 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 use rand::Rng;
 
+const NUMBER_CARDS: u8 = 78;
+const MIN_NUMBER_CARDS_SPLIT: u8 = 3;
+const MAX_NUMBER_CARDS_SPLIT: u8 = NUMBER_CARDS - MIN_NUMBER_CARDS_SPLIT;
+
 #[derive(Debug)]
 pub struct Config {
     n_players: u8,
@@ -192,6 +196,13 @@ fn build_deck() -> Vec<Card> {
     deck.to_vec()
 }
 
+fn split_deck(deck: &mut Vec<Card>) {
+    let split_index = rand::thread_rng().gen_range(1..MAX_NUMBER_CARDS_SPLIT) as usize;
+    let head = &deck[..split_index];
+    let tail = &deck[split_index..];
+    *deck = [tail, head].concat();
+}
+
 fn kitty_size(n_players: u8) -> u8 {
     match n_players {
         2..=4 => 6,
@@ -204,6 +215,9 @@ fn draw_cards(deck: &Vec<Card>, players: &mut Vec<Player>) {
     // slice deck between all players and the kitty
     // if 3 or 4 players, the kitty length is 6 cards
     // if 5 or 6 players, the kitty length is 3 cards
+    // 1. choose randomly the kitty size of cards in deck
+    // 2. slice the deck between the players 3 cards by 3 in the order of players start with next
+    //    of dealer
 }
 
 fn compute_score(cards: &Vec<&Card>) -> f64 {
@@ -227,7 +241,6 @@ fn choose_first_dealer(players: &mut Vec<Player>) {
 }
 
 fn update_dealer(players: &mut Vec<Player>) {
-    dbg!(&players);
     let index = players.iter().position(|player| player.is_dealer).unwrap();
     players[index].is_dealer = false;
     let new_index = if index >= players.len() - 1 {
@@ -240,10 +253,11 @@ fn update_dealer(players: &mut Vec<Player>) {
 
 pub fn run(config: Config) {
     println!("There are {} players.", config.n_players);
-    let deck = build_deck();
+    let mut deck = build_deck();
     let mut players = create_players(&config);
     loop {
         update_dealer(&mut players);
+        split_deck(&mut deck);
         draw_cards(&deck, &mut players);
         break;
     }
