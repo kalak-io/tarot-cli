@@ -97,8 +97,44 @@ mod deck {
         let fisrt_card = deck.first().cloned().unwrap();
         let last_card = deck.last().cloned().unwrap();
         split_deck(&mut deck);
-        assert_ne!(fisrt_card.name, deck.first().unwrap().name);
-        assert_ne!(last_card.name, deck.last().unwrap().name);
+        assert_ne!(fisrt_card.id(), deck.first().unwrap().id());
+        assert_ne!(last_card.id(), deck.last().unwrap().id());
+    }
+
+    #[test]
+    fn deals_right_number_of_cards_with_4_players() {
+        let mut deck = build_deck();
+        let mut players = create_players(&Config::default());
+        let mut kitty = Vec::new();
+        deal_cards(&mut deck, &mut players, &mut kitty);
+        let n_cards = players
+            .iter()
+            .fold(0, |acc, player| acc + player.hand.len())
+            + kitty.len();
+        assert_eq!(n_cards, 78);
+        assert_eq!(kitty.len(), 6);
+        for player in players {
+            assert_eq!(player.hand.len(), 18);
+        }
+    }
+
+    #[test]
+    fn deals_right_number_of_cards_with_5_players() {
+        let mut deck = build_deck();
+        let args = [String::from("target/debug/tarot-cli"), String::from("5")];
+        let config = Config::build(&args).unwrap();
+        let mut players = create_players(&config);
+        let mut kitty = Vec::new();
+        deal_cards(&mut deck, &mut players, &mut kitty);
+        let n_cards = players
+            .iter()
+            .fold(0, |acc, player| acc + player.hand.len())
+            + kitty.len();
+        assert_eq!(n_cards, 78);
+        assert_eq!(kitty.len(), 3);
+        for player in players {
+            assert_eq!(player.hand.len(), 15);
+        }
     }
 }
 
@@ -107,14 +143,14 @@ mod kitty {
     use super::super::*;
 
     #[test]
-    fn kitty_size_computes_correctly() {
-        assert_eq!(kitty_size(1), 0);
-        assert_eq!(kitty_size(2), 6);
-        assert_eq!(kitty_size(3), 6);
-        assert_eq!(kitty_size(4), 6);
-        assert_eq!(kitty_size(5), 3);
-        assert_eq!(kitty_size(6), 3);
-        assert_eq!(kitty_size(7), 3);
+    fn kitty_expected_size_computes_correctly() {
+        assert_eq!(kitty_expected_size(1), 0);
+        assert_eq!(kitty_expected_size(2), 6);
+        assert_eq!(kitty_expected_size(3), 6);
+        assert_eq!(kitty_expected_size(4), 6);
+        assert_eq!(kitty_expected_size(5), 3);
+        assert_eq!(kitty_expected_size(6), 3);
+        assert_eq!(kitty_expected_size(7), 3);
     }
 }
 
@@ -171,21 +207,25 @@ mod players {
                 name: String::from("Player 1"),
                 score: 0,
                 is_dealer: false,
+                hand: Vec::new(),
             },
             Player {
                 name: String::from("Player 2"),
                 score: 0,
                 is_dealer: true,
+                hand: Vec::new(),
             },
             Player {
                 name: String::from("Player 3"),
                 score: 0,
                 is_dealer: false,
+                hand: Vec::new(),
             },
             Player {
                 name: String::from("Player 4"),
                 score: 0,
                 is_dealer: false,
+                hand: Vec::new(),
             },
         ]);
         assert_eq!(players[1].is_dealer, true);
