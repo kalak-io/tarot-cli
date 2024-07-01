@@ -48,10 +48,17 @@ mod deck {
     }
 
     #[test]
+    fn deck_contains_3_oudlers() {
+        let deck = build_deck();
+        let n_oudlers = compute_oudlers(&deck);
+        assert_eq!(n_oudlers, 3);
+    }
+
+    #[test]
     fn deck_score_equals_91() {
         let deck = build_deck();
         let pdeck = deck.iter().collect::<Vec<&Card>>();
-        assert_eq!(compute_score(&pdeck), 91.0);
+        assert_eq!(compute_points(&pdeck), 91.0);
     }
 
     #[test]
@@ -61,7 +68,7 @@ mod deck {
             .iter()
             .filter(|c| c.suit.name == "Trumps")
             .collect::<Vec<&Card>>();
-        assert_eq!(compute_score(&trump_cards), 23.0);
+        assert_eq!(compute_points(&trump_cards), 23.0);
     }
 
     #[test]
@@ -79,7 +86,7 @@ mod deck {
                 .iter()
                 .filter(|c| c.suit.name == suit)
                 .collect::<Vec<&Card>>();
-            assert_eq!(compute_score(&suit_cards), 17.0);
+            assert_eq!(compute_points(&suit_cards), 17.0);
         }
     }
 
@@ -109,12 +116,12 @@ mod deck {
         deal_cards(&mut deck, &mut players, &mut kitty);
         let n_cards = players
             .iter()
-            .fold(0, |acc, player| acc + player.hand.len())
+            .fold(0, |acc, player| acc + player.cards.len())
             + kitty.len();
         assert_eq!(n_cards, 78);
         assert_eq!(kitty.len(), 6);
         for player in players {
-            assert_eq!(player.hand.len(), 18);
+            assert_eq!(player.cards.len(), 18);
         }
     }
 
@@ -128,12 +135,12 @@ mod deck {
         deal_cards(&mut deck, &mut players, &mut kitty);
         let n_cards = players
             .iter()
-            .fold(0, |acc, player| acc + player.hand.len())
+            .fold(0, |acc, player| acc + player.cards.len())
             + kitty.len();
         assert_eq!(n_cards, 78);
         assert_eq!(kitty.len(), 3);
         for player in players {
-            assert_eq!(player.hand.len(), 15);
+            assert_eq!(player.cards.len(), 15);
         }
     }
 }
@@ -207,25 +214,25 @@ mod players {
                 name: String::from("Player 1"),
                 score: 0,
                 is_dealer: false,
-                hand: Vec::new(),
+                cards: Vec::new(),
             },
             Player {
                 name: String::from("Player 2"),
                 score: 0,
                 is_dealer: true,
-                hand: Vec::new(),
+                cards: Vec::new(),
             },
             Player {
                 name: String::from("Player 3"),
                 score: 0,
                 is_dealer: false,
-                hand: Vec::new(),
+                cards: Vec::new(),
             },
             Player {
                 name: String::from("Player 4"),
                 score: 0,
                 is_dealer: false,
-                hand: Vec::new(),
+                cards: Vec::new(),
             },
         ]);
         assert_eq!(players[1].is_dealer, true);
@@ -236,4 +243,11 @@ mod players {
         update_dealer(&mut players);
         assert_eq!(players[0].is_dealer, true);
     }
+}
+
+#[cfg(test)]
+mod scoring {
+    // use super::super::*;
+
+    // #[test]
 }

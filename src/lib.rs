@@ -3,6 +3,8 @@
 mod tests;
 
 use std::fmt::Display;
+// use std::io;
+// use std::io::*;
 
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -45,7 +47,7 @@ struct Player {
     name: String,
     score: u8,
     is_dealer: bool,
-    hand: Vec<Card>,
+    cards: Vec<Card>,
 }
 impl Player {
     fn new(name: String) -> Player {
@@ -53,7 +55,7 @@ impl Player {
             name,
             score: 0,
             is_dealer: false,
-            hand: Vec::new(),
+            cards: Vec::new(),
         }
     }
 }
@@ -102,6 +104,8 @@ impl Suit {
 trait CardGetters {
     fn score(rank: u8) -> f64;
     fn name(rank: u8) -> String;
+    fn is_trump() -> bool;
+    fn is_oudler(rank: u8) -> bool;
 }
 
 #[derive(Debug, Clone)]
@@ -110,20 +114,23 @@ struct Card {
     name: String,
     score: f64,
     suit: Suit,
+    is_trump: bool,
+    is_oudler: bool,
 }
 impl Card {
     fn new<T: CardGetters>(_: T, rank: u8, suit: Suit) -> Card {
         let score = T::score(rank);
         let name = T::name(rank);
+        let is_trump = T::is_trump();
+        let is_oudler = T::is_oudler(rank);
         Card {
             rank,
             name,
             score,
             suit,
+            is_trump,
+            is_oudler,
         }
-    }
-    fn is_trump(&self) -> bool {
-        self.suit.name == "Trumps"
     }
     fn id(&self) -> String {
         format!("|{}{}|", self.suit.icon, self.name)
@@ -158,6 +165,15 @@ impl CardGetters for CardSuit {
             _ => rank.to_string(),
         }
     }
+    fn is_trump() -> bool {
+        false
+    }
+    fn is_oudler(rank: u8) -> bool {
+        match rank {
+            1 | 21 | 22 => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -175,6 +191,12 @@ impl CardGetters for CardTrump {
             22 => String::from("Joker"),
             _ => rank.to_string(),
         }
+    }
+    fn is_trump() -> bool {
+        true
+    }
+    fn is_oudler(_rank: u8) -> bool {
+        false
     }
 }
 
@@ -223,9 +245,52 @@ fn kitty_expected_size(n_players: usize) -> usize {
     }
 }
 
-fn compute_score(cards: &Vec<&Card>) -> f64 {
+// Score
+
+fn compute_points(cards: &Vec<&Card>) -> f64 {
     cards.into_iter().fold(0.0, |acc, card| acc + card.score)
 }
+
+fn needed_points(n_oudlers: usize) -> f64 {
+    match n_oudlers {
+        0 => 56.0,
+        1 => 51.0,
+        2 => 41.0,
+        3 => 36.0,
+        _ => 0.0, // maybe raise an error
+    }
+}
+
+// fn multiplier(bid: Bid) -> f64 {
+//     match bid {
+//         Bid::Petite => 1.0,
+//         Bid::Garde => 2.0,
+//         Bid::GardeSans => 4.0,
+//         Bid::GardeContre => 6.0,
+//     }
+// }
+
+fn compute_oudlers(cards: &Vec<&Card>) -> usize {
+    cards.into_iter().filter(|card| card.is_oudler).count()
+}
+
+fn compute_needed_points(cards: &Vec<&Card>) -> f64 {
+    needed_points(compute_oudlers(cards))
+}
+
+fn diff_points(cards: &Vec<&Card>) -> f64 {
+    let points = compute_points(cards);
+    let needed_points = compute_needed_points(cards);
+    points - needed_points
+}
+
+// fn compute_score(hand: &Hand) -> f64 {
+//     let points = diff_points(&hand.attack_pool);
+//     let petit_au_bout = if hand.bonus_petit_au_bout { 10.0 } else { 0.0 };
+//     ((25.0 + points + petit_au_bout) * multiplier(hand.bid))
+//         + hand.bonus_poignee
+//         + hand.bonus_chelem
+// }
 
 fn create_players(config: &Config) -> Vec<Player> {
     let mut players = Vec::new();
@@ -265,11 +330,7 @@ fn update_dealer(players: &mut Vec<Player>) {
     println!("The dealer is {}", players[new_index].name);
 }
 
-fn deal_kitty_or_player(
-    kitty: &Vec<Card>,
-    kitty_expected_size: usize,
-    remaining_cards: usize,
-) -> String {
+fn deal_kitty_or_player(kitty: &Vec<Card>, kitty_expected_size: usize) -> String {
     if kitty.len() < kitty_expected_size {
         return ["player".to_string(), "kitty".to_string()]
             .choose(&mut thread_rng())
@@ -289,7 +350,7 @@ fn deal_cards(deck: &Vec<Card>, players: &mut Vec<Player>, kitty: &mut Vec<Card>
         if dealing_kitty_or_player == "player" {
             let end_of_range = index + DEAL_SIZE_PLAYERS;
             let split = &deck[index..end_of_range];
-            players[player_index].hand.extend(split.to_vec());
+            players[player_index].cards.extend(split.to_vec());
             player_index = get_next_player_index(&players, player_index);
             index = end_of_range;
         } else {
@@ -298,9 +359,29 @@ fn deal_cards(deck: &Vec<Card>, players: &mut Vec<Player>, kitty: &mut Vec<Card>
             kitty.extend(split.to_vec());
             index = end_of_range;
         }
-        dealing_kitty_or_player =
-            deal_kitty_or_player(&kitty, kitty_expected_size, deck.len() - index);
+        dealing_kitty_or_player = deal_kitty_or_player(&kitty, kitty_expected_size);
     }
+}
+
+// struct Bid {}
+// struct Poignee {}
+// struct Chelem {}
+//
+struct Trick {
+    cards_played: Vec<Card>,
+}
+
+struct Hand {
+    dealer: Player,
+    // bid: Bid,
+    bonus_petit_au_bout: bool,
+    // bonus_poignee: Poignee,
+    // bonus_chelem: Chelem,
+    taker: Player,
+    tricks: Vec<Trick>,
+    attack_pool: Vec<Card>,
+    defense_pool: Vec<Card>,
+    taker_oudlers: usize,
 }
 
 pub fn run(config: Config) {
@@ -308,11 +389,26 @@ pub fn run(config: Config) {
     let mut deck = build_deck();
     let mut players = create_players(&config);
     let mut kitty = Vec::new();
+    // let mut hands = Vec::new();
     loop {
         update_dealer(&mut players);
         split_deck(&mut deck);
         deal_cards(&deck, &mut players, &mut kitty);
-        println!("{}'s hand is {:?}", players[0].name, players[0].hand);
+        println!("{}'s cards is {:?}", players[0].name, players[0].cards);
+
+        //         // BID
+        //         // First player (after the dealer) makes bid
+        //         // - compute score in cardss if under X points PASS
+        //         // - else if PETITE ...
+        //         // while all players make their bid
+        //         // - prompt bid for the player A
+        //         // PLAY
+        //         // Each player plays one card
+        //         // - check which wins
+        //         // MARK POINT
+        //         // - compute score of taker
+        //         // - check if taker wins
+        //         // - store points
         break;
     }
 }
