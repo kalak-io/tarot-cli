@@ -408,7 +408,7 @@ fn input_bid() -> Option<Bid> {
     }
 }
 
-fn is_valid_bid(bid: &Bid, previous_bid: Option<&Bid>) -> bool {
+fn is_higher_bid(bid: &Bid, previous_bid: Option<&Bid>) -> bool {
     match previous_bid {
         Some(previous_bid) => match bid {
             Bid::Passe => true,
@@ -427,8 +427,7 @@ fn make_bid(cards: &Vec<Card>, previous_bid: &Bid) -> Bid {
     let bid = input_bid();
     match bid {
         Some(bid) => {
-            if is_valid_bid(&bid, Some(previous_bid)) {
-                println!("Your bid is {:?}", bid);
+            if is_higher_bid(&bid, Some(previous_bid)) {
                 bid
             } else {
                 make_bid(cards, previous_bid)
@@ -457,7 +456,7 @@ fn collect_bid(players: &Vec<Player>) -> Taker {
                 make_bid(&player.cards, &taker.bid)
             }
         };
-        if is_valid_bid(&bid, Some(&taker.bid)) {
+        if is_higher_bid(&bid, Some(&taker.bid)) {
             taker.player = player.name.clone();
             taker.bid = bid;
         }
