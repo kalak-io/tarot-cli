@@ -3,8 +3,7 @@
 mod tests;
 
 use std::fmt::Display;
-// use std::io;
-// use std::io::*;
+use std::io;
 
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -42,19 +41,21 @@ impl Config {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Player {
     name: String,
     score: u8,
     is_dealer: bool,
+    is_bot: bool,
     cards: Vec<Card>,
 }
 impl Player {
-    fn new(name: String) -> Player {
+    fn new(name: String, is_bot: bool) -> Player {
         Player {
             name,
             score: 0,
             is_dealer: false,
+            is_bot,
             cards: Vec::new(),
         }
     }
@@ -133,7 +134,7 @@ impl Card {
         }
     }
     fn id(&self) -> String {
-        format!("|{}{}|", self.suit.icon, self.name)
+        format!("|{} {}|", self.suit.icon, self.name)
     }
 }
 
@@ -295,7 +296,7 @@ fn diff_points(cards: &Vec<&Card>) -> f64 {
 fn create_players(config: &Config) -> Vec<Player> {
     let mut players = Vec::new();
     for i in 1..=config.n_players {
-        let player = Player::new(format!("Player {}", i));
+        let player = Player::new(format!("Player {}", i), i != 1);
         players.push(player);
     }
     choose_first_dealer(&mut players);
@@ -306,7 +307,6 @@ fn choose_first_dealer(players: &mut Vec<Player>) {
     let mut rng = rand::thread_rng();
     let index = rng.gen_range(0..players.len());
     players[index].is_dealer = true;
-    println!("The dealer is {}", players[index].name);
 }
 
 fn get_player_index_after_dealer(players: &Vec<Player>) -> usize {
@@ -320,6 +320,13 @@ fn get_next_player_index(players: &Vec<Player>, current_index: usize) -> usize {
     } else {
         current_index + 1
     }
+}
+
+fn reorder_players(players: &Vec<Player>) -> Vec<Player> {
+    let start_index = get_player_index_after_dealer(players);
+    let start = &players[start_index..];
+    let end = &players[..start_index];
+    [start, end].concat()
 }
 
 fn update_dealer(players: &mut Vec<Player>) {
@@ -363,7 +370,110 @@ fn deal_cards(deck: &Vec<Card>, players: &mut Vec<Player>, kitty: &mut Vec<Card>
     }
 }
 
-// struct Bid {}
+fn display_cards(cards: &Vec<Card>) {
+    println!("Cards in your hand:");
+    for card in cards {
+        print!("{} ", card);
+    }
+    println!();
+}
+
+fn auto_bid(cards: &Vec<Card>, previous_bid: &Bid) -> Bid {
+    // Previous bids
+    // Score of owned cards
+    // let hand_score = compute_points(cards);
+    let hand_score = 0.0;
+    // println!("Hand score: {}", hand_score);
+    match hand_score {
+        0.0..=30.0 => Bid::Passe,
+        31.0..=40.0 => Bid::Petite,
+        41.0..=50.0 => Bid::Garde,
+        _ => Bid::Passe,
+    }
+}
+
+fn input_bid() -> Option<Bid> {
+    println!("What is your bid?");
+    println!("1. Petite, 2. Garde, 3. Garde Sans, 4. Garde Contre, 5. Passe");
+    let mut name = String::new();
+    io::stdin().read_line(&mut name).expect("Read line failed.");
+    let name = name.trim();
+    match name {
+        "1" | "petite" | "Petite" | "PETITE" => Some(Bid::Petite),
+        "2" | "garde" | "Garde" | "GARDE" => Some(Bid::Garde),
+        "3" | "garde-sans" | "GardeSans" | "GARDE-SANS" => Some(Bid::GardeSans),
+        "4" | "garde-contre" | "GardeContre" | "GARDE-CONTRE" => Some(Bid::GardeContre),
+        "5" | "passe" | "Passe" | "PASSE" => Some(Bid::Passe),
+        _ => None,
+    }
+}
+
+fn is_valid_bid(bid: &Bid, previous_bid: Option<&Bid>) -> bool {
+    match previous_bid {
+        Some(previous_bid) => match bid {
+            Bid::Passe => true,
+            Bid::Petite => [Bid::Passe].contains(&previous_bid),
+            Bid::Garde => [Bid::Passe, Bid::Petite].contains(&previous_bid),
+            Bid::GardeSans => [Bid::Passe, Bid::Petite, Bid::Garde].contains(&previous_bid),
+            Bid::GardeContre => {
+                [Bid::Passe, Bid::Petite, Bid::Garde, Bid::GardeSans].contains(&previous_bid)
+            }
+        },
+        None => true,
+    }
+}
+
+fn make_bid(cards: &Vec<Card>, previous_bid: &Bid) -> Bid {
+    let bid = input_bid();
+    match bid {
+        Some(bid) => {
+            if is_valid_bid(&bid, Some(previous_bid)) {
+                println!("Your bid is {:?}", bid);
+                bid
+            } else {
+                make_bid(cards, previous_bid)
+            }
+        }
+        None => {
+            println!("Type a number between 1 and 5");
+            make_bid(cards, previous_bid)
+        }
+    }
+}
+
+fn collect_bid(players: &Vec<Player>) -> Taker {
+    println!("Collecting bids...");
+    let reordered_players = reorder_players(players);
+
+    let mut taker = Taker {
+        player: reordered_players[0].name.clone(),
+        bid: Bid::Passe,
+    };
+    for player in reordered_players {
+        let bid = match player.is_bot {
+            true => auto_bid(&player.cards, &taker.bid),
+            false => {
+                display_cards(&player.cards);
+                make_bid(&player.cards, &taker.bid)
+            }
+        };
+        if is_valid_bid(&bid, Some(&taker.bid)) {
+            taker.player = player.name.clone();
+            taker.bid = bid;
+        }
+        println!("{}'s bid is {:?}", taker.player, taker.bid);
+    }
+    return taker;
+}
+
+#[derive(Debug, PartialEq)]
+enum Bid {
+    Petite,
+    Garde,
+    GardeSans,
+    GardeContre,
+    Passe,
+}
 // struct Poignee {}
 // struct Chelem {}
 //
@@ -371,13 +481,18 @@ struct Trick {
     cards_played: Vec<Card>,
 }
 
+#[derive(Debug)]
+struct Taker {
+    player: String,
+    bid: Bid,
+}
+
 struct Hand {
     dealer: Player,
-    // bid: Bid,
     bonus_petit_au_bout: bool,
     // bonus_poignee: Poignee,
     // bonus_chelem: Chelem,
-    taker: Player,
+    taker: Taker,
     tricks: Vec<Trick>,
     attack_pool: Vec<Card>,
     defense_pool: Vec<Card>,
@@ -387,14 +502,23 @@ struct Hand {
 pub fn run(config: Config) {
     println!("There are {} players.", config.n_players);
     let mut deck = build_deck();
+    // println!("Deck: {:?}", &deck);
     let mut players = create_players(&config);
+    // println!("Players: {:?}", &players);
     let mut kitty = Vec::new();
+    // println!("Kitty: {:?}", &kitty);
     // let mut hands = Vec::new();
     loop {
+        // create a hand
         update_dealer(&mut players);
         split_deck(&mut deck);
         deal_cards(&deck, &mut players, &mut kitty);
-        println!("{}'s cards is {:?}", players[0].name, players[0].cards);
+        let taker = collect_bid(&players);
+        println!("Taker: {:?}", &taker);
+        if taker.bid == Bid::Passe {
+            println!("Nobody made a bid. Starting a new hand...");
+            continue;
+        }
 
         //         // BID
         //         // First player (after the dealer) makes bid

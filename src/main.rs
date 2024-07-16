@@ -13,5 +13,5 @@ fn main() {
     });
     run(config);
 
-    println!("Thanks for playing !");
+    println!("\n\nThanks for playing !");
 }
