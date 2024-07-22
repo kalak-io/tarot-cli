@@ -1,4 +1,3 @@
-#[cfg(test)]
 mod deck {
     use super::super::*;
 
@@ -57,8 +56,7 @@ mod deck {
     #[test]
     fn deck_score_equals_91() {
         let deck = build_deck();
-        let pdeck = deck.iter().collect::<Vec<&Card>>();
-        assert_eq!(compute_points(&pdeck), 91.0);
+        assert_eq!(compute_points(&deck), 91.0);
     }
 
     #[test]
@@ -67,7 +65,8 @@ mod deck {
         let trump_cards = deck
             .iter()
             .filter(|c| c.suit.name == "Trumps")
-            .collect::<Vec<&Card>>();
+            .cloned()
+            .collect::<Vec<Card>>();
         assert_eq!(compute_points(&trump_cards), 23.0);
     }
 
@@ -85,7 +84,8 @@ mod deck {
             let suit_cards = deck
                 .iter()
                 .filter(|c| c.suit.name == suit)
-                .collect::<Vec<&Card>>();
+                .cloned()
+                .collect::<Vec<Card>>();
             assert_eq!(compute_points(&suit_cards), 17.0);
         }
     }
@@ -150,14 +150,14 @@ mod kitty {
     use super::super::*;
 
     #[test]
-    fn kitty_expected_size_computes_correctly() {
-        assert_eq!(kitty_expected_size(1), 0);
-        assert_eq!(kitty_expected_size(2), 6);
-        assert_eq!(kitty_expected_size(3), 6);
-        assert_eq!(kitty_expected_size(4), 6);
-        assert_eq!(kitty_expected_size(5), 3);
-        assert_eq!(kitty_expected_size(6), 3);
-        assert_eq!(kitty_expected_size(7), 3);
+    fn get_kitty_expected_size_computes_correctly() {
+        assert_eq!(get_kitty_expected_size(1), 0);
+        assert_eq!(get_kitty_expected_size(2), 6);
+        assert_eq!(get_kitty_expected_size(3), 6);
+        assert_eq!(get_kitty_expected_size(4), 6);
+        assert_eq!(get_kitty_expected_size(5), 3);
+        assert_eq!(get_kitty_expected_size(6), 3);
+        assert_eq!(get_kitty_expected_size(7), 3);
     }
 }
 
@@ -214,25 +214,37 @@ mod players {
                 name: String::from("Player 1"),
                 score: 0,
                 is_dealer: false,
+                is_bot: false,
                 cards: Vec::new(),
+                played_cards: Vec::new(),
+                picked_up_cards: Vec::new(),
             },
             Player {
                 name: String::from("Player 2"),
                 score: 0,
                 is_dealer: true,
+                is_bot: true,
                 cards: Vec::new(),
+                played_cards: Vec::new(),
+                picked_up_cards: Vec::new(),
             },
             Player {
                 name: String::from("Player 3"),
                 score: 0,
                 is_dealer: false,
+                is_bot: true,
                 cards: Vec::new(),
+                played_cards: Vec::new(),
+                picked_up_cards: Vec::new(),
             },
             Player {
                 name: String::from("Player 4"),
                 score: 0,
                 is_dealer: false,
+                is_bot: true,
                 cards: Vec::new(),
+                played_cards: Vec::new(),
+                picked_up_cards: Vec::new(),
             },
         ]);
         assert_eq!(players[1].is_dealer, true);
