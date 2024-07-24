@@ -189,6 +189,17 @@ mod players {
 
     #[test]
     #[should_panic]
+
+    const NUMBER_CARDS: u8 = 78;
+    const MIN_NUMBER_CARDS_SPLIT: u8 = 3;
+    const MAX_NUMBER_CARDS_SPLIT: u8 = NUMBER_CARDS - MIN_NUMBER_CARDS_SPLIT;
+    const DEAL_SIZE_PLAYERS: usize = 3;
+    const DEAL_SIZE_KITTY: usize = 1;
+
+    #[derive(Debug)]
+    pub struct Config {
+        n_players: u8,
+    }
     fn create_with_too_many_players_panics() {
         let args = [
             String::from("target/debug/tarot-cli"),
@@ -262,4 +273,55 @@ mod scoring {
     // use super::super::*;
 
     // #[test]
+}
+
+#[cfg(test)]
+mod bid {
+    use super::super::*;
+
+    #[test]
+    fn petite_is_higher_than_passe() {
+        let previous_bid = Some(Bid::Passe);
+        let bid = Bid::Petite;
+        assert_eq!(is_higher_bid(&bid, previous_bid.as_ref()), true);
+    }
+
+    #[test]
+    fn garde_is_higher_than_petite_and_passe() {
+        let mut previous_bid = Some(Bid::Passe);
+        let bid = Bid::Garde;
+        assert_eq!(is_higher_bid(&bid, previous_bid.as_ref()), true);
+
+        previous_bid = Some(Bid::Petite);
+        assert_eq!(is_higher_bid(&bid, previous_bid.as_ref()), true);
+    }
+
+    #[test]
+    fn garde_sans_is_higher_than_garde_and_petite_and_passe() {
+        let mut previous_bid = Some(Bid::Passe);
+        let bid = Bid::GardeSans;
+        assert_eq!(is_higher_bid(&bid, previous_bid.as_ref()), true);
+
+        previous_bid = Some(Bid::Petite);
+        assert_eq!(is_higher_bid(&bid, previous_bid.as_ref()), true);
+
+        previous_bid = Some(Bid::Garde);
+        assert_eq!(is_higher_bid(&bid, previous_bid.as_ref()), true);
+    }
+
+    #[test]
+    fn garde_contre_is_higher_than_garde_sans_and_garde_and_petite_and_passe() {
+        let mut previous_bid = Some(Bid::Passe);
+        let bid = Bid::GardeContre;
+        assert_eq!(is_higher_bid(&bid, previous_bid.as_ref()), true);
+
+        previous_bid = Some(Bid::Petite);
+        assert_eq!(is_higher_bid(&bid, previous_bid.as_ref()), true);
+
+        previous_bid = Some(Bid::Garde);
+        assert_eq!(is_higher_bid(&bid, previous_bid.as_ref()), true);
+
+        previous_bid = Some(Bid::GardeSans);
+        assert_eq!(is_higher_bid(&bid, previous_bid.as_ref()), true);
+    }
 }

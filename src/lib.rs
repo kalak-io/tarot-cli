@@ -7,8 +7,8 @@ use std::io;
 
 use rand::distributions::{Distribution, Standard};
 use rand::seq::SliceRandom;
+use rand::thread_rng;
 use rand::Rng;
-use rand::{random, thread_rng};
 
 const NUMBER_CARDS: u8 = 78;
 const MIN_NUMBER_CARDS_SPLIT: u8 = 3;
@@ -243,7 +243,7 @@ fn split_deck(deck: &mut Vec<Card>) {
     *deck = [tail, head].concat();
 }
 
-fn collect_deck(players: &Vec<Player>) -> Vec<Card> {
+fn collect_deck(players: &[Player]) -> Vec<Card> {
     let mut deck = Vec::new();
     for player in players {
         match player.cards.len() > 0 {
@@ -264,7 +264,7 @@ fn get_kitty_expected_size(n_players: usize) -> usize {
 
 // Score
 
-fn compute_points(cards: &Vec<Card>) -> f64 {
+fn compute_points(cards: &[Card]) -> f64 {
     cards.into_iter().fold(0.0, |acc, card| acc + card.score)
 }
 
@@ -287,15 +287,15 @@ fn needed_points(n_oudlers: usize) -> f64 {
 //     }
 // }
 
-fn compute_oudlers(cards: &Vec<Card>) -> usize {
+fn compute_oudlers(cards: &[Card]) -> usize {
     cards.into_iter().filter(|card| card.is_oudler).count()
 }
 
-fn compute_needed_points(cards: &Vec<Card>) -> f64 {
+fn compute_needed_points(cards: &[Card]) -> f64 {
     needed_points(compute_oudlers(cards))
 }
 
-fn diff_points(cards: &Vec<Card>) -> f64 {
+fn diff_points(cards: &[Card]) -> f64 {
     let points = compute_points(cards);
     let needed_points = compute_needed_points(cards);
     points - needed_points
@@ -325,12 +325,12 @@ fn choose_first_dealer(players: &mut Vec<Player>) {
     players[index].is_dealer = true;
 }
 
-fn get_player_index_after_dealer(players: &Vec<Player>) -> usize {
+fn get_player_index_after_dealer(players: &[Player]) -> usize {
     let index = players.iter().position(|player| player.is_dealer).unwrap();
     get_next_player_index(players, index) as usize
 }
 
-fn get_next_player_index(players: &Vec<Player>, current_index: usize) -> usize {
+fn get_next_player_index(players: &[Player], current_index: usize) -> usize {
     if current_index == players.len() - 1 {
         0
     } else {
@@ -356,7 +356,7 @@ fn update_dealer(players: &mut Vec<Player>) -> Player {
     players[new_index].clone()
 }
 
-fn deal_kitty_or_player(kitty: &Vec<Card>, kitty_expected_size: usize) -> Dealing {
+fn deal_kitty_or_player(kitty: &[Card], kitty_expected_size: usize) -> Dealing {
     match kitty.len() == kitty_expected_size {
         false => {
             let random: Dealing = rand::random();
@@ -393,7 +393,7 @@ fn clear_cards(players: &mut Vec<Player>) {
     }
 }
 
-fn deal_cards(deck: &Vec<Card>, players: &mut Vec<Player>, kitty: &mut Vec<Card>) {
+fn deal_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Vec<Card>) {
     let mut index: usize = 0;
     let mut dealing = Dealing::Player;
     let mut player_index = get_player_index_after_dealer(players);
@@ -417,7 +417,7 @@ fn deal_cards(deck: &Vec<Card>, players: &mut Vec<Player>, kitty: &mut Vec<Card>
     }
 }
 
-fn display_cards(cards: &Vec<Card>) {
+fn display_cards(cards: &[Card]) {
     println!("{} cards in your hand:", cards.len());
     for card in cards {
         print!("{} ", card);
@@ -425,12 +425,12 @@ fn display_cards(cards: &Vec<Card>) {
     println!();
 }
 
-fn auto_bid(cards: &Vec<Card>, previous_bid: &Bid) -> Bid {
+fn auto_bid(cards: &[Card], previous_bid: &Bid) -> Bid {
     let n_oudlers = compute_oudlers(cards) as f64;
     // println!("{} oudlers", n_oudlers);
     let hand_score = compute_points(cards) % 5.0;
     // println!("Hand score: {}", hand_score);
-    let evaluation = n_oudlers + hand_score;
+    let evaluation = n_oudlers * hand_score;
     // println!("Hand evaluation: {}", evaluation);
     let auto_bid = match evaluation {
         0.0..=8.0 => Bid::Passe,
@@ -475,7 +475,7 @@ fn is_higher_bid(bid: &Bid, previous_bid: Option<&Bid>) -> bool {
     }
 }
 
-fn make_bid(cards: &Vec<Card>, previous_bid: &Bid) -> Bid {
+fn make_bid(cards: &[Card], previous_bid: &Bid) -> Bid {
     let bid = input_bid();
     match bid {
         Some(bid) => {
@@ -492,7 +492,7 @@ fn make_bid(cards: &Vec<Card>, previous_bid: &Bid) -> Bid {
     }
 }
 
-fn collect_bid(players: &Vec<Player>) -> Taker {
+fn collect_bid(players: &[Player]) -> Taker {
     let mut taker = Taker {
         player: players[0].name.clone(),
         bid: Bid::Passe,
@@ -573,6 +573,7 @@ pub fn run(config: Config) {
             "The taker is {} with a bid of {:?}",
             &taker.player, &taker.bid
         );
+
         let hand = Hand {
             dealer,
             taker,
@@ -582,6 +583,7 @@ pub fn run(config: Config) {
             taker_oudlers: 0,
         };
         hands.push(hand);
+        println!("{:?}", &hands);
         //         // BID
         //         // First player (after the dealer) makes bid
         //         // - compute score in cardss if under X points PASS
@@ -597,5 +599,4 @@ pub fn run(config: Config) {
         //         // - store points
         // break;
     }
-    println!("{:?}", &hands);
 }
