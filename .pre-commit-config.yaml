@@ -17,3 +17,7 @@ repos:
         name: cargofmt
         language: system
         entry: bash -c 'cargo fmt'
+      - id: cargotest
+        name: cargotest
+        language: system
+        entry: bash -c 'cargo test'
