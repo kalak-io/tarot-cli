@@ -36,15 +36,8 @@ impl Deal {
             called_king: None,
         }
     }
-    pub fn collect_bids(&mut self) {
-        for player in &self.players {
-            let bid = player.bid(&self.taker);
-            if compare(&bid, Some(&self.taker.bid), compare_bids) {
-                self.taker.player = player.clone();
-                self.taker.bid = bid;
-            }
-            println!("{} make the bid: {}", player.name, bid);
-        }
+    pub fn update_taker(&mut self) {
+        self.taker = collect_bids(&self.players, &mut self.taker);
     }
     pub fn show_taker(&self) {
         println!(
@@ -139,5 +132,34 @@ fn deal_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Vec<Card>) {
         }
         index = end_of_range;
         dealing = deal_kitty_or_player(&kitty, kitty_expected_size);
+    }
+}
+
+fn collect_bids(players: &Vec<Player>, current_taker: &mut Taker) -> Taker {
+    if players.len() <= 1 {
+        return current_taker.clone();
+    }
+
+    let mut takers: Vec<Player> = Vec::new();
+    for player in players {
+        let bid = player.bid(current_taker);
+
+        if bid != Bid::Passe {
+            if compare(&bid, Some(&current_taker.bid), compare_bids) {
+                *current_taker = Taker {
+                    player: player.clone(),
+                    bid,
+                };
+                takers.push(player.clone());
+            }
+        }
+        println!("{} makes the following bid: {:?}", player.name, bid);
+    }
+    println!("{} takers", takers.len()); // TODO: remove
+
+    if takers.len() > 1 {
+        collect_bids(&takers, current_taker)
+    } else {
+        current_taker.clone()
     }
 }

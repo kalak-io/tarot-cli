@@ -29,11 +29,8 @@ impl Display for Bid {
 
 pub fn bot_bid(cards: &[Card], previous_bid: &Bid) -> Bid {
     let n_oudlers = compute_oudlers(cards) as f64;
-    // println!("{} oudlers", n_oudlers);
     let hand_score = compute_points(cards) % 5.0;
-    // println!("Hand score: {}", hand_score);
     let evaluation = n_oudlers * hand_score;
-    // println!("Hand evaluation: {}", evaluation);
     let bid = match evaluation {
         0.0..2.0 => Bid::Passe,
         2.0..4.0 => Bid::Petite,
@@ -44,7 +41,7 @@ pub fn bot_bid(cards: &[Card], previous_bid: &Bid) -> Bid {
     match compare(&bid, Some(previous_bid), compare_bids) {
         true => bid,
         false => Bid::Passe,
-    } // in this case, there is no evaluation of a second bid
+    }
 }
 
 fn prompt_bid(current_bid: &Bid) -> Option<Bid> {
@@ -67,7 +64,7 @@ pub fn human_bid(cards: &[Card], previous_bid: &Bid) -> Bid {
     let bid = prompt_bid(previous_bid);
     match bid {
         Some(bid) => {
-            if compare(&bid, Some(previous_bid), compare_bids) {
+            if bid == Bid::Passe || compare(&bid, Some(previous_bid), compare_bids) {
                 bid
             } else {
                 human_bid(cards, previous_bid)
@@ -93,16 +90,14 @@ pub fn compare_bids(bid: &Bid, active_bid: &Bid) -> bool {
 }
 
 fn get_available_bids(active_bid: &Bid) -> Vec<Bid> {
-    let bids = vec![
-        Bid::Petite,
-        Bid::Garde,
-        Bid::GardeSans,
-        Bid::GardeContre,
-        Bid::Passe,
-    ];
-    bids.into_iter()
+    let bids = vec![Bid::Petite, Bid::Garde, Bid::GardeSans, Bid::GardeContre];
+    let mut available_bids: Vec<Bid> = bids
+        .into_iter()
         .filter(|bid| compare(bid, Some(active_bid), compare_bids))
-        .collect()
+        .collect();
+    available_bids.push(Bid::Passe);
+
+    available_bids
 }
 
 fn display_available_bids(available_bids: &[Bid]) {

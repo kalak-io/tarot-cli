@@ -21,7 +21,7 @@ fn main() {
 
         let mut deal = Deal::new(&mut game.players, &mut game.deck);
 
-        deal.collect_bids();
+        deal.update_taker();
         if deal.taker.bid == Bid::Passe {
             println!("Nobody made a bid. Starting a new deal...");
             game.collect_deck(&deal.players);
