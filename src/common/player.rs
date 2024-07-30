@@ -7,11 +7,6 @@ use super::{
     utils::display,
 };
 
-// pub trait PlayerActions {
-//     fn bid(&self, current_taker: Taker) -> Bid;
-//     fn play(&self);
-// }
-
 #[derive(Debug, Default, Clone)]
 pub struct Player {
     pub id: u8,

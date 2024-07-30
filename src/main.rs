@@ -1,7 +1,7 @@
 // use std::env;
 // use std::process;
 
-use common::bid::{collect_bid, Bid};
+use common::bid::Bid;
 use common::deal::Deal;
 use common::game::Game;
 use common::trick::Trick;
@@ -14,17 +14,24 @@ fn main() {
     let mut deals = Vec::new();
 
     loop {
+        // Start of turn
+        game.split_deck();
+        game.update_dealer();
+        game.reorder_players();
+
         let mut deal = Deal::new(&mut game.players, &mut game.deck);
         // println!("{:?}", deal);
 
-        // TODO: move collect_bid in Deal struct
-        deal.taker = collect_bid(&deal.players);
+        deal.collect_bids();
         if deal.taker.bid == Bid::Passe {
             println!("Nobody made a bid. Starting a new deal...");
             game.collect_deck(&deal.players);
             continue;
         }
         deal.show_taker();
+        if game.players.len() == 5 {
+            deal.call_king();
+        }
         // TODO: call king in tarot at 5
         deal.show_kitty();
 
@@ -34,9 +41,6 @@ fn main() {
 
         // End of turn
         game.collect_deck(&deal.players);
-        game.split_deck();
-        game.update_dealer();
-        game.reorder_players();
         deals.push(deal);
         break;
     }

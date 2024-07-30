@@ -3,7 +3,10 @@ use rand::{
     Rng,
 };
 
-use crate::common::utils::display;
+use crate::common::{
+    bid::compare_bids,
+    utils::{compare, display},
+};
 
 use super::{
     bid::Bid, card::Card, player::Player, taker::Taker, trick::Trick, utils::get_next_index,
@@ -18,6 +21,7 @@ pub struct Deal {
     pub players: Vec<Player>,
     pub taker: Taker,
     pub tricks: Vec<Trick>,
+    pub called_king: Option<Card>,
 }
 impl Deal {
     pub fn new(players: &mut Vec<Player>, deck: &mut Vec<Card>) -> Self {
@@ -29,6 +33,17 @@ impl Deal {
             players: players.to_vec(), // TODO: is it necessary ?
             taker: Taker::default(),
             tricks: Vec::new(),
+            called_king: None,
+        }
+    }
+    pub fn collect_bids(&mut self) {
+        for player in &self.players {
+            let bid = player.bid(&self.taker);
+            if compare(&bid, Some(&self.taker.bid), compare_bids) {
+                self.taker.player = player.clone();
+                self.taker.bid = bid;
+            }
+            println!("{} make the bid: {}", player.name, bid);
         }
     }
     pub fn show_taker(&self) {
@@ -44,6 +59,12 @@ impl Deal {
                 println!("The kitty contains: ");
                 display(&self.kitty)
             }
+        }
+    }
+    pub fn call_king(&mut self) {
+        match self.taker.player.is_human {
+            true => {}
+            false => {}
         }
     }
 }

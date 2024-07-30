@@ -29,22 +29,6 @@ impl Display for Bid {
     }
 }
 
-pub fn collect_bid(players: &[Player]) -> Taker {
-    let mut taker = Taker {
-        player: players[0].clone(),
-        bid: Bid::Passe,
-    };
-    for player in players {
-        let bid = player.bid(&taker);
-        if compare(&bid, Some(&taker.bid), compare_bids) {
-            taker.player.id = player.id;
-            taker.bid = bid;
-        }
-        println!("{} make the bid: {}", player.name, bid);
-    }
-    return taker.clone();
-}
-
 pub fn bot_bid(cards: &[Card], previous_bid: &Bid) -> Bid {
     let n_oudlers = compute_oudlers(cards) as f64;
     // println!("{} oudlers", n_oudlers);
