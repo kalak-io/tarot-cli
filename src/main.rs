@@ -20,7 +20,6 @@ fn main() {
         game.reorder_players();
 
         let mut deal = Deal::new(&mut game.players, &mut game.deck);
-        // println!("{:?}", deal);
 
         deal.collect_bids();
         if deal.taker.bid == Bid::Passe {
@@ -29,15 +28,12 @@ fn main() {
             continue;
         }
         deal.show_taker();
-        if game.players.len() == 5 {
-            deal.call_king();
-        }
-        // TODO: call king in tarot at 5
+        deal.call_king();
         deal.show_kitty();
+        deal.play_tricks();
 
-        let trick = Trick::new();
-
-        deal.tricks.push(trick);
+        deal.compute_score();
+        deal.show_score();
 
         // End of turn
         game.collect_deck(&deal.players);
@@ -45,26 +41,5 @@ fn main() {
         break;
     }
 
-    // println!("{:?}", deals);
-
     println!("\n\nThanks for playing !");
 }
-
-// Game
-// init players
-// init cards (deck)
-// init deals
-
-// deal
-// split_deck
-// update dealer
-// deal cards
-// make tricks
-// compute score
-
-// Trick
-// play cards
-
-// Player
-// make_bid
-// play_card

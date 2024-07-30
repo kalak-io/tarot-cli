@@ -50,7 +50,6 @@ pub fn bot_bid(cards: &[Card], previous_bid: &Bid) -> Bid {
 
 fn prompt_bid(current_bid: &Bid) -> Option<Bid> {
     println!("What is your bid?");
-    // println!("1. Petite, 2. Garde, 3. Garde Sans, 4. Garde Contre, 5. Passe");
     display_available_bids(&get_available_bids(current_bid));
     let mut name = String::new();
     io::stdin().read_line(&mut name).expect("Read line failed.");

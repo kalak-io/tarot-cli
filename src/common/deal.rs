@@ -62,11 +62,16 @@ impl Deal {
         }
     }
     pub fn call_king(&mut self) {
-        match self.taker.player.is_human {
-            true => {}
-            false => {}
+        if self.players.len() > 4 {
+            match self.taker.player.is_human {
+                true => {}
+                false => {}
+            }
         }
     }
+    pub fn play_tricks(&mut self) {}
+    pub fn compute_score(&self) {}
+    pub fn show_score(&self) {}
 }
 
 #[derive(Debug, PartialEq)]
