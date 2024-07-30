@@ -38,8 +38,6 @@ impl Deal {
     }
     pub fn update_taker(&mut self) {
         self.taker = collect_bids(&self.players, &mut self.taker);
-    }
-    pub fn show_taker(&self) {
         println!(
             "The taker is {} with a bid of {:?}",
             self.taker.player.name, self.taker.bid
@@ -155,7 +153,6 @@ fn collect_bids(players: &Vec<Player>, current_taker: &mut Taker) -> Taker {
         }
         println!("{} makes the following bid: {:?}", player.name, bid);
     }
-    println!("{} takers", takers.len()); // TODO: remove
 
     if takers.len() > 1 {
         collect_bids(&takers, current_taker)

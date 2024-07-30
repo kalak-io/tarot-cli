@@ -4,7 +4,6 @@
 use common::bid::Bid;
 use common::deal::Deal;
 use common::game::Game;
-use common::trick::Trick;
 use tarot_cli::*;
 
 fn main() {
@@ -27,7 +26,6 @@ fn main() {
             game.collect_deck(&deal.players);
             continue;
         }
-        deal.show_taker();
         deal.call_king();
         deal.show_kitty();
         deal.play_tricks();
