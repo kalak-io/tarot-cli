@@ -11,7 +11,7 @@ pub enum CardSuits {
 
 #[derive(Debug, Clone)]
 pub struct Suit {
-    name: String,
+    pub name: String,
     icon: char,
 }
 impl Suit {
@@ -53,8 +53,8 @@ pub struct Card {
     rank: u8,
     name: String,
     pub score: f64,
-    suit: Suit,
-    is_trump: bool,
+    pub suit: Suit,
+    pub is_trump: bool,
     pub is_oudler: bool,
 }
 impl Card {
@@ -72,7 +72,7 @@ impl Card {
             is_oudler,
         }
     }
-    fn id(&self) -> String {
+    pub fn id(&self) -> String {
         format!("|{} {}|", self.suit.icon, self.name)
     }
 }

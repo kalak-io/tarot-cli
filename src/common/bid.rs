@@ -5,7 +5,7 @@ use super::{
     player::Player,
     score::{compute_oudlers, compute_points},
     taker::Taker,
-    utils::{compare, display},
+    utils::compare,
 };
 
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
@@ -98,7 +98,7 @@ pub fn human_bid(cards: &[Card], previous_bid: &Bid) -> Bid {
     }
 }
 
-fn compare_bids(bid: &Bid, active_bid: &Bid) -> bool {
+pub fn compare_bids(bid: &Bid, active_bid: &Bid) -> bool {
     match bid {
         Bid::Passe => bid == active_bid,
         Bid::Petite => [Bid::Passe].contains(&active_bid),

@@ -2,9 +2,9 @@ use rand::prelude::SliceRandom;
 use rand::thread_rng;
 
 use super::card::{Card, CardGetters, CardSuit, CardSuits, CardTrump, Suit};
-use super::deal::{toggle_is_dealer, Deal};
+use super::deal::Deal;
 use super::player::Player;
-use super::utils::random_int_in_range;
+use super::utils::{get_next_index, random_int_in_range};
 
 const NUMBER_CARDS_BY_SUIT: usize = 14;
 const NUMBER_TRUMP_CARDS: usize = 22;
@@ -36,6 +36,42 @@ impl Game {
             deals: Vec::new(),
         }
     }
+    pub fn split_deck(&mut self) {
+        let split_index = random_int_in_range(1, MAX_NUMBER_CARDS_SPLIT);
+        let mut new_deck = Vec::new();
+        new_deck.extend_from_slice(&self.deck[split_index..]);
+        new_deck.extend_from_slice(&self.deck[..split_index]);
+        self.deck = new_deck;
+    }
+
+    pub fn collect_deck(&mut self, players: &[Player]) {
+        let mut deck = Vec::new();
+        for player in players {
+            match player.cards.len() > 0 {
+                true => deck.extend(player.cards.clone()),
+                false => deck.extend(player.picked_up_cards.clone()),
+            }
+        }
+        self.deck = deck;
+    }
+    pub fn update_dealer(&mut self) {
+        let index = find_dealer(&self.players);
+        self.players[index].is_dealer = false;
+
+        let next_index = get_next_index(&self.players, index);
+        self.players[next_index].is_dealer = true;
+
+        println!("The dealer is {}", self.players[next_index].name);
+    }
+    pub fn reorder_players(&mut self) {
+        let dealer_index = find_dealer(&self.players);
+        let start_index = get_next_index(&self.players, dealer_index);
+        let start = &self.players[start_index..];
+        let end = &self.players[..start_index];
+        let new_players = [start, end].concat();
+        self.players.clear();
+        self.players.extend_from_slice(&new_players);
+    }
 }
 
 // PLAYERS
@@ -52,7 +88,7 @@ fn generate_players(n_players: u8) -> Vec<Player> {
 
 fn set_first_dealer(players: &mut Vec<Player>) {
     let index = random_int_in_range(0, players.len());
-    toggle_is_dealer(players, index);
+    players[index].is_dealer = true;
 }
 
 fn create_players(n_players: u8) -> Vec<Player> {
@@ -101,20 +137,6 @@ pub fn create_deck() -> Vec<Card> {
     deck.to_vec()
 }
 
-pub fn split_deck(deck: &mut Vec<Card>) {
-    let split_index = random_int_in_range(1, MAX_NUMBER_CARDS_SPLIT);
-    let head = &deck[..split_index];
-    let tail = &deck[split_index..];
-    *deck = [tail, head].concat();
-}
-
-pub fn collect_deck(players: &[Player]) -> Vec<Card> {
-    let mut deck = Vec::new();
-    for player in players {
-        match player.cards.len() > 0 {
-            true => deck.extend(player.cards.clone()),
-            false => deck.extend(player.picked_up_cards.clone()),
-        }
-    }
-    deck
+pub fn find_dealer(players: &Vec<Player>) -> usize {
+    players.iter().position(|player| player.is_dealer).unwrap()
 }

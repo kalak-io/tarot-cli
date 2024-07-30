@@ -6,8 +6,7 @@ use rand::{
 use crate::common::utils::display;
 
 use super::{
-    bid::Bid, card::Card, game::split_deck, player::Player, taker::Taker, trick::Trick,
-    utils::get_next_index,
+    bid::Bid, card::Card, player::Player, taker::Taker, trick::Trick, utils::get_next_index,
 };
 
 const DEAL_SIZE_PLAYERS: usize = 3;
@@ -15,27 +14,19 @@ const DEAL_SIZE_KITTY: usize = 1;
 
 #[derive(Debug)]
 pub struct Deal {
-    // dealer: Player,
-    kitty: Vec<Card>,
+    pub kitty: Vec<Card>,
     pub players: Vec<Player>,
     pub taker: Taker,
     pub tricks: Vec<Trick>,
 }
 impl Deal {
     pub fn new(players: &mut Vec<Player>, deck: &mut Vec<Card>) -> Self {
-        let dealer = patch_dealer(players);
         let mut kitty = Vec::new();
-
-        // println!("BEFORE: {:?}", kitty.len());
-        reorder_players(players);
-        split_deck(deck);
         deal_cards(&deck, players, &mut kitty);
-        // println!("AFTER: {:?}", kitty.len());
 
         Deal {
-            // dealer,
             kitty,
-            players: players.to_vec(),
+            players: players.to_vec(), // TODO: is it necessary ?
             taker: Taker::default(),
             tricks: Vec::new(),
         }
@@ -55,35 +46,6 @@ impl Deal {
             }
         }
     }
-}
-
-fn find_dealer(players: &Vec<Player>) -> usize {
-    players.iter().position(|player| player.is_dealer).unwrap()
-}
-
-pub fn toggle_is_dealer(players: &mut Vec<Player>, index: usize) {
-    players[index].is_dealer ^= true;
-}
-
-fn patch_dealer(players: &mut Vec<Player>) -> Player {
-    let index = find_dealer(players);
-    toggle_is_dealer(players, index);
-
-    let next_index = get_next_index(&players, index);
-    toggle_is_dealer(players, next_index);
-
-    println!("The dealer is {}", players[next_index].name);
-    players[next_index].clone()
-}
-
-fn reorder_players(players: &mut Vec<Player>) {
-    let dealer_index = find_dealer(players);
-    let start_index = get_next_index(players, dealer_index);
-    let start = &players[start_index..];
-    let end = &players[..start_index];
-    let new_players = [start, end].concat();
-    players.clear();
-    players.extend_from_slice(&new_players);
 }
 
 #[derive(Debug, PartialEq)]
@@ -112,7 +74,7 @@ fn clear_cards(players: &mut Vec<Player>) {
     }
 }
 
-fn get_kitty_expected_size(n_players: usize) -> usize {
+pub fn get_kitty_expected_size(n_players: usize) -> usize {
     match n_players {
         2..=4 => 6,
         5.. => 3,
