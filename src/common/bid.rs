@@ -2,9 +2,7 @@ use std::{fmt::Display, io};
 
 use super::{
     card::Card,
-    player::Player,
     score::{compute_oudlers, compute_points},
-    taker::Taker,
     utils::compare,
 };
 
@@ -20,11 +18,11 @@ pub enum Bid {
 impl Display for Bid {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Bid::Petite => write!(f, "Petite"),
-            Bid::Garde => write!(f, "Garde"),
-            Bid::GardeSans => write!(f, "Garde Sans"),
-            Bid::GardeContre => write!(f, "Garde Contre"),
-            Bid::Passe => write!(f, "Passe"),
+            Bid::Petite => write!(f, "1. Petite"),
+            Bid::Garde => write!(f, "2. Garde"),
+            Bid::GardeSans => write!(f, "3. Garde Sans"),
+            Bid::GardeContre => write!(f, "4. Garde Contre"),
+            Bid::Passe => write!(f, "5. Passe"),
         }
     }
 }
@@ -37,10 +35,11 @@ pub fn bot_bid(cards: &[Card], previous_bid: &Bid) -> Bid {
     let evaluation = n_oudlers * hand_score;
     // println!("Hand evaluation: {}", evaluation);
     let bid = match evaluation {
-        0.0..=8.0 => Bid::Passe,
-        8.0..=15.0 => Bid::Petite,
-        15.0..=500.0 => Bid::Garde, // TODO: GardeContre after update computation of evaluation
-        _ => Bid::Passe,
+        0.0..2.0 => Bid::Passe,
+        2.0..4.0 => Bid::Petite,
+        4.0..6.0 => Bid::Garde,
+        6.0..8.0 => Bid::GardeSans,
+        _ => Bid::GardeContre,
     };
     match compare(&bid, Some(previous_bid), compare_bids) {
         true => bid,
@@ -107,10 +106,7 @@ fn get_available_bids(active_bid: &Bid) -> Vec<Bid> {
 }
 
 fn display_available_bids(available_bids: &[Bid]) {
-    // TODO: add the right number to press
-    let mut index = 1;
     for bid in available_bids {
-        println!("{index}. {bid}");
-        index += 1;
+        println!("{bid}");
     }
 }
