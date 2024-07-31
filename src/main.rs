@@ -27,7 +27,7 @@ fn main() {
             continue;
         }
         deal.call_king();
-        deal.show_kitty();
+        deal.compose_kitty();
         deal.play_tricks();
 
         deal.compute_score();

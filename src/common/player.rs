@@ -1,4 +1,6 @@
-use std::fmt::Display;
+use std::{cmp::Ordering, fmt::Display};
+
+use crate::common::deal::get_kitty_expected_size;
 
 use super::{
     bid::{bot_bid, human_bid, Bid},
@@ -39,10 +41,37 @@ impl Player {
             false => bot_bid(&self.cards, &current_taker.bid),
         }
     }
+    pub fn compose_kitty(&mut self, kitty: &[Card]) -> Vec<Card> {
+        let mut cards = self.cards.to_vec();
+        cards.extend_from_slice(kitty);
+        cards.sort_by(compare_cards);
+        self.cards = cards;
+        match self.is_human {
+            true => human_compose_kitty(&self.cards),
+            false => bot_compose_kitty(&self.cards),
+        }
+    }
     fn play(&self) {
         match self.is_human {
             true => {}
             false => {}
         }
     }
+}
+
+fn bot_compose_kitty(cards: &[Card]) -> Vec<Card> {
+    println!("Bot compose kitty");
+    cards.to_vec()
+}
+
+fn human_compose_kitty(cards: &[Card]) -> Vec<Card> {
+    println!("\n\nCompose your kitty");
+
+    display(&cards);
+    // select_cards(&cards, get_kitty_expected_size(n_players));
+    cards.to_vec()
+}
+
+fn compare_cards(a: &Card, b: &Card) -> Ordering {
+    a.id.cmp(&b.id)
 }

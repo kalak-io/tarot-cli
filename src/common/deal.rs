@@ -43,12 +43,16 @@ impl Deal {
             self.taker.player.name, self.taker.bid
         );
     }
-    pub fn show_kitty(&self) {
-        match self.taker.bid {
-            Bid::GardeSans | Bid::GardeContre => println!("The kitty stays hidden"),
+    pub fn compose_kitty(&mut self) {
+        self.kitty = match self.taker.bid {
+            Bid::GardeSans | Bid::GardeContre => {
+                println!("\n\nThe kitty stays hidden"); // TODO: move kitty in right place
+                self.kitty.clone()
+            }
             _ => {
-                println!("The kitty contains: ");
-                display(&self.kitty)
+                println!("\n\nThe kitty contains: ");
+                display(&self.kitty);
+                self.taker.player.compose_kitty(&self.kitty)
             }
         }
     }
