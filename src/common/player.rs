@@ -73,5 +73,6 @@ fn human_compose_kitty(cards: &[Card]) -> Vec<Card> {
 }
 
 fn compare_cards(a: &Card, b: &Card) -> Ordering {
+    // TODO: sort by suit and by rank
     a.id.cmp(&b.id)
 }
