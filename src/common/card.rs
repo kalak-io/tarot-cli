@@ -2,10 +2,10 @@ use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 pub enum CardSuits {
-    Spades,
-    Hearts,
-    Diamonds,
     Clubs,
+    Diamonds,
+    Hearts,
+    Spades,
     Trumps,
 }
 
@@ -13,29 +13,35 @@ pub enum CardSuits {
 pub struct Suit {
     pub name: String,
     icon: char,
+    initial: char,
 }
 impl Suit {
     pub fn new(name: CardSuits) -> Suit {
         match name {
-            CardSuits::Spades => Suit {
-                name: String::from("Spades"),
-                icon: '♠',
-            },
-            CardSuits::Hearts => Suit {
-                name: String::from("Hearts"),
-                icon: '♥',
+            CardSuits::Clubs => Suit {
+                name: String::from("Clubs"),
+                icon: '♣',
+                initial: 'C',
             },
             CardSuits::Diamonds => Suit {
                 name: String::from("Diamonds"),
                 icon: '♦',
+                initial: 'D',
             },
-            CardSuits::Clubs => Suit {
-                name: String::from("Clubs"),
-                icon: '♣',
+            CardSuits::Spades => Suit {
+                name: String::from("Spades"),
+                icon: '♠',
+                initial: 'S',
+            },
+            CardSuits::Hearts => Suit {
+                name: String::from("Hearts"),
+                icon: '♥',
+                initial: 'H',
             },
             CardSuits::Trumps => Suit {
                 name: String::from("Trumps"),
                 icon: '*',
+                initial: 'T',
             },
         }
     }
@@ -50,6 +56,7 @@ pub trait CardGetters {
 
 #[derive(Debug, Clone)]
 pub struct Card {
+    pub id: String,
     rank: u8,
     name: String,
     pub score: f64,
@@ -59,11 +66,13 @@ pub struct Card {
 }
 impl Card {
     pub fn new<T: CardGetters>(_: T, rank: u8, suit: Suit) -> Self {
+        let id = format!("{}{}", suit.initial, rank);
         let score = T::score(rank);
         let name = T::name(rank);
         let is_trump = T::is_trump();
         let is_oudler = T::is_oudler(rank);
         Card {
+            id,
             rank,
             name,
             score,
@@ -72,13 +81,10 @@ impl Card {
             is_oudler,
         }
     }
-    pub fn id(&self) -> String {
-        format!("|{} {}|", self.suit.icon, self.name)
-    }
 }
 impl Display for Card {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.id())
+        write!(f, "|{} {}| ", self.suit.icon, self.name)
     }
 }
 

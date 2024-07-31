@@ -67,8 +67,8 @@ mod game {
         let fisrt_card = game.deck.first().cloned().unwrap();
         let last_card = game.deck.last().cloned().unwrap();
         game.split_deck();
-        assert_ne!(fisrt_card.id(), game.deck.first().unwrap().id());
-        assert_ne!(last_card.id(), game.deck.last().unwrap().id());
+        assert_ne!(fisrt_card.id, game.deck.first().unwrap().id);
+        assert_ne!(last_card.id, game.deck.last().unwrap().id);
     }
 
     #[test]
