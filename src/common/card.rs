@@ -81,6 +81,18 @@ impl Card {
             is_oudler,
         }
     }
+    pub fn is_superior_than(self, card: &Card) -> bool {
+        match self.is_trump {
+            true => match card.is_trump {
+                true => self.rank > card.rank,
+                false => true,
+            },
+            false => match card.is_trump {
+                true => false,
+                false => self.rank > card.rank,
+            },
+        }
+    }
 }
 impl Display for Card {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
