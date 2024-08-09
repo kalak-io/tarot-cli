@@ -30,7 +30,7 @@ mod game {
         let mut suits = game
             .deck
             .iter()
-            .map(|c| c.suit.name.clone())
+            .map(|c| c.suit.name.to_string())
             .collect::<Vec<String>>();
         suits.sort();
         suits.dedup();
@@ -43,13 +43,19 @@ mod game {
         let mut suits = game
             .deck
             .iter()
-            .map(|c| c.suit.name.clone())
+            .map(|c| c.suit.name.to_string())
             .collect::<Vec<String>>();
         suits.sort();
         suits.dedup();
         suits.retain(|suit| *suit != "Trumps");
         for suit in suits {
-            assert_eq!(game.deck.iter().filter(|c| c.suit.name == suit).count(), 14);
+            assert_eq!(
+                game.deck
+                    .iter()
+                    .filter(|c| c.suit.name.to_string() == suit)
+                    .count(),
+                14
+            );
         }
     }
 

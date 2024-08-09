@@ -37,7 +37,7 @@ mod score {
         let mut suits = game
             .deck
             .iter()
-            .map(|c| c.suit.name.clone())
+            .map(|c| c.suit.name.to_string())
             .collect::<Vec<String>>();
         suits.sort();
         suits.dedup();
@@ -46,7 +46,7 @@ mod score {
             let suit_cards = game
                 .deck
                 .iter()
-                .filter(|c| c.suit.name == suit)
+                .filter(|c| c.suit.name.to_string() == suit)
                 .cloned()
                 .collect::<Vec<Card>>();
             assert_eq!(compute_points(&suit_cards), 17.0);

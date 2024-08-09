@@ -1,4 +1,5 @@
-use std::fmt::Display;
+use core::fmt;
+use std::fmt::{write, Display, Formatter};
 
 #[derive(Debug, Clone)]
 pub enum CardSuits {
@@ -8,10 +9,15 @@ pub enum CardSuits {
     Spades,
     Trumps,
 }
+impl Display for CardSuits {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Suit {
-    pub name: String,
+    pub name: CardSuits,
     icon: char,
     initial: char,
 }
@@ -19,27 +25,27 @@ impl Suit {
     pub fn new(name: CardSuits) -> Suit {
         match name {
             CardSuits::Clubs => Suit {
-                name: String::from("Clubs"),
+                name: CardSuits::Clubs,
                 icon: '♣',
                 initial: 'C',
             },
             CardSuits::Diamonds => Suit {
-                name: String::from("Diamonds"),
+                name: CardSuits::Diamonds,
                 icon: '♦',
                 initial: 'D',
             },
             CardSuits::Spades => Suit {
-                name: String::from("Spades"),
+                name: CardSuits::Spades,
                 icon: '♠',
                 initial: 'S',
             },
             CardSuits::Hearts => Suit {
-                name: String::from("Hearts"),
+                name: CardSuits::Hearts,
                 icon: '♥',
                 initial: 'H',
             },
             CardSuits::Trumps => Suit {
-                name: String::from("Trumps"),
+                name: CardSuits::Trumps,
                 icon: '*',
                 initial: 'T',
             },
