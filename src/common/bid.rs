@@ -1,4 +1,7 @@
-use std::{fmt::Display, io};
+use std::{
+    fmt::{Display, Formatter, Result},
+    io,
+};
 
 use super::{
     card::Card,
@@ -16,7 +19,7 @@ pub enum Bid {
     Passe,
 }
 impl Display for Bid {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
             Bid::Petite => write!(f, "1. Petite"),
             Bid::Garde => write!(f, "2. Garde"),

@@ -1,5 +1,4 @@
-use core::fmt;
-use std::fmt::{write, Display, Formatter};
+use std::fmt::{Display, Formatter, Result};
 
 #[derive(Debug, Clone)]
 pub enum CardSuits {
@@ -10,7 +9,7 @@ pub enum CardSuits {
     Trumps,
 }
 impl Display for CardSuits {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "{:?}", self)
     }
 }
