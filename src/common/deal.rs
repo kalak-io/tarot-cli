@@ -26,7 +26,7 @@ pub struct Deal {
 impl Deal {
     pub fn new(players: &mut Vec<Player>, deck: &mut Vec<Card>) -> Self {
         let mut kitty = Vec::new();
-        deal_cards(&deck, players, &mut kitty);
+        draw_cards(&deck, players, &mut kitty);
 
         Deal {
             kitty,
@@ -57,6 +57,7 @@ impl Deal {
         }
     }
     pub fn call_king(&mut self) {
+        // TODO: implement logic
         if self.players.len() > 4 {
             match self.taker.player.is_human {
                 true => {}
@@ -103,7 +104,7 @@ pub fn get_kitty_expected_size(n_players: usize) -> usize {
     }
 }
 
-fn deal_kitty_or_player(kitty: &[Card], kitty_expected_size: usize) -> Dealing {
+fn draw_kitty_or_player(kitty: &[Card], kitty_expected_size: usize) -> Dealing {
     match kitty.len() == kitty_expected_size {
         false => {
             let random: Dealing = rand::random();
@@ -113,7 +114,7 @@ fn deal_kitty_or_player(kitty: &[Card], kitty_expected_size: usize) -> Dealing {
     }
 }
 
-fn deal_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Vec<Card>) {
+fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Vec<Card>) {
     let mut index: usize = 0;
     let mut dealing = Dealing::Player;
     let mut player_index = 0;
@@ -133,7 +134,7 @@ fn deal_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Vec<Card>) {
             }
         }
         index = end_of_range;
-        dealing = deal_kitty_or_player(&kitty, kitty_expected_size);
+        dealing = draw_kitty_or_player(&kitty, kitty_expected_size);
     }
 }
 
