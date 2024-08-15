@@ -47,9 +47,9 @@ impl Game {
     pub fn collect_deck(&mut self, players: &[Player]) {
         let mut deck = Vec::new();
         for player in players {
-            match player.cards.len() > 0 {
-                true => deck.extend(player.cards.clone()),
-                false => deck.extend(player.picked_up_cards.clone()),
+            match player.hand.cards.len() > 0 {
+                true => deck.extend(player.hand.cards.clone()),
+                false => deck.extend(player.hand.won_cards.clone()),
             }
         }
         self.deck = deck;

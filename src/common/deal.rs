@@ -9,7 +9,12 @@ use crate::common::{
 };
 
 use super::{
-    bid::Bid, card::Card, player::Player, taker::Taker, trick::Trick, utils::get_next_index,
+    bid::Bid,
+    card::Card,
+    player::Player,
+    taker::Taker,
+    trick::Trick,
+    utils::{get_next_index, reorder},
 };
 
 const DEAL_SIZE_PLAYERS: usize = 3;
@@ -65,7 +70,19 @@ impl Deal {
             }
         }
     }
-    pub fn play_tricks(&mut self) {}
+    pub fn play_tricks(&mut self) {
+        if self.players[0].hand.cards.len() == 0 {
+            return;
+        }
+        let trick = Trick::default();
+        for player in self.players.clone() {
+            player.play(&trick);
+        }
+        let winner_index = trick.get_best_played_card_index();
+        self.players = reorder(&self.players, winner_index);
+        self.tricks.push(trick);
+        self.play_tricks()
+    }
     pub fn compute_score(&self) {}
     pub fn show_score(&self) {}
 }
@@ -92,7 +109,7 @@ fn get_deal_size(dealing: &Dealing) -> usize {
 }
 fn clear_cards(players: &mut Vec<Player>) {
     for player in players {
-        player.cards.clear();
+        player.hand.cards.clear();
     }
 }
 
@@ -129,7 +146,7 @@ fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Vec<Card>) {
                 kitty.extend(split.to_vec());
             }
             Dealing::Player => {
-                players[player_index].cards.extend(split.to_vec());
+                players[player_index].hand.cards.extend(split.to_vec());
                 player_index = get_next_index(&players, player_index);
             }
         }

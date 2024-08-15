@@ -13,12 +13,12 @@ mod deal {
         let n_cards = deal
             .players
             .iter()
-            .fold(0, |acc, player| acc + player.cards.len())
+            .fold(0, |acc, player| acc + player.hand.cards.len())
             + deal.kitty.len();
         assert_eq!(n_cards, 78);
         assert_eq!(deal.kitty.len(), 6);
         for player in deal.players {
-            assert_eq!(player.cards.len(), 18);
+            assert_eq!(player.hand.cards.len(), 18);
         }
     }
 
@@ -30,12 +30,12 @@ mod deal {
         let n_cards = deal
             .players
             .iter()
-            .fold(0, |acc, player| acc + player.cards.len())
+            .fold(0, |acc, player| acc + player.hand.cards.len())
             + deal.kitty.len();
         assert_eq!(n_cards, 78);
         assert_eq!(deal.kitty.len(), 3);
         for player in deal.players {
-            assert_eq!(player.cards.len(), 15);
+            assert_eq!(player.hand.cards.len(), 15);
         }
     }
 
