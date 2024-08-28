@@ -4,7 +4,7 @@ use rand::thread_rng;
 use super::card::{Card, CardGetters, CardSuit, CardSuits, CardTrump, Suit};
 use super::deal::Deal;
 use super::player::Player;
-use super::utils::{get_next_index, random_int_in_range};
+use super::utils::{get_next_index, random_int_in_range, reorder};
 
 const NUMBER_CARDS_BY_SUIT: usize = 14;
 const NUMBER_TRUMP_CARDS: usize = 22;
@@ -66,9 +66,7 @@ impl Game {
     pub fn reorder_players(&mut self) {
         let dealer_index = find_dealer(&self.players);
         let start_index = get_next_index(&self.players, dealer_index);
-        let start = &self.players[start_index..];
-        let end = &self.players[..start_index];
-        let new_players = [start, end].concat();
+        let new_players = reorder(&self.players, start_index);
         self.players.clear();
         self.players.extend_from_slice(&new_players);
     }
