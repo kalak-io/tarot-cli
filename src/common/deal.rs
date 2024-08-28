@@ -78,7 +78,7 @@ impl Deal {
         for player in self.players.clone() {
             player.play(&trick);
         }
-        let winner_index = trick.get_best_played_card_index();
+        let winner_index = 0; // trick.get_best_played_card_index();
         self.players = reorder(&self.players, winner_index);
         self.tricks.push(trick);
         self.play_tricks()

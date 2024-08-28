@@ -1,12 +1,11 @@
 use std::{cmp::Ordering, fmt::Display};
 
-use crate::common::deal::get_kitty_expected_size;
-
 use super::{
     bid::{bot_bid, human_bid, Bid},
     card::Card,
     hand::Hand,
     taker::Taker,
+    trick::Trick,
     utils::display,
 };
 
@@ -53,7 +52,7 @@ impl Player {
             false => bot_compose_kitty(&self.hand.cards),
         }
     }
-    fn play(&self) {
+    pub fn play(&self, trick: &Trick) {
         match self.is_human {
             true => {}
             false => {}
