@@ -9,7 +9,7 @@ use crate::common::{
 };
 
 use super::{
-    bid::Bid,
+    bid::Bids,
     card::Card,
     player::Player,
     taker::Taker,
@@ -50,7 +50,7 @@ impl Deal {
     }
     pub fn compose_kitty(&mut self) {
         self.kitty = match self.taker.bid {
-            Bid::GardeSans | Bid::GardeContre => {
+            Bids::GardeSans | Bids::GardeContre => {
                 println!("\n\nThe kitty stays hidden"); // TODO: move kitty in right place
                 self.kitty.clone()
             }
@@ -164,7 +164,7 @@ fn collect_bids(players: &Vec<Player>, current_taker: &mut Taker) -> Taker {
     for player in players {
         let bid = player.bid(current_taker);
 
-        if bid != Bid::Passe {
+        if bid != Bids::Passe {
             if compare(&bid, Some(&current_taker.bid), compare_bids) {
                 *current_taker = Taker {
                     player: player.clone(),

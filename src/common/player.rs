@@ -1,7 +1,7 @@
 use std::{cmp::Ordering, fmt::Display};
 
 use super::{
-    bid::{bot_bid, human_bid, Bid},
+    bid::{bot_bid, human_bid, Bids},
     card::Card,
     hand::Hand,
     taker::Taker,
@@ -33,7 +33,7 @@ impl Player {
             ..Default::default()
         }
     }
-    pub fn bid(&self, current_taker: &Taker) -> Bid {
+    pub fn bid(&self, current_taker: &Taker) -> Bids {
         match self.is_human {
             true => {
                 display(&self.hand.cards);

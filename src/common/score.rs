@@ -1,4 +1,4 @@
-use super::{bid::Bid, card::Card};
+use super::{bid::Bids, card::Card};
 
 pub fn compute_oudlers(cards: &[Card]) -> usize {
     cards.into_iter().filter(|card| card.is_oudler).count()
@@ -28,12 +28,12 @@ fn get_needed_points(n_oudlers: usize) -> f64 {
     }
 }
 
-fn multiplier(bid: &Bid) -> f64 {
+fn multiplier(bid: &Bids) -> f64 {
     match bid {
-        Bid::Petite => 1.0,
-        Bid::Garde => 2.0,
-        Bid::GardeSans => 4.0,
-        Bid::GardeContre => 6.0,
+        Bids::Petite => 1.0,
+        Bids::Garde => 2.0,
+        Bids::GardeSans => 4.0,
+        Bids::GardeContre => 6.0,
         _ => 0.0,
     }
 }

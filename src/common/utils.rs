@@ -32,3 +32,11 @@ pub fn reorder<T: Clone>(serie: &Vec<T>, index: usize) -> Vec<T> {
     let end = &serie[..index];
     [start, end].concat()
 }
+
+pub fn select<T: std::fmt::Display>(vector: &[T]) -> usize {
+    // Display the vector with an id for each element
+    // Prompt the user to select an element by id
+    // Return the index of the selected element
+
+    todo!()
+}
