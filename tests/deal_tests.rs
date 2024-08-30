@@ -1,9 +1,6 @@
 #[cfg(test)]
 mod deal {
-    use tarot_cli::common::{
-        deal::{get_kitty_expected_size, Deal},
-        game::Game,
-    };
+    use tarot_cli::common::{deal::Deal, game::Game, kitty::get_max_size_kitty};
 
     #[test]
     fn deals_right_number_of_cards_with_4_players() {
@@ -14,9 +11,9 @@ mod deal {
             .players
             .iter()
             .fold(0, |acc, player| acc + player.hand.cards.len())
-            + deal.kitty.len();
+            + deal.kitty.cards.len();
         assert_eq!(n_cards, 78);
-        assert_eq!(deal.kitty.len(), 6);
+        assert_eq!(deal.kitty.cards.len(), 6);
         for player in deal.players {
             assert_eq!(player.hand.cards.len(), 18);
         }
@@ -31,22 +28,22 @@ mod deal {
             .players
             .iter()
             .fold(0, |acc, player| acc + player.hand.cards.len())
-            + deal.kitty.len();
+            + deal.kitty.cards.len();
         assert_eq!(n_cards, 78);
-        assert_eq!(deal.kitty.len(), 3);
+        assert_eq!(deal.kitty.cards.len(), 3);
         for player in deal.players {
             assert_eq!(player.hand.cards.len(), 15);
         }
     }
 
     #[test]
-    fn get_kitty_expected_size_computes_correctly() {
-        assert_eq!(get_kitty_expected_size(1), 0);
-        assert_eq!(get_kitty_expected_size(2), 6);
-        assert_eq!(get_kitty_expected_size(3), 6);
-        assert_eq!(get_kitty_expected_size(4), 6);
-        assert_eq!(get_kitty_expected_size(5), 3);
-        assert_eq!(get_kitty_expected_size(6), 3);
-        assert_eq!(get_kitty_expected_size(7), 3);
+    fn get_max_size_kitty_computes_correctly() {
+        assert_eq!(get_max_size_kitty(1), 0);
+        assert_eq!(get_max_size_kitty(2), 6);
+        assert_eq!(get_max_size_kitty(3), 6);
+        assert_eq!(get_max_size_kitty(4), 6);
+        assert_eq!(get_max_size_kitty(5), 3);
+        assert_eq!(get_max_size_kitty(6), 3);
+        assert_eq!(get_max_size_kitty(7), 3);
     }
 }

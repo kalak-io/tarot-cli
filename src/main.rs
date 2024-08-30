@@ -12,11 +12,9 @@ fn main() {
     let mut deals = Vec::new();
 
     loop {
-        // Start of turn
         game.split_deck();
         game.update_dealer();
         game.reorder_players();
-        // println!("{:?}", game.deck);
 
         let mut deal = Deal::new(&mut game.players, &mut game.deck);
 
@@ -33,14 +31,13 @@ fn main() {
                 );
             }
         }
-        deal.call_king();
+        deal.call_king(); // TODO
         deal.compose_kitty();
         deal.play_tricks();
 
         deal.compute_score();
         deal.show_score();
 
-        // End of turn
         game.collect_deck(&deal.players);
         deals.push(deal);
         break;

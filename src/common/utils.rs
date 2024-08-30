@@ -49,7 +49,7 @@ fn display_enumeration<T: std::fmt::Display>(vector: &[T]) {
 pub fn prompt_selection<T: std::fmt::Display>(message: &str, data: Option<Vec<T>>) -> usize {
     if let Some(data) = data {
         println!(
-            "\n{message} Select an option between 0 and {}",
+            "\n{message}\nSelect an option between 0 and {}",
             data.len() - 1
         );
         display_enumeration(&data);
@@ -62,4 +62,8 @@ pub fn prompt_selection<T: std::fmt::Display>(message: &str, data: Option<Vec<T>
         .read_line(&mut input)
         .expect("Failed to read line");
     input.trim().parse().unwrap()
+}
+
+pub fn subtract(a: &mut Vec<Card>, b: &Vec<Card>) {
+    a.retain(|x| !b.contains(x));
 }

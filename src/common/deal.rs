@@ -8,6 +8,7 @@ use crate::common::utils::display;
 use super::{
     bid::{Bid, Bids},
     card::Card,
+    kitty::Kitty,
     player::Player,
     taker::Taker,
     trick::Trick,
@@ -17,9 +18,9 @@ use super::{
 const DEAL_SIZE_PLAYERS: usize = 3;
 const DEAL_SIZE_KITTY: usize = 1;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Deal {
-    pub kitty: Vec<Card>,
+    pub kitty: Kitty,
     pub players: Vec<Player>,
     pub taker: Option<Taker>,
     pub tricks: Vec<Trick>,
@@ -27,15 +28,13 @@ pub struct Deal {
 }
 impl Deal {
     pub fn new(players: &mut Vec<Player>, deck: &mut Vec<Card>) -> Self {
-        let mut kitty = Vec::new();
+        let mut kitty = Kitty::new(players.len());
         draw_cards(&deck, players, &mut kitty);
 
         Deal {
-            kitty,
             players: players.to_vec(), // TODO: is it necessary ?
-            taker: None,
-            tricks: Vec::new(),
-            called_king: None,
+            kitty,
+            ..Default::default()
         }
     }
     pub fn take_bids(&mut self) {
@@ -49,19 +48,19 @@ impl Deal {
         }
     }
     pub fn compose_kitty(&mut self) {
-        self.kitty = match self.taker.clone().unwrap().bid {
+        match self.taker.clone().unwrap().bid {
             Bids::GardeSans | Bids::GardeContre => {
                 println!("\n\nThe kitty stays hidden"); // TODO: move kitty in right place
-                self.kitty.clone()
             }
             _ => {
                 println!("\n\nThe kitty contains: ");
-                display(&self.kitty);
-                self.taker
+                display(&self.kitty.cards);
+                self.kitty.cards = self
+                    .taker
                     .clone()
                     .unwrap()
                     .player
-                    .compose_kitty(&self.kitty)
+                    .compose_kitty(&mut self.kitty)
             }
         }
     }
@@ -108,14 +107,6 @@ fn clear_cards(players: &mut Vec<Player>) {
     }
 }
 
-pub fn get_kitty_expected_size(n_players: usize) -> usize {
-    match n_players {
-        2..=4 => 6,
-        5.. => 3,
-        _ => 0, // maybe raise an error
-    }
-}
-
 fn draw_kitty_or_player(kitty: &[Card], kitty_expected_size: usize) -> Dealing {
     match kitty.len() == kitty_expected_size {
         false => {
@@ -126,11 +117,10 @@ fn draw_kitty_or_player(kitty: &[Card], kitty_expected_size: usize) -> Dealing {
     }
 }
 
-fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Vec<Card>) {
+fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Kitty) {
     let mut index: usize = 0;
     let mut dealing = Dealing::Player;
     let mut player_index = 0;
-    let kitty_expected_size = get_kitty_expected_size(players.len());
 
     clear_cards(players);
     while index < deck.len() {
@@ -138,7 +128,7 @@ fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Vec<Card>) {
         let split = &deck[index..end_of_range];
         match dealing {
             Dealing::Kitty => {
-                kitty.extend(split.to_vec());
+                kitty.cards.extend(split.to_vec());
             }
             Dealing::Player => {
                 players[player_index].hand.cards.extend(split.to_vec());
@@ -146,7 +136,7 @@ fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Vec<Card>) {
             }
         }
         index = end_of_range;
-        dealing = draw_kitty_or_player(&kitty, kitty_expected_size);
+        dealing = draw_kitty_or_player(&kitty.cards, kitty.max_size);
     }
 }
 

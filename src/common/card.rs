@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CardSuits {
     Clubs,
     Diamonds,
@@ -14,11 +14,11 @@ impl Display for CardSuits {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Suit {
     pub name: CardSuits,
     icon: char,
-    initial: char,
+    pub initial: char,
 }
 impl Suit {
     pub fn new(name: CardSuits) -> Suit {
@@ -59,10 +59,10 @@ pub trait CardGetters {
     fn is_oudler(rank: u8) -> bool;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Card {
     pub id: String,
-    rank: u8,
+    pub rank: u8,
     name: String,
     pub score: f64,
     pub suit: Suit,

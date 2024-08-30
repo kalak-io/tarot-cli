@@ -4,7 +4,7 @@ use super::{
     bid::{Bid, Bids},
     card::Card,
     hand::Hand,
-    // taker::Taker,
+    kitty::Kitty,
     trick::Trick,
     utils::display,
 };
@@ -47,15 +47,12 @@ impl Player {
             bot_call_king(&self.hand.cards)
         }
     }
-    pub fn compose_kitty(&mut self, kitty: &[Card]) -> Vec<Card> {
-        let mut cards = self.hand.cards.to_vec();
-        cards.extend_from_slice(kitty);
-        cards.sort_by(compare_cards);
-        self.hand.cards = cards;
+    pub fn compose_kitty(&mut self, kitty: &mut Kitty) -> Vec<Card> {
+        add_kitty_in_hand(&kitty.cards, &mut self.hand);
         if self.is_human {
-            human_compose_kitty(&self.hand.cards)
+            kitty.human_compose(&mut self.hand.cards)
         } else {
-            bot_compose_kitty(&self.hand.cards)
+            kitty.bot_compose(&self.hand.cards)
         }
     }
     pub fn play(&self, trick: &Trick) {
@@ -76,20 +73,9 @@ fn human_call_king(cards: &[Card]) -> Card {
     todo!()
 }
 
-fn bot_compose_kitty(cards: &[Card]) -> Vec<Card> {
-    println!("Bot compose kitty");
-    cards.to_vec()
-}
-
-fn human_compose_kitty(cards: &[Card]) -> Vec<Card> {
-    println!("\n\nCompose your kitty");
-
-    display(&cards);
-    // select_cards(&cards, get_kitty_expected_size(n_players));
-    cards.to_vec()
-}
-
-fn compare_cards(a: &Card, b: &Card) -> Ordering {
-    // TODO: sort by suit and by rank
-    a.id.cmp(&b.id)
+fn add_kitty_in_hand(kitty: &[Card], hand: &mut Hand) {
+    let mut cards = hand.cards.to_vec();
+    cards.extend_from_slice(kitty);
+    cards.sort_unstable_by_key(|card| (card.suit.initial, card.rank));
+    hand.cards = cards
 }
