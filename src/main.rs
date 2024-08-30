@@ -1,7 +1,6 @@
 // use std::env;
 // use std::process;
 
-use common::bid::Bids;
 use common::deal::Deal;
 use common::game::Game;
 use tarot_cli::*;
@@ -17,15 +16,22 @@ fn main() {
         game.split_deck();
         game.update_dealer();
         game.reorder_players();
-        println!("{:?}", game.deck);
+        // println!("{:?}", game.deck);
 
         let mut deal = Deal::new(&mut game.players, &mut game.deck);
 
-        deal.update_taker();
-        if deal.taker.bid == Bids::Passe {
-            println!("Nobody made a bid. Starting a new deal...");
-            game.collect_deck(&deal.players);
-            continue;
+        deal.take_bids();
+        match &deal.taker {
+            None => {
+                println!("Nobody made a bid. Starting a new deal...");
+                continue;
+            }
+            Some(taker) => {
+                println!(
+                    "The taker is {} with a bid of {:?}",
+                    taker.player.name, taker.bid
+                );
+            }
         }
         deal.call_king();
         deal.compose_kitty();

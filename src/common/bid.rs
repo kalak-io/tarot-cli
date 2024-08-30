@@ -1,12 +1,9 @@
-use std::{
-    fmt::{Display, Formatter, Result},
-    io,
-};
+use std::fmt::{Display, Formatter, Result};
 
 use super::{
     card::Card,
     score::{compute_oudlers, compute_points},
-    utils::compare,
+    utils::{compare, display, prompt_selection},
 };
 
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
@@ -23,53 +20,58 @@ impl Display for Bids {
         write!(f, "{:?}", self)
     }
 }
-
-pub fn bot_bid(cards: &[Card], previous_bid: &Bids) -> Bids {
-    let n_oudlers = compute_oudlers(cards) as f64;
-    let hand_score = compute_points(cards) % 5.0;
-    let evaluation = n_oudlers * hand_score;
-    let bid = match evaluation {
-        0.0..2.0 => Bids::Passe,
-        2.0..4.0 => Bids::Petite,
-        4.0..6.0 => Bids::Garde,
-        6.0..8.0 => Bids::GardeSans,
-        _ => Bids::GardeContre,
-    };
-    match compare(&bid, Some(previous_bid), compare_bids) {
-        true => bid,
-        false => Bids::Passe,
-    }
+impl Bids {
+    const BASICS: [Self; 4] = [
+        Self::Petite,
+        Self::Garde,
+        Self::GardeSans,
+        Self::GardeContre,
+    ];
 }
 
-fn prompt_bid(current_bid: &Bids) -> Option<Bids> {
-    println!("What is your bid?");
-    display_available_bids(&get_available_bids(current_bid));
-    let mut name = String::new();
-    io::stdin().read_line(&mut name).expect("Read line failed.");
-    let name = name.trim();
-    match name {
-        "1" | "petite" | "Petite" | "PETITE" => Some(Bids::Petite),
-        "2" | "garde" | "Garde" | "GARDE" => Some(Bids::Garde),
-        "3" | "garde-sans" | "GardeSans" | "GARDE-SANS" => Some(Bids::GardeSans),
-        "4" | "garde-contre" | "GardeContre" | "GARDE-CONTRE" => Some(Bids::GardeContre),
-        "5" | "passe" | "Passe" | "PASSE" => Some(Bids::Passe),
-        _ => None,
+#[derive(Debug, Default)]
+pub struct Bid {
+    pub current: Bids,
+}
+impl Display for Bid {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(f, "{:?}", self.current)
     }
 }
+impl Bid {
+    pub fn new(current: Bids) -> Self {
+        Bid { current }
+    }
+    pub fn get_available_bids(&self) -> Vec<Bids> {
+        let mut available_bids: Vec<Bids> = Bids::BASICS
+            .into_iter()
+            .filter(|bid| compare(bid, Some(&self.current), compare_bids))
+            .collect();
+        available_bids.push(Bids::Passe);
 
-pub fn human_bid(cards: &[Card], previous_bid: &Bids) -> Bids {
-    let bid = prompt_bid(previous_bid);
-    match bid {
-        Some(bid) => {
-            if bid == Bids::Passe || compare(&bid, Some(previous_bid), compare_bids) {
-                bid
-            } else {
-                human_bid(cards, previous_bid)
+        available_bids
+    }
+    pub fn human_choose(&mut self, cards: &[Card]) -> Bids {
+        println!("\nYour cards:");
+        display(cards);
+        let available_bids = self.get_available_bids();
+        let index = prompt_selection("What is your bid?", Some(available_bids));
+        self.current = self.get_available_bids().get(index).copied().unwrap();
+        self.current
+    }
+    pub fn bot_choose(&mut self, cards: &[Card]) -> Bids {
+        let ideal_bid = taker_evaluation(cards);
+        match ideal_bid {
+            Bids::Passe => ideal_bid,
+            _ => {
+                let available_bids = self.get_available_bids();
+                if available_bids.contains(&ideal_bid) {
+                    self.current = ideal_bid;
+                    ideal_bid
+                } else {
+                    Bids::Passe
+                }
             }
-        }
-        None => {
-            println!("Type a number between 1 and 5");
-            human_bid(cards, previous_bid)
         }
     }
 }
@@ -86,24 +88,15 @@ pub fn compare_bids(bid: &Bids, active_bid: &Bids) -> bool {
     }
 }
 
-fn get_available_bids(active_bid: &Bids) -> Vec<Bids> {
-    let bids = vec![
-        Bids::Petite,
-        Bids::Garde,
-        Bids::GardeSans,
-        Bids::GardeContre,
-    ];
-    let mut available_bids: Vec<Bids> = bids
-        .into_iter()
-        .filter(|bid| compare(bid, Some(active_bid), compare_bids))
-        .collect();
-    available_bids.push(Bids::Passe);
-
-    available_bids
-}
-
-fn display_available_bids(available_bids: &[Bids]) {
-    for bid in available_bids {
-        println!("{bid}");
+pub fn taker_evaluation(cards: &[Card]) -> Bids {
+    let n_oudlers = compute_oudlers(cards) as f64;
+    let hand_score = compute_points(cards) % 5.0;
+    let evaluation = n_oudlers * hand_score;
+    match evaluation {
+        0.0..2.0 => Bids::Passe,
+        2.0..4.0 => Bids::Petite,
+        4.0..6.0 => Bids::Garde,
+        6.0..8.0 => Bids::GardeSans,
+        _ => Bids::GardeContre,
     }
 }

@@ -3,13 +3,10 @@ use rand::{
     Rng,
 };
 
-use crate::common::{
-    bid::compare_bids,
-    utils::{compare, display},
-};
+use crate::common::utils::display;
 
 use super::{
-    bid::Bids,
+    bid::{Bid, Bids},
     card::Card,
     player::Player,
     taker::Taker,
@@ -24,7 +21,7 @@ const DEAL_SIZE_KITTY: usize = 1;
 pub struct Deal {
     pub kitty: Vec<Card>,
     pub players: Vec<Player>,
-    pub taker: Taker,
+    pub taker: Option<Taker>,
     pub tricks: Vec<Trick>,
     pub called_king: Option<Card>,
 }
@@ -36,20 +33,23 @@ impl Deal {
         Deal {
             kitty,
             players: players.to_vec(), // TODO: is it necessary ?
-            taker: Taker::default(),
+            taker: None,
             tricks: Vec::new(),
             called_king: None,
         }
     }
-    pub fn update_taker(&mut self) {
-        self.taker = collect_bids(&self.players, &mut self.taker);
-        println!(
-            "The taker is {} with a bid of {:?}",
-            self.taker.player.name, self.taker.bid
-        );
+    pub fn take_bids(&mut self) {
+        let mut bid = Bid::default();
+        // self.taker = collect_bids(&self.players, self.taker.clone(), &mut bid);
+        self.taker = collect_bids(&self.players, self.taker.clone(), &mut bid);
+    }
+    pub fn call_king(&mut self) {
+        if self.players.len() > 4 {
+            self.called_king = Some(self.taker.clone().unwrap().player.call_king());
+        }
     }
     pub fn compose_kitty(&mut self) {
-        self.kitty = match self.taker.bid {
+        self.kitty = match self.taker.clone().unwrap().bid {
             Bids::GardeSans | Bids::GardeContre => {
                 println!("\n\nThe kitty stays hidden"); // TODO: move kitty in right place
                 self.kitty.clone()
@@ -57,16 +57,11 @@ impl Deal {
             _ => {
                 println!("\n\nThe kitty contains: ");
                 display(&self.kitty);
-                self.taker.player.compose_kitty(&self.kitty)
-            }
-        }
-    }
-    pub fn call_king(&mut self) {
-        // TODO: implement logic
-        if self.players.len() > 4 {
-            match self.taker.player.is_human {
-                true => {}
-                false => {}
+                self.taker
+                    .clone()
+                    .unwrap()
+                    .player
+                    .compose_kitty(&self.kitty)
             }
         }
     }
@@ -155,30 +150,28 @@ fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Vec<Card>) {
     }
 }
 
-fn collect_bids(players: &Vec<Player>, current_taker: &mut Taker) -> Taker {
+fn collect_bids(players: &Vec<Player>, mut taker: Option<Taker>, bid: &mut Bid) -> Option<Taker> {
     if players.len() <= 1 {
-        return current_taker.clone();
+        return taker;
     }
 
     let mut takers: Vec<Player> = Vec::new();
     for player in players {
-        let bid = player.bid(current_taker);
+        let new_bid = player.bid(bid);
 
-        if bid != Bids::Passe {
-            if compare(&bid, Some(&current_taker.bid), compare_bids) {
-                *current_taker = Taker {
-                    player: player.clone(),
-                    bid,
-                };
-                takers.push(player.clone());
-            }
+        if new_bid != Bids::Passe {
+            taker = Some(Taker {
+                player: player.clone(),
+                bid: new_bid,
+            });
+            takers.push(player.clone());
         }
-        println!("{} makes the following bid: {:?}", player.name, bid);
+        println!("{} makes the following bid: {}", player.name, new_bid);
     }
 
     if takers.len() > 1 {
-        collect_bids(&takers, current_taker)
+        collect_bids(&takers, taker, bid)
     } else {
-        current_taker.clone()
+        taker.clone()
     }
 }

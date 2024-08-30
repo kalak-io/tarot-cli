@@ -1,10 +1,10 @@
 use std::{cmp::Ordering, fmt::Display};
 
 use super::{
-    bid::{bot_bid, human_bid, Bids},
+    bid::{Bid, Bids},
     card::Card,
     hand::Hand,
-    taker::Taker,
+    // taker::Taker,
     trick::Trick,
     utils::display,
 };
@@ -33,13 +33,18 @@ impl Player {
             ..Default::default()
         }
     }
-    pub fn bid(&self, current_taker: &Taker) -> Bids {
-        match self.is_human {
-            true => {
-                display(&self.hand.cards);
-                human_bid(&self.hand.cards, &current_taker.bid)
-            }
-            false => bot_bid(&self.hand.cards, &current_taker.bid),
+    pub fn bid(&self, bid: &mut Bid) -> Bids {
+        if self.is_human {
+            bid.human_choose(&self.hand.cards)
+        } else {
+            bid.bot_choose(&self.hand.cards)
+        }
+    }
+    pub fn call_king(&mut self) -> Card {
+        if self.is_human {
+            human_call_king(&self.hand.cards)
+        } else {
+            bot_call_king(&self.hand.cards)
         }
     }
     pub fn compose_kitty(&mut self, kitty: &[Card]) -> Vec<Card> {
@@ -47,9 +52,10 @@ impl Player {
         cards.extend_from_slice(kitty);
         cards.sort_by(compare_cards);
         self.hand.cards = cards;
-        match self.is_human {
-            true => human_compose_kitty(&self.hand.cards),
-            false => bot_compose_kitty(&self.hand.cards),
+        if self.is_human {
+            human_compose_kitty(&self.hand.cards)
+        } else {
+            bot_compose_kitty(&self.hand.cards)
         }
     }
     pub fn play(&self, trick: &Trick) {
@@ -58,6 +64,16 @@ impl Player {
             false => {}
         }
     }
+}
+
+fn bot_call_king(cards: &[Card]) -> Card {
+    todo!()
+}
+
+fn human_call_king(cards: &[Card]) -> Card {
+    println!("\nYour cards:");
+    display(cards);
+    todo!()
 }
 
 fn bot_compose_kitty(cards: &[Card]) -> Vec<Card> {

@@ -1,5 +1,11 @@
 use rand::Rng;
 
+use super::{
+    bid::Bids,
+    card::Card,
+    score::{compute_oudlers, compute_points},
+};
+
 pub fn random_int_in_range(min: usize, max: usize) -> usize {
     let mut rng = rand::thread_rng();
     rng.gen_range(min..max)
@@ -33,10 +39,27 @@ pub fn reorder<T: Clone>(serie: &Vec<T>, index: usize) -> Vec<T> {
     [start, end].concat()
 }
 
-pub fn select<T: std::fmt::Display>(vector: &[T]) -> usize {
-    // Display the vector with an id for each element
-    // Prompt the user to select an element by id
-    // Return the index of the selected element
+fn display_enumeration<T: std::fmt::Display>(vector: &[T]) {
+    for (index, vect) in vector.iter().enumerate() {
+        print!("{}. {}\t", index, vect);
+    }
+    println!("");
+}
 
-    todo!()
+pub fn prompt_selection<T: std::fmt::Display>(message: &str, data: Option<Vec<T>>) -> usize {
+    if let Some(data) = data {
+        println!(
+            "\n{message} Select an option between 0 and {}",
+            data.len() - 1
+        );
+        display_enumeration(&data);
+    } else {
+        println!("{message} No options available");
+        return 0; // or handle this case in some other way
+    }
+    let mut input = String::new();
+    std::io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read line");
+    input.trim().parse().unwrap()
 }
