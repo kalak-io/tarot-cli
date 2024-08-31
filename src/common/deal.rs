@@ -108,12 +108,10 @@ fn clear_cards(players: &mut Vec<Player>) {
 }
 
 fn draw_kitty_or_player(kitty: &[Card], kitty_expected_size: usize) -> Dealing {
-    match kitty.len() == kitty_expected_size {
-        false => {
-            let random: Dealing = rand::random();
-            random
-        }
-        true => Dealing::Player,
+    if kitty.len() < kitty_expected_size {
+        rand::random()
+    } else {
+        Dealing::Player
     }
 }
 
