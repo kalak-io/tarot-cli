@@ -1,4 +1,9 @@
-use std::{cmp::Ordering, fmt::Display};
+use std::fmt::Display;
+
+use crate::common::{
+    card::{CardSuit, CardSuits, Suit},
+    utils::prompt_selection,
+};
 
 use super::{
     bid::{Bid, Bids},
@@ -41,10 +46,16 @@ impl Player {
         }
     }
     pub fn call_king(&mut self) -> Card {
+        let kings: [Card; 4] = [
+            Card::new(CardSuit, 14, Suit::new(CardSuits::Clubs)),
+            Card::new(CardSuit, 14, Suit::new(CardSuits::Diamonds)),
+            Card::new(CardSuit, 14, Suit::new(CardSuits::Hearts)),
+            Card::new(CardSuit, 14, Suit::new(CardSuits::Spades)),
+        ];
         if self.is_human {
-            human_call_king(&self.hand.cards)
+            human_call_king(&self.hand.cards, &kings)
         } else {
-            bot_call_king(&self.hand.cards)
+            bot_call_king(&self.hand.cards, &kings)
         }
     }
     pub fn compose_kitty(&mut self, kitty: &mut Kitty) -> Vec<Card> {
@@ -63,14 +74,15 @@ impl Player {
     }
 }
 
-fn bot_call_king(cards: &[Card]) -> Card {
+fn bot_call_king(cards: &[Card], kings: &[Card]) -> Card {
     todo!()
 }
 
-fn human_call_king(cards: &[Card]) -> Card {
+fn human_call_king(cards: &[Card], kings: &[Card]) -> Card {
     println!("\nYour cards:");
     display(cards);
-    todo!()
+    let index: usize = prompt_selection("Which king do you call?", Some(kings.to_vec()));
+    kings[index].clone()
 }
 
 fn add_kitty_in_hand(kitty: &[Card], hand: &mut Hand) {

@@ -62,6 +62,7 @@ pub fn prompt_selection<T: std::fmt::Display>(message: &str, data: Option<Vec<T>
         .read_line(&mut input)
         .expect("Failed to read line");
     input.trim().parse().unwrap()
+    // TODO: check that input is a number, is a valid index and is not out of bounds
 }
 
 pub fn subtract(a: &mut Vec<Card>, b: &Vec<Card>) {

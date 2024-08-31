@@ -45,6 +45,7 @@ impl Deal {
     pub fn call_king(&mut self) {
         if self.players.len() > 4 {
             self.called_king = Some(self.taker.clone().unwrap().player.call_king());
+            println!("\nThe called king is {}", self.called_king.clone().unwrap());
         }
     }
     pub fn compose_kitty(&mut self) {
