@@ -2,7 +2,7 @@ use crate::common::utils::display;
 
 use super::{
     card::Card,
-    utils::{prompt_selection, subtract},
+    utils::{select, subtract},
 };
 
 #[derive(Debug, Default)]
@@ -28,10 +28,11 @@ impl Kitty {
         while new_kitty.len() < self.max_size {
             // get diff of vects cards and new_kitty
             subtract(cards, &new_kitty);
+            let available_cards = cards.clone();
 
-            let index = prompt_selection("Compose your kitty", Some(cards.to_vec()));
+            let card = select(Some("Compose your kitty"), Some(available_cards)).unwrap();
             // TODO: implement rule to reject some cards in kitty like Kings0 or Trumps
-            new_kitty.push(cards[index].clone());
+            new_kitty.push(card);
         }
         println!("The new kitty is:");
         display(&new_kitty);

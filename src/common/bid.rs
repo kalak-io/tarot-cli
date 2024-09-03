@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter, Result};
 use super::{
     card::Card,
     score::{compute_oudlers, compute_points},
-    utils::{compare, display, prompt_selection},
+    utils::{compare, display, select},
 };
 
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
@@ -55,8 +55,7 @@ impl Bid {
         println!("\nYour cards:");
         display(cards);
         let available_bids = self.get_available_bids();
-        let index = prompt_selection("What is your bid?", Some(available_bids));
-        self.current = self.get_available_bids().get(index).copied().unwrap();
+        self.current = select(Some("What is your bid?"), Some(available_bids)).unwrap();
         self.current
     }
     pub fn bot_choose(&mut self, cards: &[Card]) -> Bids {

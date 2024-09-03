@@ -73,15 +73,14 @@ impl Player {
     }
 }
 
-fn bot_call_king(cards: &[Card], kings: &[Card]) -> Card {
+fn bot_call_king(_cards: &[Card], _kings: &[Card]) -> Card {
     todo!()
 }
 
 fn human_call_king(cards: &[Card], kings: &[Card]) -> Card {
     println!("\nYour cards:");
     display(cards);
-    let index: usize = prompt_selection("Which king do you call?", Some(kings.to_vec()));
-    kings[index].clone()
+    select(Some("Which king do you call?"), Some(kings.to_vec())).unwrap()
 }
 
 fn add_kitty_in_hand(kitty: &[Card], hand: &mut Hand) {

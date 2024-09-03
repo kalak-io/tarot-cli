@@ -1,10 +1,6 @@
 use rand::Rng;
 
-use super::{
-    bid::Bids,
-    card::Card,
-    score::{compute_oudlers, compute_points},
-};
+use super::card::Card;
 
 pub fn random_int_in_range(min: usize, max: usize) -> usize {
     let mut rng = rand::thread_rng();
@@ -46,23 +42,38 @@ fn display_enumeration<T: std::fmt::Display>(vector: &[T]) {
     println!("");
 }
 
-pub fn prompt_selection<T: std::fmt::Display>(message: &str, data: Option<Vec<T>>) -> usize {
-    if let Some(data) = data {
-        println!(
-            "\n{message}\nSelect an option between 0 and {}",
-            data.len() - 1
-        );
-        display_enumeration(&data);
-    } else {
-        println!("{message} No options available");
-        return 0; // or handle this case in some other way
-    }
+fn prompt_selection() -> usize {
     let mut input = String::new();
     std::io::stdin()
         .read_line(&mut input)
         .expect("Failed to read line");
-    input.trim().parse().unwrap()
-    // TODO: check that input is a number, is a valid index and is not out of bounds
+    input.trim().parse().expect("Input not an integer")
+}
+
+pub fn select<T: std::fmt::Display + std::marker::Copy>(
+    message: Option<&str>,
+    from: Option<Vec<T>>,
+) -> Option<T> {
+    if let Some(message) = message {
+        println!("\n{}", message);
+    }
+
+    match from {
+        Some(from) => {
+            println!("\nSelect an option between 0 and {}", from.len() - 1);
+            display_enumeration(&from);
+            let index = prompt_selection();
+            if 0 <= index && index < from.len() {
+                Some(from[index])
+            } else {
+                None
+            }
+        }
+        None => {
+            println!("\nNo options available");
+            None
+        }
+    }
 }
 
 pub fn subtract(a: &mut Vec<Card>, b: &Vec<Card>) {
