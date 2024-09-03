@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod game {
     use tarot_cli::common::{
-        card::Card,
+        card::{Card, CardGetters, CardSuits},
         game::{find_dealer, Game},
         utils::get_next_index,
     };
@@ -18,7 +18,7 @@ mod game {
         let trump_cards = game
             .deck
             .iter()
-            .filter(|c| c.is_trump)
+            .filter(|c| c.is_trump())
             .collect::<Vec<&Card>>()
             .len();
         assert_eq!(trump_cards, 22);
@@ -73,8 +73,8 @@ mod game {
         let fisrt_card = game.deck.first().cloned().unwrap();
         let last_card = game.deck.last().cloned().unwrap();
         game.split_deck();
-        assert_ne!(fisrt_card.id, game.deck.first().unwrap().id);
-        assert_ne!(last_card.id, game.deck.last().unwrap().id);
+        assert_ne!(fisrt_card.id(), game.deck.first().unwrap().id());
+        assert_ne!(last_card.id(), game.deck.last().unwrap().id());
     }
 
     #[test]

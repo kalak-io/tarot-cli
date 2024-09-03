@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CardSuits {
     Clubs,
     Diamonds,
@@ -14,149 +14,127 @@ impl Display for CardSuits {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Suit {
     pub name: CardSuits,
-    icon: char,
+    pub icon: char,
     pub initial: char,
 }
+
 impl Suit {
     pub fn new(name: CardSuits) -> Suit {
-        match name {
-            CardSuits::Clubs => Suit {
-                name: CardSuits::Clubs,
-                icon: '♣',
-                initial: 'C',
-            },
-            CardSuits::Diamonds => Suit {
-                name: CardSuits::Diamonds,
-                icon: '♦',
-                initial: 'D',
-            },
-            CardSuits::Spades => Suit {
-                name: CardSuits::Spades,
-                icon: '♠',
-                initial: 'S',
-            },
-            CardSuits::Hearts => Suit {
-                name: CardSuits::Hearts,
-                icon: '♥',
-                initial: 'H',
-            },
-            CardSuits::Trumps => Suit {
-                name: CardSuits::Trumps,
-                icon: '*',
-                initial: 'T',
+        let suit_data = match name {
+            CardSuits::Clubs => ('♣', 'C'),
+            CardSuits::Diamonds => ('♦', 'D'),
+            CardSuits::Spades => ('♠', 'S'),
+            CardSuits::Hearts => ('♥', 'H'),
+            CardSuits::Trumps => ('*', 'T'),
+        };
+        match suit_data {
+            (icon, initial) => Suit {
+                name,
+                icon,
+                initial,
             },
         }
     }
 }
 
 pub trait CardGetters {
-    fn score(rank: u8) -> f64;
-    fn name(rank: u8) -> String;
-    fn is_trump() -> bool;
-    fn is_oudler(rank: u8) -> bool;
+    fn is_trump(&self) -> bool;
+    fn is_oudler(&self) -> bool;
+    fn score(&self) -> f64;
+    fn name(&self) -> String;
+    fn id(&self) -> String;
 }
 
-#[derive(Debug, Clone, PartialEq)]
+pub trait CardActions {
+    fn is_superior_than(&self, card: &Card) -> bool;
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Card {
-    pub id: String,
     pub rank: u8,
-    name: String,
-    pub score: f64,
     pub suit: Suit,
-    pub is_trump: bool,
-    pub is_oudler: bool,
 }
 impl Card {
-    pub fn new<T: CardGetters>(_: T, rank: u8, suit: Suit) -> Self {
-        let id = format!("{}{}", suit.initial, rank);
-        let score = T::score(rank);
-        let name = T::name(rank);
-        let is_trump = T::is_trump();
-        let is_oudler = T::is_oudler(rank);
-        Card {
-            id,
-            rank,
-            name,
-            score,
-            suit,
-            is_trump,
-            is_oudler,
-        }
-    }
-    pub fn is_superior_than(self, card: &Card) -> bool {
-        match self.is_trump {
-            true => match card.is_trump {
-                true => self.rank > card.rank,
-                false => true,
-            },
-            false => match card.is_trump {
-                true => false,
-                false => self.rank > card.rank,
-            },
-        }
+    pub fn new(rank: u8, suit: CardSuits) -> Self {
+        let suit = Suit::new(suit);
+        Card { rank, suit }
     }
 }
 impl Display for Card {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "|{} {}| ", self.suit.icon, self.name)
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(f, "{} of {}", self.name(), self.suit.icon)
     }
 }
-
-#[derive(Copy, Clone)]
-pub struct CardSuit;
-impl CardGetters for CardSuit {
-    fn score(rank: u8) -> f64 {
-        match rank {
-            1..=10 => 0.5,
-            11 => 1.5,
-            12 => 2.5,
-            13 => 3.5,
-            14 => 4.5,
-            _ => 0.0,
+impl CardGetters for Card {
+    fn score(&self) -> f64 {
+        if self.is_trump() {
+            match self.rank {
+                1 | 21 | 22 => 4.5,
+                _ => 0.5,
+            }
+        } else {
+            match self.rank {
+                1..=10 => 0.5,
+                11 => 1.5,
+                12 => 2.5,
+                13 => 3.5,
+                14 => 4.5,
+                _ => 0.0,
+            }
         }
     }
-    fn name(rank: u8) -> String {
-        match rank {
-            11 => String::from("Jack"),
-            12 => String::from("Knight"),
-            13 => String::from("Queen"),
-            14 => String::from("King"),
-            _ => rank.to_string(),
+    fn name(&self) -> String {
+        if self.is_trump() {
+            match self.rank {
+                22 => String::from("Fool"),
+                _ => self.rank.to_string(),
+            }
+        } else {
+            match self.rank {
+                11 => String::from("Jack"),
+                12 => String::from("Knight"),
+                13 => String::from("Queen"),
+                14 => String::from("King"),
+                _ => self.rank.to_string(),
+            }
         }
     }
-    fn is_trump() -> bool {
-        false
+    fn id(&self) -> String {
+        format!("{}{}", self.suit.initial, self.rank)
     }
-    fn is_oudler(_rank: u8) -> bool {
-        false
-    }
-}
-
-#[derive(Copy, Clone)]
-pub struct CardTrump;
-impl CardGetters for CardTrump {
-    fn score(rank: u8) -> f64 {
-        match rank {
-            1 | 21 | 22 => 4.5,
-            _ => 0.5,
-        }
-    }
-    fn name(rank: u8) -> String {
-        match rank {
-            22 => String::from("Fool"),
-            _ => rank.to_string(),
-        }
-    }
-    fn is_trump() -> bool {
-        true
-    }
-    fn is_oudler(rank: u8) -> bool {
-        match rank {
-            1 | 21 | 22 => true,
+    fn is_trump(&self) -> bool {
+        match self.suit.name {
+            CardSuits::Trumps => true,
             _ => false,
+        }
+    }
+    fn is_oudler(&self) -> bool {
+        if self.is_trump() {
+            match self.rank {
+                1 | 21 | 22 => true,
+                _ => false,
+            }
+        } else {
+            false
+        }
+    }
+}
+
+impl CardActions for Card {
+    fn is_superior_than(&self, card: &Card) -> bool {
+        if self.is_trump() {
+            match card.is_trump() {
+                true => self.rank > card.rank,
+                false => true,
+            }
+        } else {
+            match card.is_trump() {
+                true => false,
+                false => self.rank > card.rank,
+            }
         }
     }
 }

@@ -1,9 +1,6 @@
 use std::fmt::Display;
 
-use crate::common::{
-    card::{CardSuit, CardSuits, Suit},
-    utils::prompt_selection,
-};
+use crate::common::{card::CardSuits, utils::select};
 
 use super::{
     bid::{Bid, Bids},
@@ -13,6 +10,8 @@ use super::{
     trick::Trick,
     utils::display,
 };
+
+const KING_RANK: u8 = 14;
 
 #[derive(Debug, Default, Clone)]
 pub struct Player {
@@ -47,10 +46,10 @@ impl Player {
     }
     pub fn call_king(&mut self) -> Card {
         let kings: [Card; 4] = [
-            Card::new(CardSuit, 14, Suit::new(CardSuits::Clubs)),
-            Card::new(CardSuit, 14, Suit::new(CardSuits::Diamonds)),
-            Card::new(CardSuit, 14, Suit::new(CardSuits::Hearts)),
-            Card::new(CardSuit, 14, Suit::new(CardSuits::Spades)),
+            Card::new(KING_RANK, CardSuits::Clubs),
+            Card::new(KING_RANK, CardSuits::Diamonds),
+            Card::new(KING_RANK, CardSuits::Hearts),
+            Card::new(KING_RANK, CardSuits::Spades),
         ];
         if self.is_human {
             human_call_king(&self.hand.cards, &kings)
