@@ -21,11 +21,7 @@ pub struct Game {
 }
 impl Default for Game {
     fn default() -> Self {
-        Game {
-            players: create_players(4_u8),
-            deck: create_deck(),
-            deals: Vec::new(),
-        }
+        Game::new(4)
     }
 }
 impl Game {
