@@ -4,14 +4,12 @@ use crate::common::{card::CardSuits, utils::select};
 
 use super::{
     bid::{Bid, Bids},
-    card::Card,
+    card::{Card, KING_RANK},
     hand::Hand,
     kitty::Kitty,
     trick::Trick,
     utils::display,
 };
-
-const KING_RANK: u8 = 14;
 
 #[derive(Debug, Default, Clone)]
 pub struct Player {

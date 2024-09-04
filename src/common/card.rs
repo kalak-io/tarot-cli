@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter, Result};
 
-const KING_RANK: u8 = 14;
+pub const KING_RANK: u8 = 14;
 const QUEEN_RANK: u8 = 13;
 const KNIGHT_RANK: u8 = 12;
 const JACK_RANK: u8 = 11;
