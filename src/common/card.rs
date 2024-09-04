@@ -21,6 +21,15 @@ impl Display for CardSuits {
         write!(f, "{:?}", self)
     }
 }
+impl CardSuits {
+    pub const AVAILABLE_SUITS: [Self; 5] = [
+        Self::Clubs,
+        Self::Diamonds,
+        Self::Hearts,
+        Self::Spades,
+        Self::Trumps,
+    ];
+}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Suit {

@@ -21,7 +21,7 @@ impl Display for Bids {
     }
 }
 impl Bids {
-    const BASICS: [Self; 4] = [
+    const AVAILABLE_BIDS: [Self; 4] = [
         Self::Petite,
         Self::Garde,
         Self::GardeSans,
@@ -43,7 +43,7 @@ impl Bid {
         Bid { current }
     }
     pub fn get_available_bids(&self) -> Vec<Bids> {
-        let mut available_bids: Vec<Bids> = Bids::BASICS
+        let mut available_bids: Vec<Bids> = Bids::AVAILABLE_BIDS
             .into_iter()
             .filter(|bid| compare(bid, Some(&self.current), compare_bids))
             .collect();

@@ -105,14 +105,7 @@ fn generate_card(n_cards: usize, suit: CardSuits) -> Vec<Card> {
 }
 
 fn generate_suits(deck: &mut Vec<Card>) {
-    let suits: [CardSuits; 5] = [
-        CardSuits::Spades,
-        CardSuits::Hearts,
-        CardSuits::Diamonds,
-        CardSuits::Clubs,
-        CardSuits::Trumps,
-    ];
-    for suit in suits {
+    for suit in CardSuits::AVAILABLE_SUITS.into_iter() {
         let n_cards = match suit {
             CardSuits::Trumps => NUMBER_TRUMP_CARDS,
             _ => NUMBER_CARDS_BY_SUIT,
