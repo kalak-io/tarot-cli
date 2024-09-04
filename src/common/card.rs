@@ -1,5 +1,13 @@
 use std::fmt::{Display, Formatter, Result};
 
+const KING_RANK: u8 = 14;
+const QUEEN_RANK: u8 = 13;
+const KNIGHT_RANK: u8 = 12;
+const JACK_RANK: u8 = 11;
+const LITTLE_RANK: u8 = 1;
+const BIG_RANK: u8 = 21;
+const FOOL_RANK: u8 = 22;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CardSuits {
     Clubs,
@@ -23,13 +31,7 @@ pub struct Suit {
 
 impl Suit {
     pub fn new(name: CardSuits) -> Suit {
-        let suit_data = match name {
-            CardSuits::Clubs => ('♣', 'C'),
-            CardSuits::Diamonds => ('♦', 'D'),
-            CardSuits::Spades => ('♠', 'S'),
-            CardSuits::Hearts => ('♥', 'H'),
-            CardSuits::Trumps => ('*', 'T'),
-        };
+        let suit_data = get_suit_data(name);
         match suit_data {
             (icon, initial) => Suit {
                 name,
@@ -70,36 +72,25 @@ impl Display for Card {
 }
 impl CardGetters for Card {
     fn score(&self) -> f64 {
-        if self.is_trump() {
-            match self.rank {
-                1 | 21 | 22 => 4.5,
-                _ => 0.5,
-            }
-        } else {
-            match self.rank {
-                1..=10 => 0.5,
-                11 => 1.5,
-                12 => 2.5,
-                13 => 3.5,
-                14 => 4.5,
-                _ => 0.0,
-            }
+        match (self.rank, self.suit.name) {
+            (LITTLE_RANK | BIG_RANK | FOOL_RANK, CardSuits::Trumps) => 4.5,
+            (2..BIG_RANK, CardSuits::Trumps) => 0.5,
+            (KING_RANK, _) => 4.5,
+            (QUEEN_RANK, _) => 3.5,
+            (KNIGHT_RANK, _) => 2.5,
+            (JACK_RANK, _) => 1.5,
+            (1..=10, _) => 0.5,
+            (_, _) => 0.0,
         }
     }
     fn name(&self) -> String {
-        if self.is_trump() {
-            match self.rank {
-                22 => String::from("Fool"),
-                _ => self.rank.to_string(),
-            }
-        } else {
-            match self.rank {
-                11 => String::from("Jack"),
-                12 => String::from("Knight"),
-                13 => String::from("Queen"),
-                14 => String::from("King"),
-                _ => self.rank.to_string(),
-            }
+        match (self.rank, self.suit.name) {
+            (FOOL_RANK, CardSuits::Trumps) => String::from("Fool"),
+            (KING_RANK, _) => String::from("King"),
+            (QUEEN_RANK, _) => String::from("Queen"),
+            (KNIGHT_RANK, _) => String::from("Knight"),
+            (JACK_RANK, _) => String::from("Jack"),
+            (_, _) => self.rank.to_string(),
         }
     }
     fn id(&self) -> String {
@@ -112,29 +103,33 @@ impl CardGetters for Card {
         }
     }
     fn is_oudler(&self) -> bool {
-        if self.is_trump() {
-            match self.rank {
-                1 | 21 | 22 => true,
-                _ => false,
-            }
-        } else {
-            false
+        match (self.rank, self.suit.name) {
+            (LITTLE_RANK | BIG_RANK | FOOL_RANK, CardSuits::Trumps) => true,
+            (_, _) => false,
         }
     }
 }
 
 impl CardActions for Card {
     fn is_superior_than(&self, card: &Card) -> bool {
-        if self.is_trump() {
-            match card.is_trump() {
-                true => self.rank > card.rank,
-                false => true,
-            }
+        if self.is_trump() && card.is_trump() {
+            self.rank > card.rank
+        } else if self.is_trump() {
+            true
+        } else if card.is_trump() {
+            false
         } else {
-            match card.is_trump() {
-                true => false,
-                false => self.rank > card.rank,
-            }
+            self.rank > card.rank
         }
+    }
+}
+
+fn get_suit_data(name: CardSuits) -> (char, char) {
+    match name {
+        CardSuits::Clubs => ('♣', 'C'),
+        CardSuits::Diamonds => ('♦', 'D'),
+        CardSuits::Spades => ('♠', 'S'),
+        CardSuits::Hearts => ('♥', 'H'),
+        CardSuits::Trumps => ('*', 'T'),
     }
 }
