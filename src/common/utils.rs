@@ -1,4 +1,5 @@
 use rand::Rng;
+use std::str::FromStr;
 
 use super::card::Card;
 
@@ -42,12 +43,12 @@ fn display_enumeration<T: std::fmt::Display>(vector: &[T]) {
     println!("");
 }
 
-fn prompt_selection() -> usize {
+fn prompt_selection() -> Result<usize, <usize as FromStr>::Err> {
     let mut input = String::new();
     std::io::stdin()
         .read_line(&mut input)
         .expect("Failed to read line");
-    input.trim().parse().expect("Input not an integer")
+    input.trim().parse::<usize>()
 }
 
 pub fn select<T: std::fmt::Display + std::marker::Copy>(
@@ -62,11 +63,22 @@ pub fn select<T: std::fmt::Display + std::marker::Copy>(
         Some(from) => {
             println!("Select an option between 0 and {}", from.len() - 1);
             display_enumeration(&from);
-            let index = prompt_selection();
-            if 0 <= index && index < from.len() {
-                Some(from[index])
-            } else {
-                None
+            match prompt_selection() {
+                Ok(index) => {
+                    if index < from.len() {
+                        Some(from[index])
+                    } else {
+                        println!(
+                            "Invalid input. Please enter a number lower or equal than {}",
+                            from.len() - 1
+                        );
+                        select(message, Some(from))
+                    }
+                }
+                Err(_) => {
+                    println!("Invalid input. Please enter a number.");
+                    select(message, Some(from))
+                }
             }
         }
         None => {
