@@ -76,7 +76,7 @@ impl Card {
 }
 impl Display for Card {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        write!(f, "{} of {}", self.name(), self.suit.icon)
+        write!(f, " | {} {} | ", self.name(), self.suit.icon)
     }
 }
 impl CardGetters for Card {
