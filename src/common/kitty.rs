@@ -38,8 +38,11 @@ impl KittyActions for Kitty {
     }
 
     fn human_compose(&mut self, cards: &mut Vec<Card>) -> Vec<Card> {
+        // TODO: implement way to correct the kitty
         let mut new_kitty: Vec<Card> = Vec::new();
         while new_kitty.len() < self.max_size {
+            println!("\nThe building kitty contains: ");
+            display(&new_kitty);
             // get diff of vects cards and new_kitty
             subtract(cards, &new_kitty);
             let available_cards = cards.clone();
@@ -51,10 +54,8 @@ impl KittyActions for Kitty {
             } else {
                 new_kitty.push(card);
             }
-            println!("The building kitty contains: ");
-            display(&new_kitty);
         }
-        println!("The new kitty is:");
+        println!("\nThe new kitty is:");
         display(&new_kitty);
         self.cards = new_kitty;
         self.cards.clone()
