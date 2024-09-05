@@ -13,6 +13,13 @@ const TOTAL_CARDS: usize = 78;
 const MIN_NUMBER_CARDS_SPLIT: usize = 3;
 const MAX_NUMBER_CARDS_SPLIT: usize = TOTAL_CARDS - MIN_NUMBER_CARDS_SPLIT;
 
+pub trait GameActions {
+    fn update_dealer(&mut self);
+    fn split_deck(&mut self);
+    fn collect_deck(&mut self, players: &[Player]);
+    fn reorder_players(&mut self);
+}
+
 #[derive(Debug)]
 pub struct Game {
     pub players: Vec<Player>,
@@ -32,7 +39,9 @@ impl Game {
             deals: Vec::new(),
         }
     }
-    pub fn split_deck(&mut self) {
+}
+impl GameActions for Game {
+    fn split_deck(&mut self) {
         let split_index = random_int_in_range(1, MAX_NUMBER_CARDS_SPLIT);
         let mut new_deck = Vec::new();
         new_deck.extend_from_slice(&self.deck[split_index..]);
@@ -40,7 +49,7 @@ impl Game {
         self.deck = new_deck;
     }
 
-    pub fn collect_deck(&mut self, players: &[Player]) {
+    fn collect_deck(&mut self, players: &[Player]) {
         let mut deck = Vec::new();
         for player in players {
             match player.hand.cards.len() > 0 {
@@ -50,7 +59,7 @@ impl Game {
         }
         self.deck = deck;
     }
-    pub fn update_dealer(&mut self) {
+    fn update_dealer(&mut self) {
         let index = find_dealer(&self.players);
         self.players[index].is_dealer = false;
 
@@ -59,7 +68,7 @@ impl Game {
 
         println!("The dealer is {}", self.players[next_index].name);
     }
-    pub fn reorder_players(&mut self) {
+    fn reorder_players(&mut self) {
         let dealer_index = find_dealer(&self.players);
         let start_index = get_next_index(&self.players, dealer_index);
         let new_players = reorder(&self.players, start_index);

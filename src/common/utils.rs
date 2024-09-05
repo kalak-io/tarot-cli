@@ -60,7 +60,7 @@ pub fn select<T: std::fmt::Display + std::marker::Copy>(
 
     match from {
         Some(from) => {
-            println!("\nSelect an option between 0 and {}", from.len() - 1);
+            println!("Select an option between 0 and {}", from.len() - 1);
             display_enumeration(&from);
             let index = prompt_selection();
             if 0 <= index && index < from.len() {

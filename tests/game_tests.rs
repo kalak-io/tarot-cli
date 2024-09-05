@@ -2,7 +2,7 @@
 mod game {
     use tarot_cli::common::{
         card::{Card, CardGetters, CardSuits},
-        game::{find_dealer, Game},
+        game::{find_dealer, Game, GameActions},
         utils::get_next_index,
     };
 

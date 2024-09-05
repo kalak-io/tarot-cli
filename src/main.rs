@@ -1,8 +1,8 @@
 // use std::env;
 // use std::process;
 
-use common::deal::Deal;
-use common::game::Game;
+use common::deal::{Deal, DealActions};
+use common::game::{Game, GameActions};
 use tarot_cli::*;
 
 fn main() {

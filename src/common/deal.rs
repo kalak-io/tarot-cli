@@ -9,7 +9,7 @@ use super::{
     bid::{Bid, Bids},
     card::Card,
     kitty::Kitty,
-    player::Player,
+    player::{Player, PlayerActions},
     taker::Taker,
     trick::Trick,
     utils::{get_next_index, reorder},
@@ -17,6 +17,15 @@ use super::{
 
 const DEAL_SIZE_PLAYERS: usize = 3;
 const DEAL_SIZE_KITTY: usize = 1;
+
+pub trait DealActions {
+    fn take_bids(&mut self);
+    fn call_king(&mut self);
+    fn compose_kitty(&mut self);
+    fn play_tricks(&mut self);
+    fn compute_score(&self);
+    fn show_score(&self);
+}
 
 #[derive(Debug, Default)]
 pub struct Deal {
@@ -37,18 +46,20 @@ impl Deal {
             ..Default::default()
         }
     }
-    pub fn take_bids(&mut self) {
+}
+impl DealActions for Deal {
+    fn take_bids(&mut self) {
         let mut bid = Bid::default();
         // self.taker = collect_bids(&self.players, self.taker.clone(), &mut bid);
         self.taker = collect_bids(&self.players, self.taker.clone(), &mut bid);
     }
-    pub fn call_king(&mut self) {
+    fn call_king(&mut self) {
         if self.players.len() > 4 {
             self.called_king = Some(self.taker.clone().unwrap().player.call_king());
             println!("\nThe called king is {}", self.called_king.clone().unwrap());
         }
     }
-    pub fn compose_kitty(&mut self) {
+    fn compose_kitty(&mut self) {
         match self.taker.clone().unwrap().bid {
             Bids::GardeSans | Bids::GardeContre => {
                 println!("\n\nThe kitty stays hidden"); // TODO: move kitty in right place
@@ -65,7 +76,7 @@ impl Deal {
             }
         }
     }
-    pub fn play_tricks(&mut self) {
+    fn play_tricks(&mut self) {
         if self.players[0].hand.cards.len() == 0 {
             return;
         }
@@ -78,8 +89,8 @@ impl Deal {
         self.tricks.push(trick);
         self.play_tricks()
     }
-    pub fn compute_score(&self) {}
-    pub fn show_score(&self) {}
+    fn compute_score(&self) {}
+    fn show_score(&self) {}
 }
 
 #[derive(Debug, PartialEq)]

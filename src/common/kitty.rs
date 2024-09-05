@@ -1,9 +1,17 @@
-use crate::common::utils::display;
+use crate::common::{
+    card::{CardGetters, CardSuits, KING_RANK},
+    utils::display,
+};
 
 use super::{
     card::Card,
     utils::{select, subtract},
 };
+
+pub trait KittyActions {
+    fn bot_compose(&mut self, cards: &[Card]) -> Vec<Card>;
+    fn human_compose(&mut self, cards: &mut Vec<Card>) -> Vec<Card>;
+}
 
 #[derive(Debug, Default)]
 pub struct Kitty {
@@ -13,17 +21,23 @@ pub struct Kitty {
 impl Kitty {
     pub fn new(n_players: usize) -> Self {
         Kitty {
-            max_size: get_max_size_kitty(n_players),
+            max_size: match n_players {
+                2..=4 => 6,
+                5.. => 3,
+                _ => 0,
+            },
             ..Default::default()
         }
     }
+}
 
-    pub fn bot_compose(&mut self, cards: &[Card]) -> Vec<Card> {
+impl KittyActions for Kitty {
+    fn bot_compose(&mut self, cards: &[Card]) -> Vec<Card> {
         println!("Bot compose kitty");
         cards.to_vec()
     }
 
-    pub fn human_compose(&mut self, cards: &mut Vec<Card>) -> Vec<Card> {
+    fn human_compose(&mut self, cards: &mut Vec<Card>) -> Vec<Card> {
         let mut new_kitty: Vec<Card> = Vec::new();
         while new_kitty.len() < self.max_size {
             // get diff of vects cards and new_kitty
@@ -31,20 +45,18 @@ impl Kitty {
             let available_cards = cards.clone();
 
             let card = select(Some("Compose your kitty"), Some(available_cards)).unwrap();
-            // TODO: implement rule to reject some cards in kitty like Kings0 or Trumps
-            new_kitty.push(card);
+            if (card.suit.name != CardSuits::Trumps && card.rank == KING_RANK) || card.is_oudler() {
+                println!("You cannot select a King or an Oudler for the kitty.");
+                continue;
+            } else {
+                new_kitty.push(card);
+            }
+            println!("The building kitty contains: ");
+            display(&new_kitty);
         }
         println!("The new kitty is:");
         display(&new_kitty);
         self.cards = new_kitty;
         self.cards.clone()
-    }
-}
-
-pub fn get_max_size_kitty(n_players: usize) -> usize {
-    match n_players {
-        2..=4 => 6,
-        5.. => 3,
-        _ => 0,
     }
 }

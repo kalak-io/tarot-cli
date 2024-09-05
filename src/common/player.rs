@@ -6,10 +6,17 @@ use super::{
     bid::{Bid, Bids},
     card::{Card, KING_RANK},
     hand::Hand,
-    kitty::Kitty,
+    kitty::{Kitty, KittyActions},
     trick::Trick,
     utils::display,
 };
+
+pub trait PlayerActions {
+    fn bid(&self, bid: &mut Bid) -> Bids;
+    fn call_king(&mut self) -> Card;
+    fn compose_kitty(&mut self, kitty: &mut Kitty) -> Vec<Card>;
+    fn play(&self, trick: &Trick);
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct Player {
@@ -35,14 +42,16 @@ impl Player {
             ..Default::default()
         }
     }
-    pub fn bid(&self, bid: &mut Bid) -> Bids {
+}
+impl PlayerActions for Player {
+    fn bid(&self, bid: &mut Bid) -> Bids {
         if self.is_human {
             bid.human_choose(&self.hand.cards)
         } else {
             bid.bot_choose(&self.hand.cards)
         }
     }
-    pub fn call_king(&mut self) -> Card {
+    fn call_king(&mut self) -> Card {
         let kings: [Card; 4] = [
             Card::new(KING_RANK, CardSuits::Clubs),
             Card::new(KING_RANK, CardSuits::Diamonds),
@@ -55,7 +64,7 @@ impl Player {
             bot_call_king(&self.hand.cards, &kings)
         }
     }
-    pub fn compose_kitty(&mut self, kitty: &mut Kitty) -> Vec<Card> {
+    fn compose_kitty(&mut self, kitty: &mut Kitty) -> Vec<Card> {
         add_kitty_in_hand(&kitty.cards, &mut self.hand);
         if self.is_human {
             kitty.human_compose(&mut self.hand.cards)
@@ -63,7 +72,7 @@ impl Player {
             kitty.bot_compose(&self.hand.cards)
         }
     }
-    pub fn play(&self, trick: &Trick) {
+    fn play(&self, trick: &Trick) {
         match self.is_human {
             true => {}
             false => {}
