@@ -78,11 +78,11 @@ impl Bid {
 pub fn compare_bids(bid: &Bids, active_bid: &Bids) -> bool {
     match bid {
         Bids::Passe => bid == active_bid,
-        Bids::Petite => [Bids::Passe].contains(&active_bid),
-        Bids::Garde => [Bids::Passe, Bids::Petite].contains(&active_bid),
-        Bids::GardeSans => [Bids::Passe, Bids::Petite, Bids::Garde].contains(&active_bid),
+        Bids::Petite => [Bids::Passe].contains(active_bid),
+        Bids::Garde => [Bids::Passe, Bids::Petite].contains(active_bid),
+        Bids::GardeSans => [Bids::Passe, Bids::Petite, Bids::Garde].contains(active_bid),
         Bids::GardeContre => {
-            [Bids::Passe, Bids::Petite, Bids::Garde, Bids::GardeSans].contains(&active_bid)
+            [Bids::Passe, Bids::Petite, Bids::Garde, Bids::GardeSans].contains(active_bid)
         }
     }
 }

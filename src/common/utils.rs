@@ -8,7 +8,7 @@ pub fn random_int_in_range(min: usize, max: usize) -> usize {
     rng.gen_range(min..max)
 }
 
-pub fn get_next_index<T>(vector: &Vec<T>, current_index: usize) -> usize {
+pub fn get_next_index<T>(vector: &[T], current_index: usize) -> usize {
     if current_index < vector.len() - 1 {
         current_index + 1
     } else {
@@ -30,7 +30,7 @@ pub fn compare<T>(a: &T, b: Option<&T>, comparator: fn(&T, &T) -> bool) -> bool 
     }
 }
 
-pub fn reorder<T: Clone>(serie: &Vec<T>, index: usize) -> Vec<T> {
+pub fn reorder<T: Clone>(serie: &[T], index: usize) -> Vec<T> {
     let start = &serie[index..];
     let end = &serie[..index];
     [start, end].concat()
@@ -40,7 +40,7 @@ fn display_enumeration<T: std::fmt::Display>(vector: &[T]) {
     for (index, vect) in vector.iter().enumerate() {
         print!("{}. {}\t", index, vect);
     }
-    println!("");
+    println!();
 }
 
 fn prompt_selection() -> Result<usize, <usize as FromStr>::Err> {
@@ -88,6 +88,6 @@ pub fn select<T: std::fmt::Display + std::marker::Copy>(
     }
 }
 
-pub fn subtract(a: &mut Vec<Card>, b: &Vec<Card>) {
+pub fn subtract(a: &mut Vec<Card>, b: &[Card]) {
     a.retain(|x| !b.contains(x));
 }

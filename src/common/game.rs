@@ -52,9 +52,9 @@ impl GameActions for Game {
     fn collect_deck(&mut self, players: &[Player]) {
         let mut deck = Vec::new();
         for player in players {
-            match player.hand.cards.len() > 0 {
-                true => deck.extend(player.hand.cards.clone()),
-                false => deck.extend(player.hand.won_cards.clone()),
+            match player.hand.cards.is_empty() {
+                true => deck.extend(player.hand.won_cards.clone()),
+                false => deck.extend(player.hand.cards.clone()),
             }
         }
         self.deck = deck;
@@ -89,7 +89,7 @@ fn generate_players(n_players: u8) -> Vec<Player> {
     players
 }
 
-fn set_first_dealer(players: &mut Vec<Player>) {
+fn set_first_dealer(players: &mut [Player]) {
     let index = random_int_in_range(0, players.len());
     players[index].is_dealer = true;
 }
@@ -103,7 +103,7 @@ fn create_players(n_players: u8) -> Vec<Player> {
 fn generate_card(n_cards: usize, suit: CardSuits) -> Vec<Card> {
     let mut cards = Vec::new();
     for rank in 1..=n_cards {
-        let card = Card::new(rank as u8, suit.clone());
+        let card = Card::new(rank as u8, suit);
         cards.push(card);
     }
     cards.to_vec()
@@ -126,6 +126,6 @@ pub fn create_deck() -> Vec<Card> {
     deck.to_vec()
 }
 
-pub fn find_dealer(players: &Vec<Player>) -> usize {
+pub fn find_dealer(players: &[Player]) -> usize {
     players.iter().position(|player| player.is_dealer).unwrap()
 }

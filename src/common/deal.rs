@@ -36,9 +36,9 @@ pub struct Deal {
     pub called_king: Option<Card>,
 }
 impl Deal {
-    pub fn new(players: &mut Vec<Player>, deck: &mut Vec<Card>) -> Self {
+    pub fn new(players: &mut Vec<Player>, deck: &mut [Card]) -> Self {
         let mut kitty = Kitty::new(players.len());
-        draw_cards(&deck, players, &mut kitty);
+        draw_cards(deck, players, &mut kitty);
 
         Deal {
             players: players.to_vec(), // TODO: is it necessary ?
@@ -56,7 +56,7 @@ impl DealActions for Deal {
     fn call_king(&mut self) {
         if self.players.len() > 4 {
             self.called_king = Some(self.taker.clone().unwrap().player.call_king());
-            println!("\nThe called king is {}", self.called_king.clone().unwrap());
+            println!("\nThe called king is {}", self.called_king.unwrap());
         }
     }
     fn compose_kitty(&mut self) {
@@ -77,12 +77,12 @@ impl DealActions for Deal {
         }
     }
     fn play_tricks(&mut self) {
-        if self.players[0].hand.cards.len() == 0 {
+        if self.players[0].hand.cards.is_empty() {
             return;
         }
-        let trick = Trick::default();
-        for player in self.players.clone() {
-            player.play(&trick);
+        let mut trick = Trick::default();
+        for mut player in self.players.clone() {
+            player.play(&mut trick);
         }
         let winner_index = 0; // trick.get_best_played_card_index();
         self.players = reorder(&self.players, winner_index);
@@ -142,7 +142,7 @@ fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Kitty) {
             }
             Dealing::Player => {
                 players[player_index].hand.cards.extend(split.to_vec());
-                player_index = get_next_index(&players, player_index);
+                player_index = get_next_index(players, player_index);
             }
         }
         index = end_of_range;

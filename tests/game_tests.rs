@@ -102,8 +102,8 @@ mod game {
         let mut game = Game::default();
         let current_dealer = find_dealer(&game.players);
         let next_dealer = get_next_index(&game.players, current_dealer);
-        assert_eq!(game.players[current_dealer].is_dealer, true);
+        assert!(game.players[current_dealer].is_dealer);
         game.update_dealer();
-        assert_eq!(game.players[next_dealer].is_dealer, true);
+        assert!(game.players[next_dealer].is_dealer);
     }
 }

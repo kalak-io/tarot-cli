@@ -4,11 +4,11 @@ use super::{
 };
 
 pub fn compute_oudlers(cards: &[Card]) -> usize {
-    cards.into_iter().filter(|card| card.is_oudler()).count()
+    cards.iter().filter(|card| card.is_oudler()).count()
 }
 
 pub fn compute_points(cards: &[Card]) -> f64 {
-    cards.into_iter().fold(0.0, |acc, card| acc + card.score())
+    cards.iter().fold(0.0, |acc, card| acc + card.score())
 }
 
 fn compute_needed_points(cards: &[Card]) -> f64 {

@@ -49,13 +49,11 @@ pub struct Suit {
 
 impl Suit {
     pub fn new(name: CardSuits) -> Suit {
-        let suit_data = get_suit_data(name);
-        match suit_data {
-            (icon, initial) => Suit {
-                name,
-                icon,
-                initial,
-            },
+        let (icon, initial) = get_suit_data(name);
+        Suit {
+            name,
+            icon,
+            initial,
         }
     }
 }
@@ -139,23 +137,21 @@ impl CardActions for Card {
             Some(played_suit) => match (self.suit.name, card.suit.name, played_suit) {
                 (CardSuits::Trumps, _, __) => {
                     if card.suit.name.is_trump() {
-                        return self.rank > card.rank;
+                        self.rank > card.rank
                     } else {
-                        return true;
+                        true
                     }
                 }
-                (_, CardSuits::Trumps, __) => {
-                    return false;
-                }
+                (_, CardSuits::Trumps, __) => false,
                 _ => {
                     if self.suit.name == played_suit && card.suit.name == played_suit {
-                        return self.rank > card.rank;
+                        self.rank > card.rank
                     } else if self.suit.name == played_suit && card.suit.name != played_suit {
-                        return true;
+                        true
                     } else if self.suit.name != played_suit && card.suit.name == played_suit {
-                        return false;
+                        false
                     } else {
-                        return false;
+                        false
                     }
                 }
             },
