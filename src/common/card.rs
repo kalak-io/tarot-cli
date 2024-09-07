@@ -103,10 +103,22 @@ impl CardGetters for Card {
     fn name(&self) -> String {
         match (self.rank, self.suit.name) {
             (FOOL_RANK, CardSuits::Trumps) => String::from("Fool"),
-            (KING_RANK, _) => String::from("King"),
-            (QUEEN_RANK, _) => String::from("Queen"),
-            (KNIGHT_RANK, _) => String::from("Knight"),
-            (JACK_RANK, _) => String::from("Jack"),
+            (KING_RANK, CardSuits::Clubs)
+            | (KING_RANK, CardSuits::Spades)
+            | (KING_RANK, CardSuits::Hearts)
+            | (KING_RANK, CardSuits::Diamonds) => String::from("King"),
+            (QUEEN_RANK, CardSuits::Clubs)
+            | (QUEEN_RANK, CardSuits::Spades)
+            | (QUEEN_RANK, CardSuits::Hearts)
+            | (QUEEN_RANK, CardSuits::Diamonds) => String::from("Queen"),
+            (KNIGHT_RANK, CardSuits::Clubs)
+            | (KNIGHT_RANK, CardSuits::Spades)
+            | (KNIGHT_RANK, CardSuits::Hearts)
+            | (KNIGHT_RANK, CardSuits::Diamonds) => String::from("Knight"),
+            (JACK_RANK, CardSuits::Clubs)
+            | (JACK_RANK, CardSuits::Spades)
+            | (JACK_RANK, CardSuits::Hearts)
+            | (JACK_RANK, CardSuits::Diamonds) => String::from("Jack"),
             (_, _) => self.rank.to_string(),
         }
     }
