@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod game {
     use tarot_cli::common::{
-        card::{Card, CardGetters, CardSuits},
+        card::{Card, CardGetters, CardSuitsGetters},
         game::{find_dealer, Game, GameActions},
         utils::get_next_index,
     };
@@ -18,7 +18,7 @@ mod game {
         let trump_cards = game
             .deck
             .iter()
-            .filter(|c| c.is_trump())
+            .filter(|c| c.suit.name.is_trump())
             .collect::<Vec<&Card>>()
             .len();
         assert_eq!(trump_cards, 22);

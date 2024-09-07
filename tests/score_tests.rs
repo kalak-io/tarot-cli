@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod score {
     use tarot_cli::common::{
-        card::{Card, CardGetters},
+        card::{Card, CardSuitsGetters},
         game::Game,
         score::{compute_oudlers, compute_points},
     };
@@ -25,7 +25,7 @@ mod score {
         let trump_cards = game
             .deck
             .iter()
-            .filter(|c| c.is_trump())
+            .filter(|c| c.suit.name.is_trump())
             .cloned()
             .collect::<Vec<Card>>();
         assert_eq!(compute_points(&trump_cards), 23.0);

@@ -8,6 +8,10 @@ const LITTLE_RANK: u8 = 1;
 const BIG_RANK: u8 = 21;
 const FOOL_RANK: u8 = 22;
 
+pub trait CardSuitsGetters {
+    fn is_trump(&self) -> bool;
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CardSuits {
     Clubs,
@@ -29,6 +33,11 @@ impl CardSuits {
         Self::Spades,
         Self::Trumps,
     ];
+}
+impl CardSuitsGetters for CardSuits {
+    fn is_trump(&self) -> bool {
+        matches!(self, CardSuits::Trumps)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -52,7 +61,6 @@ impl Suit {
 }
 
 pub trait CardGetters {
-    fn is_trump(&self) -> bool;
     fn is_oudler(&self) -> bool;
     fn score(&self) -> f64;
     fn name(&self) -> String;
@@ -60,7 +68,7 @@ pub trait CardGetters {
 }
 
 pub trait CardActions {
-    fn is_superior_than(&self, card: &Card) -> bool;
+    fn is_superior_than(&self, card: &Card, played_suit: Option<CardSuits>) -> bool;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -105,12 +113,6 @@ impl CardGetters for Card {
     fn id(&self) -> String {
         format!("{}{}", self.suit.initial, self.rank)
     }
-    fn is_trump(&self) -> bool {
-        match self.suit.name {
-            CardSuits::Trumps => true,
-            _ => false,
-        }
-    }
     fn is_oudler(&self) -> bool {
         match (self.rank, self.suit.name) {
             (LITTLE_RANK | BIG_RANK | FOOL_RANK, CardSuits::Trumps) => true,
@@ -120,15 +122,42 @@ impl CardGetters for Card {
 }
 
 impl CardActions for Card {
-    fn is_superior_than(&self, card: &Card) -> bool {
-        if self.is_trump() && card.is_trump() {
-            self.rank > card.rank
-        } else if self.is_trump() {
-            true
-        } else if card.is_trump() {
-            false
-        } else {
-            self.rank > card.rank
+    fn is_superior_than(&self, card: &Card, played_suit: Option<CardSuits>) -> bool {
+        match played_suit {
+            Some(played_suit) => match (self.suit.name, card.suit.name, played_suit) {
+                (CardSuits::Trumps, _, __) => {
+                    if card.suit.name.is_trump() {
+                        return self.rank > card.rank;
+                    } else {
+                        return true;
+                    }
+                }
+                (_, CardSuits::Trumps, __) => {
+                    return false;
+                }
+                _ => {
+                    if self.suit.name == played_suit && card.suit.name == played_suit {
+                        return self.rank > card.rank;
+                    } else if self.suit.name == played_suit && card.suit.name != played_suit {
+                        return true;
+                    } else if self.suit.name != played_suit && card.suit.name == played_suit {
+                        return false;
+                    } else {
+                        return false;
+                    }
+                }
+            },
+            None => {
+                if self.suit.name.is_trump() && card.suit.name.is_trump() {
+                    self.rank > card.rank
+                } else if self.suit.name.is_trump() {
+                    true
+                } else if card.suit.name.is_trump() {
+                    false
+                } else {
+                    self.rank > card.rank
+                }
+            }
         }
     }
 }
