@@ -14,8 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Rust
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Install cargo-audit
         uses: cargo install cargo-audit
       - name: Build
