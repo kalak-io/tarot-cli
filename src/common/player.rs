@@ -7,7 +7,7 @@ use super::{
     card::{Card, KING_RANK},
     hand::Hand,
     kitty::{Kitty, KittyActions},
-    trick::Trick,
+    trick::{Trick, TrickActions},
     utils::display,
 };
 
@@ -15,7 +15,7 @@ pub trait PlayerActions {
     fn bid(&self, bid: &mut Bid) -> Bids;
     fn call_king(&mut self) -> Card;
     fn compose_kitty(&mut self, kitty: &mut Kitty) -> Vec<Card>;
-    fn play(&self, trick: &Trick);
+    fn play(&mut self, trick: &mut Trick);
 }
 
 #[derive(Debug, Default, Clone)]
@@ -72,10 +72,11 @@ impl PlayerActions for Player {
             kitty.bot_compose(&self.hand.cards)
         }
     }
-    fn play(&self, trick: &Trick) {
-        match self.is_human {
-            true => {}
-            false => {}
+    fn play(&mut self, trick: &mut Trick) {
+        if self.is_human {
+            trick.human_play(&mut self.hand.cards)
+        } else {
+            trick.bot_play(&mut self.hand.cards)
         }
     }
 }
