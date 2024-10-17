@@ -33,7 +33,6 @@ impl TrickActions for Trick {
 
         Some(best_card_index)
     }
-    
 
     fn human_play(&mut self, cards: &mut Vec<Card>) {
         println!("\nYour cards:");
@@ -92,18 +91,24 @@ pub fn allowed_cards_to_play(trick: &Trick, player_cards: &[Card]) -> Vec<Card> 
                 .filter(|card| card.suit.name == played_suit)
                 .collect();
             if trick.played_suit() == Some(CardSuits::Trumps) && !played_suit_cards.is_empty() {
-                let best_played_trump_index: usize = trick.get_best_played_card_index(Some(CardSuits::Trumps)).unwrap();
+                let best_played_trump_index: usize = trick
+                    .get_best_played_card_index(Some(CardSuits::Trumps))
+                    .unwrap();
                 let best_played_trump = trick.played_cards[best_played_trump_index];
-                let filtered_trumps_cards: Vec<Card> = played_suit_cards.clone()
+                let filtered_trumps_cards: Vec<Card> = played_suit_cards
+                    .clone()
                     .into_iter()
-                    .filter(|card| card.is_superior_than(&best_played_trump, Some(CardSuits::Trumps)))
+                    .filter(|card| {
+                        card.is_superior_than(&best_played_trump, Some(CardSuits::Trumps))
+                    })
                     .collect();
                 if filtered_trumps_cards.is_empty() {
                     played_suit_cards
                 } else {
                     filtered_trumps_cards
                 }
-            } else if trick.played_suit() != Some(CardSuits::Trumps) && played_suit_cards.is_empty() {
+            } else if trick.played_suit() != Some(CardSuits::Trumps) && played_suit_cards.is_empty()
+            {
                 let trumps_cards: Vec<Card> = player_cards
                     .to_vec()
                     .into_iter()
