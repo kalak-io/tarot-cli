@@ -57,6 +57,11 @@ impl Suit {
         }
     }
 }
+impl CardSuitsGetters for Suit {
+    fn is_trump(&self) -> bool {
+        matches!(self.name, CardSuits::Trumps)
+    }
+}
 
 pub trait CardGetters {
     fn is_oudler(&self) -> bool;

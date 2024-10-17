@@ -3,7 +3,7 @@ use crate::common::utils::{display, select};
 use super::card::{Card, CardActions, CardSuits, CardSuitsGetters};
 
 pub trait TrickActions {
-    fn get_best_played_card_index(&self) -> Option<usize>;
+    fn get_best_played_card_index(&self, played_suit: Option<CardSuits>) -> Option<usize>;
     fn human_play(&mut self, cards: &mut Vec<Card>);
     fn bot_play(&mut self, cards: &mut Vec<Card>);
 }
@@ -18,7 +18,7 @@ pub struct Trick {
 }
 
 impl TrickActions for Trick {
-    fn get_best_played_card_index(&self) -> Option<usize> {
+    fn get_best_played_card_index(&self, played_suit: Option<CardSuits>) -> Option<usize> {
         if self.played_cards.is_empty() {
             return None;
         }
@@ -33,6 +33,7 @@ impl TrickActions for Trick {
 
         Some(best_card_index)
     }
+    
 
     fn human_play(&mut self, cards: &mut Vec<Card>) {
         println!("\nYour cards:");
@@ -77,40 +78,84 @@ pub fn check_selected_card(
     player_cards: &[Card],
     player_selected_card: &Card,
 ) -> bool {
-    // TODO: implement way to check the trick
-    // need to play the played_suit
-    // need to play a superior trump if the played_suit is trumps or if the played_suit is not trump but you need to cut and another trump is played
-
-    let played_suit = trick.played_suit();
-    match (played_suit, player_selected_card.suit.name) {
-        (Some(played_suit), CardSuits::Trumps) => {}
-        (Some(played_suit), _) => {}
-        (None, _) => true,
-    }
-    if played_suit != Some(player_selected_card.suit.name) {}
-    let player_has_trumps = player_cards.iter().any(|card| card.suit.name.is_trump());
-    let player_has_played_suit = player_cards
-        .iter()
-        .any(|card| card.suit.name == played_suit.unwrap());
-    let selected_card_suit_is_same_than_played_suit =
-        player_selected_card.suit.name == played_suit.unwrap();
-
-    false
+    let allowed_cards = allowed_cards_to_play(trick, player_cards);
+    allowed_cards.contains(player_selected_card)
 }
 
-// filtrer les cartes du joueur selon les conditions suivantes:
-// si le joueur a la couleur demandée et qu'il ne s'agit pas des atouts, il peut jouer la carte de son choix dans la couleur demandée
-// si le joueur a la couleur demandée et qu'il s'agit des atouts alors il doit monter sur l'atout précédemment jouer
-// si le joueur a la couleur demandée et qu'il s'agit des atouts et qu'il ne peut pas monter, il doit jouer un atout plus petit
-// si le joueur n'a pas la couleur demandée et qu'il a des atouts, il doit jouer un attout
-// si le joueur n'a pas la couleur demandée et qu'il n'a pas d'atout, il peut se défaussser
 pub fn allowed_cards_to_play(trick: &Trick, player_cards: &[Card]) -> Vec<Card> {
     match trick.played_suit() {
         None => player_cards.to_vec(),
-        Some(played_suit) => player_cards
-            .iter()
-            .filter(|card| card.suit.name == played_suit)
-            .copied()
-            .collect(),
+        Some(played_suit) => {
+            let played_suit_cards: Vec<Card> = player_cards
+                .to_vec()
+                .into_iter()
+                .filter(|card| card.suit.name == played_suit)
+                .collect();
+            if trick.played_suit() == Some(CardSuits::Trumps) && !played_suit_cards.is_empty() {
+                let best_played_trump_index: usize = trick.get_best_played_card_index(Some(CardSuits::Trumps)).unwrap();
+                let best_played_trump = trick.played_cards[best_played_trump_index];
+                let filtered_trumps_cards: Vec<Card> = played_suit_cards.clone()
+                    .into_iter()
+                    .filter(|card| card.is_superior_than(&best_played_trump, Some(CardSuits::Trumps)))
+                    .collect();
+                if filtered_trumps_cards.is_empty() {
+                    played_suit_cards
+                } else {
+                    filtered_trumps_cards
+                }
+            } else if trick.played_suit() != Some(CardSuits::Trumps) && played_suit_cards.is_empty() {
+                let trumps_cards: Vec<Card> = player_cards
+                    .to_vec()
+                    .into_iter()
+                    .filter(|card| card.suit.is_trump())
+                    .collect();
+                if trumps_cards.is_empty() {
+                    player_cards.to_vec()
+                } else {
+                    trumps_cards
+                }
+            } else {
+                played_suit_cards
+            }
+        }
     }
 }
+
+// pub fn allowed_cards_to_play(trick: &Trick, player_cards: &[Card]) -> Vec<Card> {
+//     let mut allowed_cards = Vec::with_capacity(player_cards.len());
+//     let played_suit = trick.played_suit();
+
+//     match played_suit {
+//         None => allowed_cards.extend_from_slice(player_cards),
+//         Some(played_suit) => {
+//             let has_played_suit = player_cards.iter().any(|card| card.suit.name == played_suit);
+//             let has_trumps = player_cards.iter().any(|card| card.suit.is_trump());
+
+//             if trick.played_suit() == Some(CardSuits::Trumps) {
+//                 let best_played_trump_index = trick.get_best_played_card_index(Some(CardSuits::Trumps)).unwrap();
+//                 let best_played_trump = trick.played_cards[best_played_trump_index];
+//                 for card in player_cards {
+//                     if card.suit.name == played_suit || (has_trumps && card.is_superior_than(&best_played_trump, Some(CardSuits::Trumps))) {
+//                         allowed_cards.push(*card);
+//                     }
+//                 }
+//             } else if has_played_suit {
+//                 for card in player_cards {
+//                     if card.suit.name == played_suit {
+//                         allowed_cards.push(*card);
+//                     }
+//                 }
+//             } else if has_trumps {
+//                 for card in player_cards {
+//                     if card.suit.is_trump() {
+//                         allowed_cards.push(*card);
+//                     }
+//                 }
+//             } else {
+//                 allowed_cards.extend_from_slice(player_cards);
+//             }
+//         }
+//     }
+
+//     allowed_cards
+// }
