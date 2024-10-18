@@ -144,44 +144,5 @@ pub fn allowed_cards_to_play(trick: &Trick, player_cards: &[Card]) -> Vec<Card> 
             }
         }
     }
-    println!("Allowed cards to play: {:?}", allowed_cards);
     allowed_cards
 }
-// pub fn allowed_cards_to_play(trick: &Trick, player_cards: &[Card]) -> Vec<Card> {
-//     let mut allowed_cards = Vec::with_capacity(player_cards.len());
-//     let played_suit = trick.played_suit();
-
-//     match played_suit {
-//         None => allowed_cards.extend_from_slice(player_cards),
-//         Some(played_suit) => {
-//             let has_played_suit = player_cards.iter().any(|card| card.suit.name == played_suit);
-//             let has_trumps = player_cards.iter().any(|card| card.suit.is_trump());
-
-//             if trick.played_suit() == Some(CardSuits::Trumps) {
-//                 let best_played_trump_index = trick.get_best_played_card_index(Some(CardSuits::Trumps)).unwrap();
-//                 let best_played_trump = trick.played_cards[best_played_trump_index];
-//                 for card in player_cards {
-//                     if card.suit.name == played_suit || (has_trumps && card.is_superior_than(&best_played_trump, Some(CardSuits::Trumps))) {
-//                         allowed_cards.push(*card);
-//                     }
-//                 }
-//             } else if has_played_suit {
-//                 for card in player_cards {
-//                     if card.suit.name == played_suit {
-//                         allowed_cards.push(*card);
-//                     }
-//                 }
-//             } else if has_trumps {
-//                 for card in player_cards {
-//                     if card.suit.is_trump() {
-//                         allowed_cards.push(*card);
-//                     }
-//                 }
-//             } else {
-//                 allowed_cards.extend_from_slice(player_cards);
-//             }
-//         }
-//     }
-
-//     allowed_cards
-// }
