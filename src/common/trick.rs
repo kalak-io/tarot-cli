@@ -76,9 +76,13 @@ pub fn check_selected_card(
     trick: &Trick,
     player_cards: &[Card],
     player_selected_card: &Card,
-) -> bool {
+) -> Result<bool, &'static str> {
     let allowed_cards = allowed_cards_to_play(trick, player_cards);
-    allowed_cards.contains(player_selected_card)
+    if allowed_cards.contains(player_selected_card) {
+        Ok(true)
+    } else {
+        Err("Selected card is not allowed to be played")
+    }
 }
 
 pub fn allowed_cards_to_play(trick: &Trick, player_cards: &[Card]) -> Vec<Card> {

@@ -31,20 +31,20 @@ mod trick {
     #[rstest]
     fn check_selected_card_in_his_context(
         #[values(
-            (Vec::new(), Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(14, CardSuits::Hearts), false),
-            (Vec::new(), Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(14, CardSuits::Clubs), true),
-            (Vec::from([Card::new(8, CardSuits::Clubs)]), Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(14, CardSuits::Clubs), true),
-            (Vec::from([Card::new(8, CardSuits::Clubs)]), Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(2, CardSuits::Hearts), false),
-            (Vec::from([Card::new(8, CardSuits::Trumps)]), Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(2, CardSuits::Hearts), false),
-            (Vec::from([Card::new(8, CardSuits::Trumps)]), Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(2, CardSuits::Trumps), true),
-            (Vec::from([Card::new(8, CardSuits::Trumps)]), Vec::from([Card::new(14, CardSuits::Trumps), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(14, CardSuits::Trumps), true),
-            (Vec::from([Card::new(8, CardSuits::Trumps)]), Vec::from([Card::new(14, CardSuits::Trumps), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(2, CardSuits::Trumps), false),
-            (Vec::from([Card::new(8, CardSuits::Trumps)]), Vec::from([Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(2, CardSuits::Hearts), true),
+            (Vec::new(), Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(14, CardSuits::Hearts), Err("Selected card is not allowed to be played")),
+            (Vec::new(), Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(14, CardSuits::Clubs), Ok(true)),
+            (Vec::from([Card::new(8, CardSuits::Clubs)]), Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(14, CardSuits::Clubs), Ok(true)),
+            (Vec::from([Card::new(8, CardSuits::Clubs)]), Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(2, CardSuits::Hearts), Err("Selected card is not allowed to be played")),
+            (Vec::from([Card::new(8, CardSuits::Trumps)]), Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(2, CardSuits::Hearts), Err("Selected card is not allowed to be played")),
+            (Vec::from([Card::new(8, CardSuits::Trumps)]), Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(2, CardSuits::Trumps), Ok(true)),
+            (Vec::from([Card::new(8, CardSuits::Trumps)]), Vec::from([Card::new(14, CardSuits::Trumps), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(14, CardSuits::Trumps), Ok(true)),
+            (Vec::from([Card::new(8, CardSuits::Trumps)]), Vec::from([Card::new(14, CardSuits::Trumps), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(2, CardSuits::Trumps), Err("Selected card is not allowed to be played")),
+            (Vec::from([Card::new(8, CardSuits::Trumps)]), Vec::from([Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(2, CardSuits::Hearts), Ok(true)),
         )]
         // (Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(14, CardSuits::Hearts), None, true),
         // (Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(14, CardSuits::Hearts), Some(CardSuits::Trumps), false),
         // (Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), Card::new(14, CardSuits::Hearts), Some(CardSuits::Trumps), false))]
-        case: (Vec<Card>, Vec<Card>, Card, bool),
+        case: (Vec<Card>, Vec<Card>, Card, Result<bool, &str>),
     ) {
         let (played_cards, player_cards, selected_card, expected_result) = case;
         let mut trick = Trick::default();
