@@ -6,10 +6,15 @@ repos:
     hooks:
     -   id: check-added-large-files
     -   id: check-case-conflict
+    -   id: check-json
     -   id: check-merge-conflict
+    -   id: check-toml
     -   id: check-yaml
+    -   id: destroyed-symlinks
     -   id: detect-private-key
     -   id: end-of-file-fixer
+    -   id: pretty-format-json
+        args: [--autofix, --indent=4, --no-sort-keys]
     -   id: trailing-whitespace
 -   repo: local
     hooks:
