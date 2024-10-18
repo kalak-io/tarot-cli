@@ -21,3 +21,11 @@ repos:
         name: cargotest
         language: system
         entry: bash -c 'cargo test'
+      - id: cargocheck
+        name: cargocheck
+        language: system
+        entry: bash -c 'cargo check --all-targets'
+      - id: cargotest
+        name: cargotest
+        language: system
+        entry: bash -c 'cargo test --verbose'
