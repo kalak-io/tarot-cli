@@ -23,7 +23,7 @@ impl TrickActions for Trick {
             return None;
         }
         let mut best_card_index = 0;
-        let played_suit = self.played_suit();
+        let played_suit = played_suit.or_else(|| self.played_suit());
 
         for (index, card) in self.played_cards.iter().enumerate() {
             if card.is_superior_than(&self.played_cards[best_card_index], Some(played_suit?)) {
@@ -43,11 +43,9 @@ impl TrickActions for Trick {
         )
         .unwrap();
 
-        // TODO: the validation of choose of the human
-        // A player must to play played_suit
-        // if he has not card vith the same played_suit, the player must use a trump
-        // if a trump is already played, the new trump must to be superior else play a trump
-        // if there are no card with the same played_suit or no trump, the player can play any card
+        if check_selected_card(self, cards, &card).is_err() {
+            self.human_play(cards);
+        }
 
         let index = cards
             .iter()

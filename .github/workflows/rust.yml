@@ -18,10 +18,10 @@ jobs:
       - name: Install cargo-audit
         uses: cargo install cargo-audit
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --verbose --all-targets
       - name: Run tests
-        run: cargo test --verbose
+        run: cargo test --verbose --all-targets
       - name: Clippy
-        run: cargo clippy --verbose -- -D warnings
+        run: cargo clippy --verbose --all-targets -- -D warnings
       - name: Audit
         run: cargo audit
