@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install cargo-audit
-        uses: cargo install cargo-audit
+        run: cargo install cargo-audit
       - name: Build
         run: cargo build --verbose --all-targets
       - name: Run tests
