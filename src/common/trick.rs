@@ -82,50 +82,71 @@ pub fn check_selected_card(
 }
 
 pub fn allowed_cards_to_play(trick: &Trick, player_cards: &[Card]) -> Vec<Card> {
-    match trick.played_suit() {
-        None => player_cards.to_vec(),
+    let mut allowed_cards = Vec::with_capacity(player_cards.len());
+    let played_suit = trick.played_suit();
+
+    match played_suit {
+        None => allowed_cards.extend_from_slice(player_cards),
         Some(played_suit) => {
-            let played_suit_cards: Vec<Card> = player_cards
-                .to_vec()
-                .into_iter()
-                .filter(|card| card.suit.name == played_suit)
-                .collect();
-            if trick.played_suit() == Some(CardSuits::Trumps) && !played_suit_cards.is_empty() {
-                let best_played_trump_index: usize = trick
-                    .get_best_played_card_index(Some(CardSuits::Trumps))
-                    .unwrap();
-                let best_played_trump = trick.played_cards[best_played_trump_index];
-                let filtered_trumps_cards: Vec<Card> = played_suit_cards
-                    .clone()
-                    .into_iter()
-                    .filter(|card| {
-                        card.is_superior_than(&best_played_trump, Some(CardSuits::Trumps))
-                    })
-                    .collect();
-                if filtered_trumps_cards.is_empty() {
-                    played_suit_cards
+            let has_played_suit = player_cards
+                .iter()
+                .any(|card| card.suit.name == played_suit);
+            let has_trumps = player_cards.iter().any(|card| card.suit.is_trump());
+
+            if trick.played_suit() == Some(CardSuits::Trumps) {
+                if has_trumps {
+                    let best_played_trump_index = trick
+                        .get_best_played_card_index(Some(CardSuits::Trumps))
+                        .unwrap();
+                    let best_played_trump = trick.played_cards[best_played_trump_index];
+
+                    let superior_trumps: Vec<Card> = player_cards
+                        .iter()
+                        .filter(|card| {
+                            card.suit.is_trump()
+                                && card
+                                    .is_superior_than(&best_played_trump, Some(CardSuits::Trumps))
+                        })
+                        .cloned()
+                        .collect();
+
+                    if superior_trumps.is_empty() {
+                        // If no superior trumps are found, allow all trumps to be played
+                        for card in player_cards {
+                            if card.suit.is_trump() {
+                                allowed_cards.push(*card);
+                            }
+                        }
+                    } else {
+                        allowed_cards.extend(superior_trumps);
+                    }
                 } else {
-                    filtered_trumps_cards
+                    // If the player doesn't have trump cards, allow them to play any card
+                    allowed_cards.extend_from_slice(player_cards);
                 }
-            } else if trick.played_suit() != Some(CardSuits::Trumps) && played_suit_cards.is_empty()
-            {
-                let trumps_cards: Vec<Card> = player_cards
-                    .to_vec()
-                    .into_iter()
-                    .filter(|card| card.suit.is_trump())
-                    .collect();
-                if trumps_cards.is_empty() {
-                    player_cards.to_vec()
-                } else {
-                    trumps_cards
+            } else if has_played_suit {
+                // If the player has cards of the same suit as the first card played, only allow them to play those cards
+                for card in player_cards {
+                    if card.suit.name == played_suit {
+                        allowed_cards.push(*card);
+                    }
+                }
+            } else if has_trumps {
+                // If the player has trump cards, but not cards of the same suit as the first card played, only allow them to play trump cards
+                for card in player_cards {
+                    if card.suit.is_trump() {
+                        allowed_cards.push(*card);
+                    }
                 }
             } else {
-                played_suit_cards
+                // If the player doesn't have cards of the same suit as the first card played, and doesn't have trump cards, allow them to play any card
+                allowed_cards.extend_from_slice(player_cards);
             }
         }
     }
+    println!("Allowed cards to play: {:?}", allowed_cards);
+    allowed_cards
 }
-
 // pub fn allowed_cards_to_play(trick: &Trick, player_cards: &[Card]) -> Vec<Card> {
 //     let mut allowed_cards = Vec::with_capacity(player_cards.len());
 //     let played_suit = trick.played_suit();
