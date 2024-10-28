@@ -31,12 +31,13 @@ fn main() {
                 );
             }
         }
-        deal.call_king(); // TODO
+        deal.call_king();
+        deal.set_side();
         deal.compose_kitty();
         deal.play_tricks();
 
-        deal.compute_score();
-        deal.show_score();
+        deal.compute_score(); // TODO
+        deal.show_score(); // TODO
 
         game.collect_deck(&deal.players);
         deals.push(deal);

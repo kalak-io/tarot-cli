@@ -8,10 +8,11 @@ use crate::common::utils::display;
 use super::{
     bid::{Bid, Bids},
     card::Card,
+    hand::{Hand, HandActions, Side},
     kitty::Kitty,
     player::{Player, PlayerActions},
     taker::Taker,
-    trick::Trick,
+    trick::{Trick, TrickActions, TrickGetters},
     utils::{get_next_index, reorder},
 };
 
@@ -23,6 +24,7 @@ pub trait DealActions {
     fn call_king(&mut self);
     fn compose_kitty(&mut self);
     fn play_tricks(&mut self);
+    fn set_side(&mut self);
     fn compute_score(&self);
     fn show_score(&self);
 }
@@ -50,7 +52,6 @@ impl Deal {
 impl DealActions for Deal {
     fn take_bids(&mut self) {
         let mut bid = Bid::default();
-        // self.taker = collect_bids(&self.players, self.taker.clone(), &mut bid);
         self.taker = collect_bids(&self.players, self.taker.clone(), &mut bid);
     }
     fn call_king(&mut self) {
@@ -84,13 +85,28 @@ impl DealActions for Deal {
         for mut player in self.players.clone() {
             player.play(&mut trick);
         }
-        let winner_index = 0; // trick.get_best_played_card_index();
-        self.players = reorder(&self.players, winner_index);
+        let winner_index = trick.get_best_played_card_index(trick.played_suit());
+        // TODO: who wins ? Which side ?
+        self.players = reorder(&self.players, winner_index.unwrap());
         self.tricks.push(trick);
         self.play_tricks()
     }
-    fn compute_score(&self) {}
-    fn show_score(&self) {}
+    fn set_side(&mut self) {
+        if self.called_king.is_some() {
+            for player in &mut self.players {
+                player.hand.set_side_with_called_king(self.called_king);
+            }
+        }
+        if let Some(taker) = &mut self.taker {
+            taker.player.hand.side = Side::Attack;
+        }
+    }
+    fn compute_score(&self) {
+        todo!()
+    }
+    fn show_score(&self) {
+        todo!()
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -113,9 +129,9 @@ fn get_deal_size(dealing: &Dealing) -> usize {
         Dealing::Player => DEAL_SIZE_PLAYERS,
     }
 }
-fn clear_cards(players: &mut Vec<Player>) {
+fn clear_hand(players: &mut Vec<Player>) {
     for player in players {
-        player.hand.cards.clear();
+        player.hand = Hand::default();
     }
 }
 
@@ -132,7 +148,7 @@ fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Kitty) {
     let mut dealing = Dealing::Player;
     let mut player_index = 0;
 
-    clear_cards(players);
+    clear_hand(players);
     while index < deck.len() {
         let end_of_range = index + get_deal_size(&dealing);
         let split = &deck[index..end_of_range];

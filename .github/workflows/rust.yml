@@ -22,6 +22,6 @@ jobs:
       - name: Run tests
         run: cargo test --verbose --all-targets
       - name: Clippy
-        run: cargo clippy --verbose --all-targets -- -D warnings
+        run: cargo clippy --verbose --all-targets --all-features -- -D warnings
       - name: Audit
         run: cargo audit

@@ -30,9 +30,9 @@ pub fn compare<T>(a: &T, b: Option<&T>, comparator: fn(&T, &T) -> bool) -> bool 
     }
 }
 
-pub fn reorder<T: Clone>(serie: &[T], index: usize) -> Vec<T> {
-    let start = &serie[index..];
-    let end = &serie[..index];
+pub fn reorder<T: Clone>(series: &[T], index: usize) -> Vec<T> {
+    let start = &series[index..];
+    let end = &series[..index];
     [start, end].concat()
 }
 
