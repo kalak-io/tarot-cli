@@ -1,7 +1,9 @@
 use super::{
-    bid::Bids,
+    bid::{self, Bids},
     card::{Card, CardGetters},
 };
+
+pub const BASE_SCORE: f64 = 25.0;
 
 pub fn compute_oudlers(cards: &[Card]) -> usize {
     cards.iter().filter(|card| card.is_oudler()).count()
@@ -41,10 +43,11 @@ fn multiplier(bid: &Bids) -> f64 {
     }
 }
 
-// fn compute_score(hand: &Hand) -> f64 {
-//     let points = diff_points(&hand.attack_pool);
-//     let petit_au_bout = if hand.bonus_petit_au_bout { 10.0 } else { 0.0 };
-//     ((25.0 + points + petit_au_bout) * multiplier(hand.bid))
-//         + hand.bonus_poignee
-//         + hand.bonus_chelem
-// }
+pub fn compute_score(cards: &[Card], bid: &Bids) -> f64 {
+    let points = diff_points(&cards);
+    // let petit_au_bout = if hand.bonus_petit_au_bout { 10.0 } else { 0.0 };
+    // ((25.0 + points + petit_au_bout) * multiplier(hand.bid))
+    // + hand.bonus_poignee
+    // + hand.bonus_chelem
+    (BASE_SCORE + points) * multiplier(bid)
+}

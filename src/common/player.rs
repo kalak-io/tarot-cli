@@ -15,14 +15,17 @@ pub trait PlayerActions {
     fn bid(&self, bid: &mut Bid) -> Bids;
     fn call_king(&mut self) -> Card;
     fn compose_kitty(&mut self, kitty: &mut Kitty) -> Vec<Card>;
+    fn declare_poignee(&mut self);
+    fn declare_chelem(&mut self);
     fn play(&mut self, trick: &mut Trick);
+    fn update_score(&mut self, score: f64);
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct Player {
     pub id: u8,
     pub name: String,
-    score: u8,
+    score: f64,
     pub is_human: bool,
     pub is_dealer: bool,
     pub cards: Vec<Card>,
@@ -72,12 +75,21 @@ impl PlayerActions for Player {
             kitty.bot_compose(&self.hand.cards)
         }
     }
+    fn declare_poignee(&mut self) {
+        todo!()
+    }
+    fn declare_chelem(&mut self) {
+        todo!()
+    }
     fn play(&mut self, trick: &mut Trick) {
         if self.is_human {
             trick.human_play(&mut self.hand.cards)
         } else {
             trick.bot_play(&mut self.hand.cards)
         }
+    }
+    fn update_score(&mut self, score: f64) {
+        self.score += score;
     }
 }
 

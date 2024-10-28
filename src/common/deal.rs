@@ -11,6 +11,7 @@ use super::{
     hand::{Hand, HandActions, Side},
     kitty::Kitty,
     player::{Player, PlayerActions},
+    score::compute_score,
     taker::Taker,
     trick::{Trick, TrickActions, TrickGetters},
     utils::{get_next_index, reorder},
@@ -25,7 +26,7 @@ pub trait DealActions {
     fn compose_kitty(&mut self);
     fn play_tricks(&mut self);
     fn set_side(&mut self);
-    fn compute_score(&self);
+    fn set_score(&self);
     fn show_score(&self);
 }
 
@@ -79,14 +80,15 @@ impl DealActions for Deal {
     }
     fn play_tricks(&mut self) {
         if self.players[0].hand.cards.is_empty() {
+            // set_bonus_petit_au_bout()
             return;
         }
         let mut trick = Trick::default();
-        for mut player in self.players.clone() {
+        for player in &mut self.players {
             player.play(&mut trick);
         }
         let winner_index = trick.get_best_played_card_index(trick.played_suit());
-        // TODO: who wins ? Which side ?
+        self.players[winner_index.unwrap()].hand.won_cards = trick.played_cards.clone();
         self.players = reorder(&self.players, winner_index.unwrap());
         self.tricks.push(trick);
         self.play_tricks()
@@ -101,8 +103,15 @@ impl DealActions for Deal {
             taker.player.hand.side = Side::Attack;
         }
     }
-    fn compute_score(&self) {
-        todo!()
+    fn set_score(&self) {
+        let won_cards_by_attack = merge_won_cards(&self.players);
+        let attack_score = compute_score(&won_cards_by_attack, &self.taker.clone().unwrap().bid);
+        let defense_score = attack_score / (self.players.len() as f64); // TODO: change computation with called_king player
+                                                                        // taker score is score
+                                                                        // called_king player score is the half of score
+                                                                        // other players score is taker score + the half of score / number of players
+        println!("{}", &attack_score)
+        // TODO: set the right score for each player
     }
     fn show_score(&self) {
         todo!()
@@ -190,4 +199,14 @@ fn collect_bids(players: &Vec<Player>, mut taker: Option<Taker>, bid: &mut Bid) 
     } else {
         taker.clone()
     }
+}
+
+fn merge_won_cards(players: &[Player]) -> Vec<Card> {
+    let mut cards = Vec::new();
+    for player in players {
+        if player.hand.side == Side::Attack {
+            cards.extend(player.hand.won_cards.clone());
+        }
+    }
+    cards
 }

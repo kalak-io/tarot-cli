@@ -36,7 +36,7 @@ fn main() {
         deal.compose_kitty();
         deal.play_tricks();
 
-        deal.compute_score(); // TODO
+        deal.set_score(); // TODO
         deal.show_score(); // TODO
 
         game.collect_deck(&deal.players);
