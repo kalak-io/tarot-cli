@@ -30,6 +30,9 @@ pub trait DealActions {
     fn show_score(&self);
 }
 
+pub trait DealGetters {
+    fn bonus_petit_au_bout(&self) -> Option<Side>;
+}
 #[derive(Debug, Default)]
 pub struct Deal {
     pub kitty: Kitty,
@@ -89,6 +92,7 @@ impl DealActions for Deal {
         }
         let winner_index = trick.get_best_played_card_index(trick.played_suit());
         self.players[winner_index.unwrap()].hand.won_cards = trick.played_cards.clone();
+        trick.winner_side = self.players[winner_index.unwrap()].hand.side;
         self.players = reorder(&self.players, winner_index.unwrap());
         self.tricks.push(trick);
         self.play_tricks()
@@ -105,7 +109,11 @@ impl DealActions for Deal {
     }
     fn set_score(&self) {
         let won_cards_by_attack = merge_won_cards(&self.players);
-        let attack_score = compute_score(&won_cards_by_attack, &self.taker.clone().unwrap().bid);
+        let attack_score = compute_score(
+            &won_cards_by_attack,
+            &self.taker.clone().unwrap().bid,
+            self.bonus_petit_au_bout(),
+        );
         let defense_score = attack_score / (self.players.len() as f64); // TODO: change computation with called_king player
                                                                         // taker score is score
                                                                         // called_king player score is the half of score
@@ -115,6 +123,14 @@ impl DealActions for Deal {
     }
     fn show_score(&self) {
         todo!()
+    }
+}
+impl DealGetters for Deal {
+    fn bonus_petit_au_bout(&self) -> Option<Side> {
+        if self.tricks.last().unwrap().has_petit_au_bout() {
+            return Some(self.tricks.last().unwrap().winner_side);
+        }
+        return None;
     }
 }
 

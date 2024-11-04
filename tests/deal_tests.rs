@@ -1,7 +1,13 @@
 #[cfg(test)]
 mod deal {
     use rstest::rstest;
-    use tarot_cli::common::{deal::Deal, game::Game};
+    use tarot_cli::common::{
+        card::{Card, CardSuits},
+        deal::{Deal, DealGetters},
+        game::Game,
+        hand::Side,
+        trick::Trick,
+    };
 
     #[rstest]
     fn deals_right_number_of_cards(#[values((4, 6, 18), (5, 3, 15))] case: (u8, usize, usize)) {
@@ -29,5 +35,24 @@ mod deal {
         let mut game = Game::new(n_players);
         let deal = Deal::new(&mut game.players, &mut game.deck);
         assert_eq!(deal.kitty.max_size, expected_max_size);
+    }
+    #[rstest]
+    fn test_bonus_petit_au_bout(
+        #[values(
+            (Vec::from([Trick {
+                played_cards: vec![Card::new(1, CardSuits::Trumps)],
+                winner_side: Side::Attack,
+            }]), Some(Side::Attack)),
+            (Vec::from([Trick {
+                played_cards: vec![Card::new(1, CardSuits::Hearts)],
+                winner_side: Side::Attack,
+            }]), None),
+        )]
+        case: (Vec<Trick>, Option<Side>),
+    ) {
+        let (tricks, expected) = case;
+        let mut deal = Deal::default();
+        deal.tricks = tricks;
+        assert_eq!(deal.bonus_petit_au_bout(), expected);
     }
 }

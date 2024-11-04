@@ -54,4 +54,19 @@ mod trick {
             expected_result
         );
     }
+
+    #[rstest]
+    fn has_petit_au_bout(
+        #[values(
+        (Vec::new(), false),
+        (Vec::from([Card::new(14, CardSuits::Clubs), Card::new(2, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), false),
+        (Vec::from([Card::new(14, CardSuits::Clubs), Card::new(1, CardSuits::Trumps), Card::new(2, CardSuits::Clubs), Card::new(2, CardSuits::Hearts)]), true),
+    )]
+        case: (Vec<Card>, bool),
+    ) {
+        let (played_cards, expected_result) = case;
+        let mut trick = Trick::default();
+        trick.played_cards = played_cards;
+        assert_eq!(trick.has_petit_au_bout(), expected_result);
+    }
 }

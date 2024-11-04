@@ -5,7 +5,7 @@ use crate::common::{card::CardSuits, utils::select};
 use super::{
     bid::{Bid, Bids},
     card::{Card, KING_RANK},
-    hand::Hand,
+    hand::{Hand, HandActions},
     kitty::{Kitty, KittyActions},
     trick::{Trick, TrickActions},
     utils::display,
@@ -76,10 +76,18 @@ impl PlayerActions for Player {
         }
     }
     fn declare_poignee(&mut self) {
-        todo!()
+        if self.is_human {
+            self.hand.human_declare_poignee()
+        } else {
+            self.hand.bot_declare_poignee()
+        }
     }
     fn declare_chelem(&mut self) {
-        todo!()
+        if self.is_human {
+            self.hand.human_declare_chelem()
+        } else {
+            self.hand.bot_declare_chelem()
+        }
     }
     fn play(&mut self, trick: &mut Trick) {
         if self.is_human {

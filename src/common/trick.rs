@@ -1,6 +1,9 @@
 use crate::common::utils::{display, select};
 
-use super::card::{Card, CardActions, CardSuits, CardSuitsGetters};
+use super::{
+    card::{Card, CardActions, CardSuits, CardSuitsGetters},
+    hand::Side,
+};
 
 pub trait TrickActions {
     fn get_best_played_card_index(&self, played_suit: Option<CardSuits>) -> Option<usize>;
@@ -10,11 +13,13 @@ pub trait TrickActions {
 
 pub trait TrickGetters {
     fn played_suit(&self) -> Option<CardSuits>;
+    fn has_petit_au_bout(&self) -> bool;
 }
 
 #[derive(Debug, Default)]
 pub struct Trick {
     pub played_cards: Vec<Card>,
+    pub winner_side: Side,
 }
 
 impl TrickActions for Trick {
@@ -67,6 +72,9 @@ impl TrickGetters for Trick {
             return None;
         }
         Some(self.played_cards[0].suit.name)
+    }
+    fn has_petit_au_bout(&self) -> bool {
+        self.played_cards.contains(&Card::new(1, CardSuits::Trumps))
     }
 }
 
