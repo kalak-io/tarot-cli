@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{default, fmt::Display};
 
 use crate::common::{card::CardSuits, utils::select};
 
@@ -18,6 +18,13 @@ pub enum PlayerKind {
     Bot,
 }
 
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
+enum PlayerRole {
+    Dealer,
+    #[default]
+    Receiver,
+}
+
 pub trait PlayerActions {
     fn bid(&self, bid: &mut Bid) -> Bids;
     fn call_king(&mut self) -> Card;
@@ -34,7 +41,7 @@ pub struct Player {
     pub name: String,
     score: f64,
     kind: PlayerKind,
-    pub is_dealer: bool,
+    role: PlayerRole,
     pub cards: Vec<Card>,
     pub picked_up_cards: Vec<Card>,
     pub hand: Hand,
@@ -51,6 +58,15 @@ impl Player {
             name,
             kind: kind.unwrap_or_default(),
             ..Default::default()
+        }
+    }
+    pub fn is_dealer(&self) -> bool {
+        self.role == PlayerRole::Dealer
+    }
+    pub fn toggle_role(&mut self) {
+        self.role = match self.role {
+            PlayerRole::Dealer => PlayerRole::Receiver,
+            PlayerRole::Receiver => PlayerRole::Dealer,
         }
     }
 }

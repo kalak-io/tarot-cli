@@ -61,10 +61,10 @@ impl GameActions for Game {
     }
     fn update_dealer(&mut self) {
         let index = find_dealer(&self.players);
-        self.players[index].is_dealer = false;
+        self.players[index].toggle_role();
 
         let next_index = get_next_index(&self.players, index);
-        self.players[next_index].is_dealer = true;
+        self.players[next_index].toggle_role();
 
         println!("The dealer is {}", self.players[next_index].name);
     }
@@ -91,7 +91,7 @@ fn generate_players(n_players: u8) -> Vec<Player> {
 
 fn set_first_dealer(players: &mut [Player]) {
     let index = random_int_in_range(0, players.len());
-    players[index].is_dealer = true;
+    players[index].toggle_role();
 }
 
 fn create_players(n_players: u8) -> Vec<Player> {
@@ -127,5 +127,8 @@ pub fn create_deck() -> Vec<Card> {
 }
 
 pub fn find_dealer(players: &[Player]) -> usize {
-    players.iter().position(|player| player.is_dealer).unwrap()
+    players
+        .iter()
+        .position(|player| player.is_dealer())
+        .unwrap()
 }

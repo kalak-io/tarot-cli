@@ -93,7 +93,11 @@ mod game {
     fn set_only_one_dealer() {
         let mut game = Game::default();
         game.update_dealer();
-        let n_dealer = game.players.iter().filter(|p| p.is_dealer).count();
+        let n_dealer = game
+            .players
+            .iter()
+            .filter(|player| player.is_dealer())
+            .count();
         assert_eq!(n_dealer, 1);
     }
 
@@ -102,8 +106,8 @@ mod game {
         let mut game = Game::default();
         let current_dealer = find_dealer(&game.players);
         let next_dealer = get_next_index(&game.players, current_dealer);
-        assert!(game.players[current_dealer].is_dealer);
+        assert!(game.players[current_dealer].is_dealer());
         game.update_dealer();
-        assert!(game.players[next_dealer].is_dealer);
+        assert!(game.players[next_dealer].is_dealer());
     }
 }
