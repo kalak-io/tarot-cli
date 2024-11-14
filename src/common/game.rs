@@ -3,7 +3,7 @@ use rand::thread_rng;
 
 use super::card::{Card, CardSuits};
 use super::deal::Deal;
-use super::player::Player;
+use super::player::{Player, PlayerKind};
 use super::utils::{get_next_index, random_int_in_range, reorder};
 
 const NUMBER_CARDS_BY_SUIT: usize = 14;
@@ -81,9 +81,9 @@ impl GameActions for Game {
 // TODO: create a submodule game/players
 fn generate_players(n_players: u8) -> Vec<Player> {
     let mut players = Vec::new();
-    for i in 1..=n_players {
-        let mut player = Player::new(format!("Player {i}"), i);
-        player.is_human = i == 1;
+    players.push(Player::new(format!("Player 1"), 1, Some(PlayerKind::Human)));
+    for i in 2..=n_players {
+        let player = Player::new(format!("Player {i}"), i, Some(PlayerKind::default()));
         players.push(player);
     }
     players

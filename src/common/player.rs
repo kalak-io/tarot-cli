@@ -11,6 +11,13 @@ use super::{
     utils::display,
 };
 
+#[derive(Debug, Default, Copy, Clone)]
+pub enum PlayerKind {
+    Human,
+    #[default]
+    Bot,
+}
+
 pub trait PlayerActions {
     fn bid(&self, bid: &mut Bid) -> Bids;
     fn call_king(&mut self) -> Card;
@@ -26,7 +33,7 @@ pub struct Player {
     pub id: u8,
     pub name: String,
     score: f64,
-    pub is_human: bool,
+    kind: PlayerKind,
     pub is_dealer: bool,
     pub cards: Vec<Card>,
     pub picked_up_cards: Vec<Card>,
@@ -38,20 +45,20 @@ impl Display for Player {
     }
 }
 impl Player {
-    pub fn new(name: String, id: u8) -> Self {
+    pub fn new(name: String, id: u8, kind: Option<PlayerKind>) -> Self {
         Player {
             id,
             name,
+            kind: kind.unwrap_or_default(),
             ..Default::default()
         }
     }
 }
 impl PlayerActions for Player {
     fn bid(&self, bid: &mut Bid) -> Bids {
-        if self.is_human {
-            bid.human_choose(&self.hand.cards)
-        } else {
-            bid.bot_choose(&self.hand.cards)
+        match self.kind {
+            PlayerKind::Human => bid.human_choose(&self.hand.cards),
+            PlayerKind::Bot => bid.bot_choose(&self.hand.cards),
         }
     }
     fn call_king(&mut self) -> Card {
@@ -61,10 +68,9 @@ impl PlayerActions for Player {
             Card::new(KING_RANK, CardSuits::Hearts),
             Card::new(KING_RANK, CardSuits::Spades),
         ];
-        if self.is_human {
-            human_call_king(&self.hand.cards, &kings)
-        } else {
-            bot_call_king(&self.hand.cards, &kings)
+        match self.kind {
+            PlayerKind::Human => human_call_king(&self.hand.cards, &kings),
+            PlayerKind::Bot => bot_call_king(&self.hand.cards, &kings),
         }
     }
     fn compose_kitty(&mut self, kitty: &mut Kitty) -> Vec<Card> {
@@ -73,31 +79,27 @@ impl PlayerActions for Player {
             .cards
             .sort_unstable_by_key(|card| (card.suit.initial, card.rank));
 
-        if self.is_human {
-            kitty.human_compose(&mut self.hand.cards)
-        } else {
-            kitty.bot_compose(&self.hand.cards)
+        match self.kind {
+            PlayerKind::Human => kitty.human_compose(&mut self.hand.cards),
+            PlayerKind::Bot => kitty.bot_compose(&self.hand.cards),
         }
     }
     fn declare_poignee(&mut self) {
-        if self.is_human {
-            self.hand.human_declare_poignee()
-        } else {
-            self.hand.bot_declare_poignee()
+        match self.kind {
+            PlayerKind::Human => self.hand.human_declare_poignee(),
+            PlayerKind::Bot => self.hand.bot_declare_poignee(),
         }
     }
     fn declare_chelem(&mut self) {
-        if self.is_human {
-            self.hand.human_declare_chelem()
-        } else {
-            self.hand.bot_declare_chelem()
+        match self.kind {
+            PlayerKind::Human => self.hand.human_declare_chelem(),
+            PlayerKind::Bot => self.hand.bot_declare_chelem(),
         }
     }
     fn play(&mut self, trick: &mut Trick) {
-        if self.is_human {
-            trick.human_play(&mut self.hand.cards)
-        } else {
-            trick.bot_play(&mut self.hand.cards)
+        match self.kind {
+            PlayerKind::Human => trick.human_play(&mut self.hand.cards),
+            PlayerKind::Bot => trick.bot_play(&mut self.hand.cards),
         }
     }
     fn update_score(&mut self, score: f64) {
