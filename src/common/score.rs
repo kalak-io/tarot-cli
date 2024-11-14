@@ -36,10 +36,10 @@ fn get_needed_points(n_oudlers: usize) -> f64 {
 
 fn multiplier(bid: &Bids) -> f64 {
     match bid {
-        Bids::Petite => 1.0,
-        Bids::Garde => 2.0,
-        Bids::GardeSans => 4.0,
-        Bids::GardeContre => 6.0,
+        Bids::Take => 1.0,
+        Bids::Guard => 2.0,
+        Bids::GuardWithout => 4.0,
+        Bids::GuardAgainst => 6.0,
         _ => 0.0,
     }
 }

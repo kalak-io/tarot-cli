@@ -66,7 +66,7 @@ impl DealActions for Deal {
     }
     fn compose_kitty(&mut self) {
         match self.taker.clone().unwrap().bid {
-            Bids::GardeSans | Bids::GardeContre => {
+            Bids::GuardWithout | Bids::GuardAgainst => {
                 println!("\n\nThe kitty stays hidden"); // TODO: move kitty in right place
             }
             _ => {
@@ -202,7 +202,7 @@ fn collect_bids(players: &Vec<Player>, mut taker: Option<Taker>, bid: &mut Bid) 
     for player in players {
         let new_bid = player.bid(bid);
 
-        if new_bid != Bids::Passe {
+        if new_bid != Bids::Pass {
             taker = Some(Taker {
                 player: player.clone(),
                 bid: new_bid,

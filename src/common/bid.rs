@@ -8,12 +8,12 @@ use super::{
 
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub enum Bids {
-    Petite,
-    Garde,
-    GardeSans,
-    GardeContre,
+    Take,
+    Guard,
+    GuardWithout,
+    GuardAgainst,
     #[default]
-    Passe,
+    Pass,
 }
 impl Display for Bids {
     fn fmt(&self, f: &mut Formatter) -> Result {
@@ -22,10 +22,10 @@ impl Display for Bids {
 }
 impl Bids {
     const AVAILABLE_BIDS: [Self; 4] = [
-        Self::Petite,
-        Self::Garde,
-        Self::GardeSans,
-        Self::GardeContre,
+        Self::Take,
+        Self::Guard,
+        Self::GuardWithout,
+        Self::GuardAgainst,
     ];
 }
 
@@ -47,7 +47,7 @@ impl Bid {
             .into_iter()
             .filter(|bid| compare(bid, Some(&self.current), compare_bids))
             .collect();
-        available_bids.push(Bids::Passe);
+        available_bids.push(Bids::Pass);
 
         available_bids
     }
@@ -61,14 +61,14 @@ impl Bid {
     pub fn bot_choose(&mut self, cards: &[Card]) -> Bids {
         let ideal_bid = taker_evaluation(cards);
         match ideal_bid {
-            Bids::Passe => ideal_bid,
+            Bids::Pass => ideal_bid,
             _ => {
                 let available_bids = self.get_available_bids();
                 if available_bids.contains(&ideal_bid) {
                     self.current = ideal_bid;
                     ideal_bid
                 } else {
-                    Bids::Passe
+                    Bids::Pass
                 }
             }
         }
@@ -77,12 +77,12 @@ impl Bid {
 
 pub fn compare_bids(bid: &Bids, active_bid: &Bids) -> bool {
     match bid {
-        Bids::Passe => bid == active_bid,
-        Bids::Petite => [Bids::Passe].contains(active_bid),
-        Bids::Garde => [Bids::Passe, Bids::Petite].contains(active_bid),
-        Bids::GardeSans => [Bids::Passe, Bids::Petite, Bids::Garde].contains(active_bid),
-        Bids::GardeContre => {
-            [Bids::Passe, Bids::Petite, Bids::Garde, Bids::GardeSans].contains(active_bid)
+        Bids::Pass => bid == active_bid,
+        Bids::Take => [Bids::Pass].contains(active_bid),
+        Bids::Guard => [Bids::Pass, Bids::Take].contains(active_bid),
+        Bids::GuardWithout => [Bids::Pass, Bids::Take, Bids::Guard].contains(active_bid),
+        Bids::GuardAgainst => {
+            [Bids::Pass, Bids::Take, Bids::Guard, Bids::GuardWithout].contains(active_bid)
         }
     }
 }
@@ -92,10 +92,10 @@ pub fn taker_evaluation(cards: &[Card]) -> Bids {
     let hand_score = compute_points(cards) % 5.0;
     let evaluation = n_oudlers * hand_score;
     match evaluation {
-        0.0..2.0 => Bids::Passe,
-        2.0..4.0 => Bids::Petite,
-        4.0..6.0 => Bids::Garde,
-        6.0..8.0 => Bids::GardeSans,
-        _ => Bids::GardeContre,
+        0.0..2.0 => Bids::Pass,
+        2.0..4.0 => Bids::Take,
+        4.0..6.0 => Bids::Guard,
+        6.0..8.0 => Bids::GuardWithout,
+        _ => Bids::GuardAgainst,
     }
 }
