@@ -113,6 +113,8 @@ impl DealActions for Deal {
             &won_cards_by_attack,
             &self.taker.clone().unwrap().bid,
             self.bonus_petit_au_bout(),
+            None, // TODO
+            None, // TODO
         );
         let defense_score = attack_score / (self.players.len() as f64); // TODO: change computation with called_king player
                                                                         // taker score is score
