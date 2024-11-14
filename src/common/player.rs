@@ -68,7 +68,11 @@ impl PlayerActions for Player {
         }
     }
     fn compose_kitty(&mut self, kitty: &mut Kitty) -> Vec<Card> {
-        add_kitty_in_hand(&kitty.cards, &mut self.hand);
+        self.hand.cards.extend(kitty.cards.clone());
+        self.hand
+            .cards
+            .sort_unstable_by_key(|card| (card.suit.initial, card.rank));
+
         if self.is_human {
             kitty.human_compose(&mut self.hand.cards)
         } else {
@@ -109,11 +113,4 @@ fn human_call_king(cards: &[Card], kings: &[Card]) -> Card {
     println!("\nYour cards:");
     display(cards);
     select(Some("Which king do you call?"), Some(kings.to_vec())).unwrap()
-}
-
-fn add_kitty_in_hand(kitty: &[Card], hand: &mut Hand) {
-    let mut cards = hand.cards.to_vec();
-    cards.extend_from_slice(kitty);
-    cards.sort_unstable_by_key(|card| (card.suit.initial, card.rank));
-    hand.cards = cards
 }
