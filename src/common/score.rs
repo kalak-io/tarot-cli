@@ -1,7 +1,8 @@
 use super::{
     bid::Bids,
     card::{Card, CardGetters},
-    hand::{Chelem, Poignee, Side},
+    chelem::{Chelem, ChelemResult},
+    hand::{Poignee, Side},
 };
 
 pub const BASE_SCORE: f64 = 25.0;
@@ -56,16 +57,19 @@ pub fn points_poignee(bonus_poignee: Option<Poignee>) -> f64 {
         Some(Poignee::Simple) => 20.0,
         Some(Poignee::Double) => 30.0,
         Some(Poignee::Triple) => 40.0,
-        _ => 0.0,
+        None => 0.0,
     }
 }
 
 pub fn points_chelem(bonus_chelem: Option<Chelem>) -> f64 {
     match bonus_chelem {
-        Some(Chelem::AnnouncedAndSucceed) => 400.0,
-        Some(Chelem::NotAnnouncedAndSucceed) => 200.0,
-        Some(Chelem::AnnouncedAndLost) => -200.0,
-        _ => 0.0,
+        Some(chelem) => match chelem.result {
+            Some(ChelemResult::AnnouncedAndSucceed) => 400.0,
+            Some(ChelemResult::NotAnnouncedAndSucceed) => 200.0,
+            Some(ChelemResult::AnnouncedAndLost) => -200.0,
+            None => 0.0,
+        },
+        None => 0.0,
     }
 }
 
@@ -76,9 +80,10 @@ pub fn compute_score(
     bonus_chelem: Option<Chelem>,
     bonus_poignee: Option<Poignee>,
 ) -> f64 {
-    let points = diff_points(&cards);
+    let points = diff_points(cards);
+    let multiplier = multiplier(bid);
     let points_petit_au_bout = points_petit_au_bout(bonus_petit_au_bout);
-    (BASE_SCORE + points + points_petit_au_bout) * multiplier(bid)
-        + points_poignee(bonus_poignee)
-        + points_chelem(bonus_chelem)
+    let points_poignee = points_poignee(bonus_poignee);
+    let points_chelem = points_chelem(bonus_chelem);
+    (BASE_SCORE + points + points_petit_au_bout) * multiplier + points_poignee + points_chelem
 }

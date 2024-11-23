@@ -184,3 +184,11 @@ fn get_suit_data(name: CardSuits) -> (char, char) {
         CardSuits::Trumps => ('*', 'T'),
     }
 }
+
+pub fn count_cards_by_hand(n_players: usize) -> u8 {
+    match n_players {
+        2..=4 => 18,
+        5.. => 15,
+        _ => 0,
+    }
+}

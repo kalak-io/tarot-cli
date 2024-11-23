@@ -7,8 +7,8 @@ use crate::common::utils::display;
 
 use super::{
     bid::{Bid, Bids},
-    card::Card,
-    hand::{Hand, HandActions, Side},
+    card::{count_cards_by_hand, Card},
+    hand::{Hand, Side},
     kitty::Kitty,
     player::{Player, PlayerActions},
     score::compute_score,
@@ -22,6 +22,7 @@ const DEAL_SIZE_KITTY: usize = 1;
 
 pub trait DealActions {
     fn take_bids(&mut self);
+    fn take_chelem(&mut self);
     fn call_king(&mut self);
     fn compose_kitty(&mut self);
     fn play_tricks(&mut self);
@@ -58,6 +59,15 @@ impl DealActions for Deal {
         let mut bid = Bid::default();
         self.taker = collect_bids(&self.players, self.taker.clone(), &mut bid);
     }
+    fn take_chelem(&mut self) {
+        if let Some(taker) = &mut self.taker {
+            taker.player.declare_chelem();
+        } else {
+            for player in &mut self.players {
+                player.declare_chelem();
+            }
+        }
+    }
     fn call_king(&mut self) {
         if self.players.len() > 4 {
             self.called_king = Some(self.taker.clone().unwrap().player.call_king());
@@ -86,8 +96,13 @@ impl DealActions for Deal {
             // set_bonus_petit_au_bout()
             return;
         }
+
+        let n_players = self.players.len();
         let mut trick = Trick::default();
         for player in &mut self.players {
+            if count_cards_by_hand(n_players) == player.hand.cards.len() as u8 {
+                player.declare_poignee();
+            }
             player.play(&mut trick);
         }
         let winner_index = trick.get_best_played_card_index(trick.played_suit());
@@ -116,10 +131,10 @@ impl DealActions for Deal {
             None, // TODO
             None, // TODO
         );
-        let defense_score = attack_score / (self.players.len() as f64); // TODO: change computation with called_king player
-                                                                        // taker score is score
-                                                                        // called_king player score is the half of score
-                                                                        // other players score is taker score + the half of score / number of players
+        // let defense_score = attack_score / (self.players.len() as f64); // TODO: change computation with called_king player
+        // taker score is score
+        // called_king player score is the half of score
+        // other players score is taker score + the half of score / number of players
         println!("{}", &attack_score)
         // TODO: set the right score for each player
     }

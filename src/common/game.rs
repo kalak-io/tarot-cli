@@ -1,10 +1,13 @@
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
 
-use super::card::{Card, CardSuits};
-use super::deal::Deal;
-use super::player::{Player, PlayerKind};
-use super::utils::{get_next_index, random_int_in_range, reorder};
+use super::{
+    card::{Card, CardSuits},
+    chelem::ChelemState,
+    deal::Deal,
+    player::{Player, PlayerKind},
+    utils::{get_next_index, random_int_in_range, reorder},
+};
 
 const NUMBER_CARDS_BY_SUIT: usize = 14;
 const NUMBER_TRUMP_CARDS: usize = 22;
@@ -13,11 +16,16 @@ const TOTAL_CARDS: usize = 78;
 const MIN_NUMBER_CARDS_SPLIT: usize = 3;
 const MAX_NUMBER_CARDS_SPLIT: usize = TOTAL_CARDS - MIN_NUMBER_CARDS_SPLIT;
 
+pub enum ReorderBy {
+    Dealer,
+    Chelem,
+}
+
 pub trait GameActions {
     fn update_dealer(&mut self);
     fn split_deck(&mut self);
     fn collect_deck(&mut self, players: &[Player]);
-    fn reorder_players(&mut self);
+    fn reorder_players(&mut self, by: ReorderBy);
 }
 
 #[derive(Debug)]
@@ -68,8 +76,11 @@ impl GameActions for Game {
 
         println!("The dealer is {}", self.players[next_index].name);
     }
-    fn reorder_players(&mut self) {
-        let dealer_index = find_dealer(&self.players);
+    fn reorder_players(&mut self, by: ReorderBy) {
+        let dealer_index = match by {
+            ReorderBy::Dealer => find_dealer(&self.players),
+            ReorderBy::Chelem => find_announced_chelem(&self.players),
+        };
         let start_index = get_next_index(&self.players, dealer_index);
         let new_players = reorder(&self.players, start_index);
         self.players.clear();
@@ -130,5 +141,14 @@ pub fn find_dealer(players: &[Player]) -> usize {
     players
         .iter()
         .position(|player| player.is_dealer())
+        .unwrap()
+}
+
+pub fn find_announced_chelem(players: &[Player]) -> usize {
+    players
+        .iter()
+        .position(|player| {
+            player.hand.bonus_chelem.as_ref().unwrap().state == ChelemState::Announced
+        })
         .unwrap()
 }

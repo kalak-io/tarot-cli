@@ -1,5 +1,6 @@
 pub mod bid;
 pub mod card;
+pub mod chelem;
 pub mod deal;
 pub mod game;
 pub mod hand;
