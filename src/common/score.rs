@@ -12,7 +12,7 @@ pub fn compute_oudlers(cards: &[Card]) -> usize {
 }
 
 pub fn compute_points(cards: &[Card]) -> f64 {
-    cards.iter().fold(0.0, |acc, card| acc + card.score())
+    cards.iter().map(|card| card.score()).sum()
 }
 
 fn compute_needed_points(cards: &[Card]) -> f64 {
