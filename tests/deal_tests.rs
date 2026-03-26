@@ -51,8 +51,10 @@ mod deal {
         case: (Vec<Trick>, Option<Side>),
     ) {
         let (tricks, expected) = case;
-        let mut deal = Deal::default();
-        deal.tricks = tricks;
+        let deal = Deal {
+            tricks,
+            ..Default::default()
+        };
         assert_eq!(deal.bonus_petit_au_bout(), expected);
     }
 }

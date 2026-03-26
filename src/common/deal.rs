@@ -27,7 +27,7 @@ pub trait DealActions {
     fn compose_kitty(&mut self);
     fn play_tricks(&mut self);
     fn set_side(&mut self);
-    fn set_score(&self);
+    fn set_score(&mut self);
     fn show_score(&self);
 }
 
@@ -75,19 +75,20 @@ impl DealActions for Deal {
         }
     }
     fn compose_kitty(&mut self) {
-        match self.taker.clone().unwrap().bid {
+        let bid = self.taker.as_ref().unwrap().bid;
+        match bid {
             Bids::GuardWithout | Bids::GuardAgainst => {
-                println!("\n\nThe kitty stays hidden"); // TODO: move kitty in right place
+                println!("\n\nThe kitty stays hidden");
             }
             _ => {
                 println!("\n\nThe kitty contains: ");
                 display(&self.kitty.cards);
-                self.kitty.cards = self
-                    .taker
-                    .clone()
-                    .unwrap()
-                    .player
-                    .compose_kitty(&mut self.kitty)
+                let taker_id = self.taker.as_ref().unwrap().player.id;
+                let taker_index = self.players.iter().position(|p| p.id == taker_id).unwrap();
+                // Temporarily take kitty out to satisfy borrow checker
+                let mut kitty = std::mem::take(&mut self.kitty);
+                self.players[taker_index].compose_kitty(&mut kitty);
+                self.kitty = kitty;
             }
         }
     }
@@ -106,48 +107,70 @@ impl DealActions for Deal {
             player.play(&mut trick);
         }
         let winner_index = trick.get_best_played_card_index(trick.played_suit());
-        self.players[winner_index.unwrap()].hand.won_cards = trick.played_cards.clone();
+        self.players[winner_index.unwrap()]
+            .hand
+            .won_cards
+            .extend(trick.played_cards.clone());
         trick.winner_side = self.players[winner_index.unwrap()].hand.side;
         self.players = reorder(&self.players, winner_index.unwrap());
         self.tricks.push(trick);
         self.play_tricks()
     }
     fn set_side(&mut self) {
+        // Set called-king holder's side (5-player game)
         if self.called_king.is_some() {
             for player in &mut self.players {
                 player.hand.set_side_with_called_king(self.called_king);
             }
         }
-        if let Some(taker) = &mut self.taker {
-            taker.player.hand.side = Side::Attack;
+        // Set the taker's side directly in self.players (taker.player is a clone)
+        if let Some(taker) = &self.taker {
+            let taker_id = taker.player.id;
+            for player in &mut self.players {
+                if player.id == taker_id {
+                    player.hand.side = Side::Attack;
+                    break;
+                }
+            }
         }
     }
-    fn set_score(&self) {
+    fn set_score(&mut self) {
         let won_cards_by_attack = merge_won_cards(&self.players);
         let attack_score = compute_score(
             &won_cards_by_attack,
             &self.taker.clone().unwrap().bid,
             self.bonus_petit_au_bout(),
-            None, // TODO
-            None, // TODO
+            None,
+            None,
         );
-        // let defense_score = attack_score / (self.players.len() as f64); // TODO: change computation with called_king player
-        // taker score is score
-        // called_king player score is the half of score
-        // other players score is taker score + the half of score / number of players
-        println!("{}", &attack_score)
-        // TODO: set the right score for each player
+
+        let taker_id = self.taker.as_ref().unwrap().player.id;
+        let n_defenders = (self.players.len() - 1) as f64;
+
+        for player in &mut self.players {
+            let score = if player.id == taker_id {
+                attack_score * n_defenders
+            } else {
+                -attack_score
+            };
+            player.update_score(score);
+        }
     }
     fn show_score(&self) {
-        todo!()
+        println!("\n--- Deal scores ---");
+        for player in &self.players {
+            println!("  {}: {:.1}", player.name, player.score());
+        }
     }
 }
 impl DealGetters for Deal {
     fn bonus_petit_au_bout(&self) -> Option<Side> {
-        if self.tricks.last().unwrap().has_petit_au_bout() {
-            return Some(self.tricks.last().unwrap().winner_side);
+        let last_trick = self.tricks.last()?;
+        if last_trick.has_petit_au_bout() {
+            Some(last_trick.winner_side)
+        } else {
+            None
         }
-        return None;
     }
 }
 

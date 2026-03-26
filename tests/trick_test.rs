@@ -47,8 +47,10 @@ mod trick {
         case: (Vec<Card>, Vec<Card>, Card, Result<bool, &str>),
     ) {
         let (played_cards, player_cards, selected_card, expected_result) = case;
-        let mut trick = Trick::default();
-        trick.played_cards = played_cards;
+        let trick = Trick {
+            played_cards,
+            ..Default::default()
+        };
         assert_eq!(
             check_selected_card(&trick, &player_cards, &selected_card),
             expected_result
@@ -65,8 +67,10 @@ mod trick {
         case: (Vec<Card>, bool),
     ) {
         let (played_cards, expected_result) = case;
-        let mut trick = Trick::default();
-        trick.played_cards = played_cards;
+        let trick = Trick {
+            played_cards,
+            ..Default::default()
+        };
         assert_eq!(trick.has_petit_au_bout(), expected_result);
     }
 }

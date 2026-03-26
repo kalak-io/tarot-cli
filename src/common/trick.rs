@@ -1,4 +1,4 @@
-use crate::common::utils::{display, select};
+use crate::common::utils::{display, random_int_in_range, select};
 
 use super::{
     card::{Card, CardActions, CardSuits, CardSuitsGetters},
@@ -61,8 +61,16 @@ impl TrickActions for Trick {
         self.played_cards.push(card);
     }
 
-    fn bot_play(&mut self, _cards: &mut Vec<Card>) {
-        todo!("Implement bot play")
+    fn bot_play(&mut self, cards: &mut Vec<Card>) {
+        let allowed = allowed_cards_to_play(self, cards);
+        let index = random_int_in_range(0, allowed.len());
+        let card = allowed[index];
+        let pos = cards
+            .iter()
+            .position(|c| c.suit.name == card.suit.name && c.rank == card.rank)
+            .unwrap();
+        cards.remove(pos);
+        self.played_cards.push(card);
     }
 }
 

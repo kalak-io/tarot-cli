@@ -140,23 +140,19 @@ impl CardActions for Card {
     fn is_superior_than(&self, card: &Card, played_suit: Option<CardSuits>) -> bool {
         match played_suit {
             Some(played_suit) => match (self.suit.name, card.suit.name, played_suit) {
-                (CardSuits::Trumps, _, __) => {
+                (CardSuits::Trumps, _, _suit) => {
                     if card.suit.name.is_trump() {
                         self.rank > card.rank
                     } else {
                         true
                     }
                 }
-                (_, CardSuits::Trumps, __) => false,
+                (_, CardSuits::Trumps, _suit) => false,
                 _ => {
                     if self.suit.name == played_suit && card.suit.name == played_suit {
                         self.rank > card.rank
-                    } else if self.suit.name == played_suit && card.suit.name != played_suit {
-                        true
-                    } else if self.suit.name != played_suit && card.suit.name == played_suit {
-                        false
                     } else {
-                        false
+                        self.suit.name == played_suit && card.suit.name != played_suit
                     }
                 }
             },

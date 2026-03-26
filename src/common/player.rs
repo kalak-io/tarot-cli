@@ -60,6 +60,9 @@ impl Player {
             ..Default::default()
         }
     }
+    pub fn score(&self) -> f64 {
+        self.score
+    }
     pub fn is_dealer(&self) -> bool {
         self.role == PlayerRole::Dealer
     }
@@ -97,7 +100,7 @@ impl PlayerActions for Player {
 
         match self.kind {
             PlayerKind::Human => kitty.human_compose(&mut self.hand.cards),
-            PlayerKind::Bot => kitty.bot_compose(&self.hand.cards),
+            PlayerKind::Bot => kitty.bot_compose(&mut self.hand.cards),
         }
     }
     fn declare_poignee(&mut self) {
@@ -123,8 +126,12 @@ impl PlayerActions for Player {
     }
 }
 
-fn bot_call_king(_cards: &[Card], _kings: &[Card]) -> Card {
-    todo!()
+fn bot_call_king(cards: &[Card], kings: &[Card]) -> Card {
+    kings
+        .iter()
+        .find(|king| !cards.contains(king))
+        .copied()
+        .unwrap_or(kings[0])
 }
 
 fn human_call_king(cards: &[Card], kings: &[Card]) -> Card {
