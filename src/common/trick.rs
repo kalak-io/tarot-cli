@@ -1,7 +1,7 @@
-use crate::common::utils::{display, random_int_in_range, select};
+use crate::common::utils::{display, select};
 
 use super::{
-    card::{Card, CardActions, CardSuits, CardSuitsGetters},
+    card::{Card, CardActions, CardGetters, CardSuits, CardSuitsGetters, KING_RANK},
     hand::Side,
 };
 
@@ -63,8 +63,7 @@ impl TrickActions for Trick {
 
     fn bot_play(&mut self, cards: &mut Vec<Card>) {
         let allowed = allowed_cards_to_play(self, cards);
-        let index = random_int_in_range(0, allowed.len());
-        let card = allowed[index];
+        let card = choose_best_card(self, &allowed);
         let pos = cards
             .iter()
             .position(|c| c.suit.name == card.suit.name && c.rank == card.rank)
@@ -96,6 +95,71 @@ pub fn check_selected_card(
         Ok(true)
     } else {
         Err("Selected card is not allowed to be played")
+    }
+}
+
+fn is_winning_card(card: &Card, trick: &Trick) -> bool {
+    let played_suit = trick.played_suit();
+    match trick.get_best_played_card_index(played_suit) {
+        None => true,
+        Some(i) => card.is_superior_than(&trick.played_cards[i], played_suit),
+    }
+}
+
+fn trick_point_value(trick: &Trick) -> f64 {
+    trick.played_cards.iter().map(|c| c.score()).sum()
+}
+
+fn lead_card_priority(card: &Card) -> i32 {
+    if card.is_oudler() {
+        return 100;
+    }
+    if card.suit.is_trump() {
+        // Lead low trumps before high ones, but prefer non-trumps first
+        return 50 + card.rank as i32;
+    }
+    if card.rank == KING_RANK {
+        return 40;
+    }
+    // Prefer cheap non-trump cards
+    (card.score() * 10.0) as i32
+}
+
+fn choose_best_card(trick: &Trick, allowed: &[Card]) -> Card {
+    if trick.played_cards.is_empty() {
+        // Leading: play cheapest safe card (never waste Oudlers or Kings)
+        *allowed
+            .iter()
+            .min_by_key(|c| lead_card_priority(c))
+            .unwrap()
+    } else {
+        let trick_value = trick_point_value(trick);
+        let winning: Vec<Card> = allowed
+            .iter()
+            .filter(|c| is_winning_card(c, trick))
+            .cloned()
+            .collect();
+
+        if winning.is_empty() || trick_value < 1.5 {
+            // Can't win, or trick not worth winning: discard cheapest card
+            *allowed
+                .iter()
+                .min_by_key(|c| (c.score() * 10.0) as i32)
+                .unwrap()
+        } else {
+            // Trick has value: win with cheapest winning card, sparing Oudlers if possible
+            let non_oudler_wins: Vec<Card> =
+                winning.iter().filter(|c| !c.is_oudler()).cloned().collect();
+            let candidates = if non_oudler_wins.is_empty() {
+                &winning
+            } else {
+                &non_oudler_wins
+            };
+            *candidates
+                .iter()
+                .min_by_key(|c| (c.score() * 10.0) as i32)
+                .unwrap()
+        }
     }
 }
 
