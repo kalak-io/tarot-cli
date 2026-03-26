@@ -9,7 +9,7 @@ use super::{
 };
 
 pub trait KittyActions {
-    fn bot_compose(&mut self, cards: &[Card]) -> Vec<Card>;
+    fn bot_compose(&mut self, cards: &mut Vec<Card>) -> Vec<Card>;
     fn human_compose(&mut self, cards: &mut Vec<Card>) -> Vec<Card>;
 }
 
@@ -32,9 +32,29 @@ impl Kitty {
 }
 
 impl KittyActions for Kitty {
-    fn bot_compose(&mut self, cards: &[Card]) -> Vec<Card> {
-        println!("Bot compose kitty");
-        cards.to_vec()
+    fn bot_compose(&mut self, cards: &mut Vec<Card>) -> Vec<Card> {
+        // Collect cards eligible for the kitty: no oudlers, no non-trump kings
+        let mut candidates: Vec<Card> = cards
+            .iter()
+            .filter(|card| {
+                !(card.is_oudler() || card.rank == KING_RANK && card.suit.name != CardSuits::Trumps)
+            })
+            .cloned()
+            .collect();
+
+        // Prefer non-trumps first, then sort by score ascending (cheapest first)
+        candidates.sort_by(|a, b| {
+            let a_trump = (a.suit.name == CardSuits::Trumps) as u8;
+            let b_trump = (b.suit.name == CardSuits::Trumps) as u8;
+            a_trump
+                .cmp(&b_trump)
+                .then_with(|| a.score().partial_cmp(&b.score()).unwrap())
+        });
+
+        let new_kitty: Vec<Card> = candidates.into_iter().take(self.max_size).collect();
+        subtract(cards, &new_kitty);
+        self.cards = new_kitty.clone();
+        new_kitty
     }
 
     fn human_compose(&mut self, cards: &mut Vec<Card>) -> Vec<Card> {

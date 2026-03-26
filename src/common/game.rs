@@ -77,11 +77,16 @@ impl GameActions for Game {
         println!("The dealer is {}", self.players[next_index].name);
     }
     fn reorder_players(&mut self, by: ReorderBy) {
-        let dealer_index = match by {
-            ReorderBy::Dealer => find_dealer(&self.players),
-            ReorderBy::Chelem => find_announced_chelem(&self.players),
+        let start_index = match by {
+            ReorderBy::Dealer => {
+                let dealer_index = find_dealer(&self.players);
+                get_next_index(&self.players, dealer_index)
+            }
+            ReorderBy::Chelem => match find_announced_chelem(&self.players) {
+                Some(chelem_index) => chelem_index,
+                None => return,
+            },
         };
-        let start_index = get_next_index(&self.players, dealer_index);
         let new_players = reorder(&self.players, start_index);
         self.players.clear();
         self.players.extend_from_slice(&new_players);
@@ -92,7 +97,11 @@ impl GameActions for Game {
 // TODO: create a submodule game/players
 fn generate_players(n_players: u8) -> Vec<Player> {
     let mut players = Vec::new();
-    players.push(Player::new(format!("Player 1"), 1, Some(PlayerKind::Human)));
+    players.push(Player::new(
+        "Player 1".to_string(),
+        1,
+        Some(PlayerKind::Human),
+    ));
     for i in 2..=n_players {
         let player = Player::new(format!("Player {i}"), i, Some(PlayerKind::default()));
         players.push(player);
@@ -144,11 +153,13 @@ pub fn find_dealer(players: &[Player]) -> usize {
         .unwrap()
 }
 
-pub fn find_announced_chelem(players: &[Player]) -> usize {
-    players
-        .iter()
-        .position(|player| {
-            player.hand.bonus_chelem.as_ref().unwrap().state == ChelemState::Announced
-        })
-        .unwrap()
+pub fn find_announced_chelem(players: &[Player]) -> Option<usize> {
+    players.iter().position(|player| {
+        player
+            .hand
+            .bonus_chelem
+            .as_ref()
+            .map(|c| c.state == ChelemState::Announced)
+            .unwrap_or(false)
+    })
 }

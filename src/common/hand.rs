@@ -1,4 +1,7 @@
-use super::{card::Card, chelem::Chelem};
+use super::{
+    card::{Card, CardSuits},
+    chelem::{Chelem, ChelemState},
+};
 
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub enum Side {
@@ -83,12 +86,57 @@ impl HandActions for Hand {
         }
     }
     fn human_declare_chelem(&mut self) {
-        todo!()
+        if self.bonus_chelem.is_some() {
+            return;
+        }
+        let mut input = String::new();
+        loop {
+            println!("Do you want to announce a chelem? (yes/no)");
+            std::io::stdin()
+                .read_line(&mut input)
+                .expect("Failed to read line");
+            match input.trim().to_lowercase().as_str() {
+                "yes" | "y" => {
+                    self.bonus_chelem = Some(Chelem {
+                        state: ChelemState::Announced,
+                        result: None,
+                    });
+                    break;
+                }
+                "no" | "n" => {
+                    self.bonus_chelem = Some(Chelem {
+                        state: ChelemState::NotAnnounced,
+                        result: None,
+                    });
+                    break;
+                }
+                _ => {
+                    input.clear();
+                    continue;
+                }
+            }
+        }
     }
     fn bot_declare_poignee(&mut self) {
-        todo!()
+        if self.bonus_poignee.is_some() {
+            return;
+        }
+        let trump_count = self
+            .cards
+            .iter()
+            .filter(|c| c.suit.name == CardSuits::Trumps)
+            .count();
+        self.bonus_poignee = match trump_count {
+            13.. => Some(Poignee::Triple),
+            10..13 => Some(Poignee::Double),
+            8..10 => Some(Poignee::Simple),
+            _ => None,
+        };
     }
     fn bot_declare_chelem(&mut self) {
-        todo!()
+        self.bonus_chelem = Some(Chelem {
+            state: ChelemState::NotAnnounced,
+            result: None,
+        });
     }
 }
