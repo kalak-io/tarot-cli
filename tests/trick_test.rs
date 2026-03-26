@@ -58,6 +58,65 @@ mod trick {
     }
 
     #[rstest]
+    fn bot_play_leads_with_cheap_card(
+        #[values(
+            // Hand has King, Jack and a cheap card: plays the cheap card
+            (Vec::new(), Vec::from([Card::new(14, CardSuits::Clubs), Card::new(11, CardSuits::Clubs), Card::new(5, CardSuits::Clubs)]), Card::new(5, CardSuits::Clubs)),
+            // Hand has Fool (oudler) and a cheap card: avoids the oudler
+            (Vec::new(), Vec::from([Card::new(22, CardSuits::Trumps), Card::new(5, CardSuits::Spades)]), Card::new(5, CardSuits::Spades)),
+            // Hand has King and a low trump: prefers cheap non-trump over King
+            (Vec::new(), Vec::from([Card::new(14, CardSuits::Clubs), Card::new(5, CardSuits::Spades), Card::new(3, CardSuits::Trumps)]), Card::new(5, CardSuits::Spades)),
+        )]
+        case: (Vec<Card>, Vec<Card>, Card),
+    ) {
+        let (played_cards, mut hand, expected_card) = case;
+        let mut trick = Trick {
+            played_cards,
+            ..Default::default()
+        };
+        trick.bot_play(&mut hand);
+        assert_eq!(trick.played_cards.last().unwrap(), &expected_card);
+    }
+
+    #[rstest]
+    fn bot_play_following_wins_valuable_trick_with_cheapest_card(
+        #[values(
+            // Jack played (value 1.5), hand has losing + two winners: picks cheapest winner (Queen over King)
+            (Vec::from([Card::new(11, CardSuits::Clubs)]), Vec::from([Card::new(5, CardSuits::Clubs), Card::new(13, CardSuits::Clubs), Card::new(14, CardSuits::Clubs)]), Card::new(13, CardSuits::Clubs)),
+            // King played (value 4.5), hand must trump: spares Petit, plays low trump instead
+            (Vec::from([Card::new(14, CardSuits::Clubs)]), Vec::from([Card::new(1, CardSuits::Trumps), Card::new(15, CardSuits::Trumps)]), Card::new(15, CardSuits::Trumps)),
+        )]
+        case: (Vec<Card>, Vec<Card>, Card),
+    ) {
+        let (played_cards, mut hand, expected_card) = case;
+        let mut trick = Trick {
+            played_cards,
+            ..Default::default()
+        };
+        trick.bot_play(&mut hand);
+        assert_eq!(trick.played_cards.last().unwrap(), &expected_card);
+    }
+
+    #[rstest]
+    fn bot_play_following_discards_cheapest_card(
+        #[values(
+            // King already played, nothing beats it: discards cheapest club
+            (Vec::from([Card::new(14, CardSuits::Clubs)]), Vec::from([Card::new(13, CardSuits::Clubs), Card::new(5, CardSuits::Clubs)]), Card::new(5, CardSuits::Clubs)),
+            // Cheap trick (value < 1.5), not worth winning: discards cheapest
+            (Vec::from([Card::new(3, CardSuits::Clubs)]), Vec::from([Card::new(13, CardSuits::Clubs), Card::new(11, CardSuits::Clubs)]), Card::new(11, CardSuits::Clubs)),
+        )]
+        case: (Vec<Card>, Vec<Card>, Card),
+    ) {
+        let (played_cards, mut hand, expected_card) = case;
+        let mut trick = Trick {
+            played_cards,
+            ..Default::default()
+        };
+        trick.bot_play(&mut hand);
+        assert_eq!(trick.played_cards.last().unwrap(), &expected_card);
+    }
+
+    #[rstest]
     fn has_petit_au_bout(
         #[values(
         (Vec::new(), false),
