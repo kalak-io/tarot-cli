@@ -134,6 +134,11 @@ mod integration {
                 *cumulative.get_mut(&player.id).unwrap() += player.score();
             }
 
+            game.collect_deck(&deal.players, &deal.kitty.cards);
+
+            // After collection the deck must always be back to 78 cards
+            assert_eq!(game.deck.len(), 78, "deck must contain 78 cards after collect_deck");
+
             game.deals.push(deal);
         }
 

@@ -24,7 +24,7 @@ pub enum ReorderBy {
 pub trait GameActions {
     fn update_dealer(&mut self);
     fn split_deck(&mut self);
-    fn collect_deck(&mut self, players: &[Player]);
+    fn collect_deck(&mut self, players: &[Player], kitty_cards: &[Card]);
     fn reorder_players(&mut self, by: ReorderBy);
 }
 
@@ -57,7 +57,7 @@ impl GameActions for Game {
         self.deck = new_deck;
     }
 
-    fn collect_deck(&mut self, players: &[Player]) {
+    fn collect_deck(&mut self, players: &[Player], kitty_cards: &[Card]) {
         let mut deck = Vec::new();
         for player in players {
             match player.hand.cards.is_empty() {
@@ -65,6 +65,7 @@ impl GameActions for Game {
                 false => deck.extend(player.hand.cards.clone()),
             }
         }
+        deck.extend_from_slice(kitty_cards);
         self.deck = deck;
     }
     fn update_dealer(&mut self) {
