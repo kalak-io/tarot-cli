@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod integration {
+    use std::collections::HashMap;
+
     use tarot_cli::common::{
         deal::{Deal, DealActions},
         game::{create_deck, Game, GameActions, ReorderBy},
@@ -76,6 +78,83 @@ mod integration {
         assert!(
             total_score.abs() < 1e-9,
             "scores must sum to zero, got {total_score}"
+        );
+    }
+
+    /// Simulate a full game round: N_PLAYERS deals so that every player
+    /// acts as dealer exactly once.
+    ///
+    /// Verified invariants:
+    /// 1. Dealer rotates through all players (each deals once).
+    /// 2. N_PLAYERS deals are stored in game.deals.
+    /// 3. Cumulative scores across all deals remain zero-sum.
+    ///
+    /// Note: `game.deck` is left untouched by `draw_cards` (which takes an
+    /// immutable slice), so no `collect_deck` call is needed between deals.
+    #[test]
+    fn game_round_rotates_dealer_and_scores_are_zero_sum() {
+        const N_PLAYERS: u8 = 4;
+        let mut game = create_all_bot_game(N_PLAYERS);
+
+        // Per-player cumulative score tracker (player id → total score)
+        let mut cumulative: HashMap<u8, f64> =
+            (1..=N_PLAYERS).map(|id| (id, 0.0)).collect();
+        let mut dealer_ids: Vec<u8> = Vec::new();
+
+        for _ in 0..N_PLAYERS {
+            game.split_deck();
+            game.update_dealer();
+            game.reorder_players(ReorderBy::Dealer);
+
+            // Record who is dealer this round
+            let dealer_id = game.players.iter().find(|p| p.is_dealer()).unwrap().id;
+            dealer_ids.push(dealer_id);
+
+            // Retry until at least one bot bids
+            // (game.deck is never modified by draw_cards, so retries are free)
+            let mut deal = loop {
+                let mut d = Deal::new(&mut game.players, &mut game.deck);
+                d.take_bids();
+                if d.taker.is_some() {
+                    break d;
+                }
+            };
+
+            deal.call_king();
+            deal.set_side();
+            deal.compose_kitty();
+            deal.take_chelem();
+            game.reorder_players(ReorderBy::Chelem);
+            deal.play_tricks();
+            deal.set_score();
+
+            // Each Deal clones game.players (scores start at 0.0 per deal),
+            // so we accumulate deal scores manually.
+            for player in &deal.players {
+                *cumulative.get_mut(&player.id).unwrap() += player.score();
+            }
+
+            game.deals.push(deal);
+        }
+
+        // 1. Every player was dealer exactly once
+        let mut unique_dealers = dealer_ids.clone();
+        unique_dealers.sort_unstable();
+        unique_dealers.dedup();
+        assert_eq!(
+            unique_dealers.len(),
+            N_PLAYERS as usize,
+            "each player must deal once; saw dealer sequence {dealer_ids:?}"
+        );
+
+        // 2. Correct number of deals recorded
+        assert_eq!(game.deals.len(), N_PLAYERS as usize);
+
+        // 3. Zero-sum across all deals
+        let grand_total: f64 = cumulative.values().sum();
+        assert!(
+            grand_total.abs() < 1e-9,
+            "cumulative scores must sum to zero, got {grand_total}"
         );
     }
 }
