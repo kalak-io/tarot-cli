@@ -9,7 +9,7 @@ mod score {
         hand::{Poignee, Side},
         score::{
             compute_oudlers, compute_points, compute_score, points_chelem, points_petit_au_bout,
-            points_poignee,
+            points_poignee, BASE_SCORE,
         },
     };
 
@@ -99,6 +99,45 @@ mod score {
     ) {
         let (chelem, expected) = case;
         assert_eq!(points_chelem(chelem), expected);
+    }
+
+    // Cards that score exactly on the 3-oudler threshold (36 pts) so diff=0.
+    // Used to isolate the multiplier: final score = (BASE_SCORE + 0) × multiplier.
+    fn threshold_cards() -> Vec<Card> {
+        [
+            Card::new(22, CardSuits::Trumps), // Fool  (4.5)
+            Card::new(1, CardSuits::Trumps),  // Little (4.5)
+            Card::new(21, CardSuits::Trumps), // Big    (4.5)
+        ]
+        .into_iter()
+        .chain(
+            (1..=9u8).flat_map(|r| {
+                [
+                    Card::new(r, CardSuits::Hearts),
+                    Card::new(r, CardSuits::Clubs),
+                    Card::new(r, CardSuits::Spades),
+                    Card::new(r, CardSuits::Diamonds),
+                ]
+            }),
+        )
+        .chain((1..=9u8).map(|r| Card::new(r, CardSuits::Hearts)))
+        .take(48) // 3 oudlers (13.5) + 45 plain (22.5) = 36.0 pts exactly
+        .collect()
+    }
+
+    #[rstest]
+    fn compute_score_applies_correct_bid_multiplier(
+        #[values(
+            (Bids::Take,         BASE_SCORE * 1.0),
+            (Bids::Guard,        BASE_SCORE * 2.0),
+            (Bids::GuardWithout, BASE_SCORE * 4.0),
+            (Bids::GuardAgainst, BASE_SCORE * 6.0),
+        )]
+        case: (Bids, f64),
+    ) {
+        let (bid, expected) = case;
+        let cards = threshold_cards();
+        assert_eq!(compute_score(&cards, &bid, None, None, None), expected);
     }
 
     #[test]

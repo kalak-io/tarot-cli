@@ -3,7 +3,7 @@ mod trick {
     use rstest::rstest;
     use tarot_cli::common::{
         card::{Card, CardSuits},
-        trick::{check_selected_card, Trick, TrickActions, TrickGetters},
+        trick::{allowed_cards_to_play, check_selected_card, Trick, TrickActions, TrickGetters},
     };
 
     #[rstest]
@@ -114,6 +114,101 @@ mod trick {
         };
         trick.bot_play(&mut hand);
         assert_eq!(trick.played_cards.last().unwrap(), &expected_card);
+    }
+
+    #[test]
+    fn allowed_cards_no_trick_yet_all_cards_allowed() {
+        let trick = Trick::default();
+        let hand = vec![
+            Card::new(14, CardSuits::Hearts),
+            Card::new(5, CardSuits::Spades),
+            Card::new(3, CardSuits::Trumps),
+        ];
+        let allowed = allowed_cards_to_play(&trick, &hand);
+        assert_eq!(allowed, hand);
+    }
+
+    #[test]
+    fn allowed_cards_must_follow_suit_when_held() {
+        let trick = Trick {
+            played_cards: vec![Card::new(8, CardSuits::Clubs)],
+            ..Default::default()
+        };
+        let hand = vec![
+            Card::new(2, CardSuits::Clubs),
+            Card::new(5, CardSuits::Clubs),
+            Card::new(3, CardSuits::Hearts),
+        ];
+        let allowed = allowed_cards_to_play(&trick, &hand);
+        assert_eq!(
+            allowed,
+            vec![Card::new(2, CardSuits::Clubs), Card::new(5, CardSuits::Clubs)]
+        );
+    }
+
+    #[test]
+    fn allowed_cards_must_trump_when_no_suit() {
+        let trick = Trick {
+            played_cards: vec![Card::new(8, CardSuits::Clubs)],
+            ..Default::default()
+        };
+        let hand = vec![
+            Card::new(5, CardSuits::Hearts),
+            Card::new(7, CardSuits::Trumps),
+            Card::new(3, CardSuits::Hearts),
+        ];
+        let allowed = allowed_cards_to_play(&trick, &hand);
+        assert_eq!(allowed, vec![Card::new(7, CardSuits::Trumps)]);
+    }
+
+    #[test]
+    fn allowed_cards_any_card_when_no_suit_no_trump() {
+        let trick = Trick {
+            played_cards: vec![Card::new(8, CardSuits::Clubs)],
+            ..Default::default()
+        };
+        let hand = vec![Card::new(5, CardSuits::Hearts), Card::new(3, CardSuits::Diamonds)];
+        let allowed = allowed_cards_to_play(&trick, &hand);
+        assert_eq!(allowed, hand);
+    }
+
+    #[test]
+    fn allowed_cards_trump_led_must_overtrump_when_possible() {
+        let trick = Trick {
+            played_cards: vec![Card::new(8, CardSuits::Trumps)],
+            ..Default::default()
+        };
+        let hand = vec![
+            Card::new(10, CardSuits::Trumps),
+            Card::new(5, CardSuits::Trumps),
+            Card::new(2, CardSuits::Trumps),
+        ];
+        // Only rank-10 beats the rank-8 already played
+        let allowed = allowed_cards_to_play(&trick, &hand);
+        assert_eq!(allowed, vec![Card::new(10, CardSuits::Trumps)]);
+    }
+
+    #[test]
+    fn allowed_cards_trump_led_all_trumps_when_cannot_overtrump() {
+        let trick = Trick {
+            played_cards: vec![Card::new(10, CardSuits::Trumps)],
+            ..Default::default()
+        };
+        let hand = vec![Card::new(5, CardSuits::Trumps), Card::new(2, CardSuits::Trumps)];
+        // No superior trump available → all trumps allowed
+        let allowed = allowed_cards_to_play(&trick, &hand);
+        assert_eq!(allowed, hand);
+    }
+
+    #[test]
+    fn allowed_cards_trump_led_no_trumps_any_card() {
+        let trick = Trick {
+            played_cards: vec![Card::new(10, CardSuits::Trumps)],
+            ..Default::default()
+        };
+        let hand = vec![Card::new(5, CardSuits::Hearts), Card::new(3, CardSuits::Diamonds)];
+        let allowed = allowed_cards_to_play(&trick, &hand);
+        assert_eq!(allowed, hand);
     }
 
     #[rstest]
