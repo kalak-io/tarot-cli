@@ -1,6 +1,6 @@
 mod card {
     use rstest::rstest;
-    use tarot_cli::common::card::{Card, CardActions, CardGetters, CardSuits, count_cards_by_hand};
+    use tarot_cli::common::card::{count_cards_by_hand, Card, CardActions, CardGetters, CardSuits};
 
     #[rstest]
     fn card_is_superior_than(

@@ -142,7 +142,10 @@ mod trick {
         let allowed = allowed_cards_to_play(&trick, &hand);
         assert_eq!(
             allowed,
-            vec![Card::new(2, CardSuits::Clubs), Card::new(5, CardSuits::Clubs)]
+            vec![
+                Card::new(2, CardSuits::Clubs),
+                Card::new(5, CardSuits::Clubs)
+            ]
         );
     }
 
@@ -167,7 +170,10 @@ mod trick {
             played_cards: vec![Card::new(8, CardSuits::Clubs)],
             ..Default::default()
         };
-        let hand = vec![Card::new(5, CardSuits::Hearts), Card::new(3, CardSuits::Diamonds)];
+        let hand = vec![
+            Card::new(5, CardSuits::Hearts),
+            Card::new(3, CardSuits::Diamonds),
+        ];
         let allowed = allowed_cards_to_play(&trick, &hand);
         assert_eq!(allowed, hand);
     }
@@ -194,7 +200,10 @@ mod trick {
             played_cards: vec![Card::new(10, CardSuits::Trumps)],
             ..Default::default()
         };
-        let hand = vec![Card::new(5, CardSuits::Trumps), Card::new(2, CardSuits::Trumps)];
+        let hand = vec![
+            Card::new(5, CardSuits::Trumps),
+            Card::new(2, CardSuits::Trumps),
+        ];
         // No superior trump available → all trumps allowed
         let allowed = allowed_cards_to_play(&trick, &hand);
         assert_eq!(allowed, hand);
@@ -206,7 +215,10 @@ mod trick {
             played_cards: vec![Card::new(10, CardSuits::Trumps)],
             ..Default::default()
         };
-        let hand = vec![Card::new(5, CardSuits::Hearts), Card::new(3, CardSuits::Diamonds)];
+        let hand = vec![
+            Card::new(5, CardSuits::Hearts),
+            Card::new(3, CardSuits::Diamonds),
+        ];
         let allowed = allowed_cards_to_play(&trick, &hand);
         assert_eq!(allowed, hand);
     }

@@ -110,16 +110,14 @@ mod score {
             Card::new(21, CardSuits::Trumps), // Big    (4.5)
         ]
         .into_iter()
-        .chain(
-            (1..=9u8).flat_map(|r| {
-                [
-                    Card::new(r, CardSuits::Hearts),
-                    Card::new(r, CardSuits::Clubs),
-                    Card::new(r, CardSuits::Spades),
-                    Card::new(r, CardSuits::Diamonds),
-                ]
-            }),
-        )
+        .chain((1..=9u8).flat_map(|r| {
+            [
+                Card::new(r, CardSuits::Hearts),
+                Card::new(r, CardSuits::Clubs),
+                Card::new(r, CardSuits::Spades),
+                Card::new(r, CardSuits::Diamonds),
+            ]
+        }))
         .chain((1..=9u8).map(|r| Card::new(r, CardSuits::Hearts)))
         .take(48) // 3 oudlers (13.5) + 45 plain (22.5) = 36.0 pts exactly
         .collect()

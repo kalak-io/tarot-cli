@@ -62,7 +62,11 @@ mod kitty {
         kitty.bot_compose(&mut hand);
 
         for card in &kitty.cards {
-            assert!(!card.is_oudler(), "Oudler {:?} must not appear in kitty", card);
+            assert!(
+                !card.is_oudler(),
+                "Oudler {:?} must not appear in kitty",
+                card
+            );
         }
     }
 
@@ -100,7 +104,10 @@ mod kitty {
             .iter()
             .filter(|c| c.suit.name == CardSuits::Trumps)
             .count();
-        assert_eq!(trumps_in_kitty, 0, "Kitty should contain no trumps when non-trumps are available");
+        assert_eq!(
+            trumps_in_kitty, 0,
+            "Kitty should contain no trumps when non-trumps are available"
+        );
     }
 
     #[test]
@@ -115,7 +122,12 @@ mod kitty {
 
         // All 6 kitty slots should be plain (0.5 pt) cards — not the Jack or Queen
         for card in &kitty.cards {
-            assert_eq!(card.score(), 0.5, "Kitty should contain only cheap cards, got {:?}", card);
+            assert_eq!(
+                card.score(),
+                0.5,
+                "Kitty should contain only cheap cards, got {:?}",
+                card
+            );
         }
     }
 }

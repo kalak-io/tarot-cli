@@ -76,7 +76,10 @@ mod utils {
 
     #[test]
     fn subtract_with_empty_slice_leaves_hand_unchanged() {
-        let mut hand = vec![Card::new(2, CardSuits::Clubs), Card::new(5, CardSuits::Hearts)];
+        let mut hand = vec![
+            Card::new(2, CardSuits::Clubs),
+            Card::new(5, CardSuits::Hearts),
+        ];
         let original = hand.clone();
         subtract(&mut hand, &[]);
         assert_eq!(hand, original);
