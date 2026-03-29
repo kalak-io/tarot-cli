@@ -59,14 +59,14 @@ mod integration {
         deal.show_score();
 
         // 1. Correct number of tricks (78 − 6 kitty cards) / 4 players = 18
-        assert_eq!(deal.tricks.len(), 18, "expected 18 tricks for a 4-player deal");
+        assert_eq!(
+            deal.tricks.len(),
+            18,
+            "expected 18 tricks for a 4-player deal"
+        );
 
         // 2. All 78 cards are accounted for
-        let total_won: usize = deal
-            .players
-            .iter()
-            .map(|p| p.hand.won_cards.len())
-            .sum();
+        let total_won: usize = deal.players.iter().map(|p| p.hand.won_cards.len()).sum();
         assert_eq!(
             total_won + deal.kitty.cards.len(),
             78,
@@ -97,8 +97,7 @@ mod integration {
         let mut game = create_all_bot_game(N_PLAYERS);
 
         // Per-player cumulative score tracker (player id → total score)
-        let mut cumulative: HashMap<u8, f64> =
-            (1..=N_PLAYERS).map(|id| (id, 0.0)).collect();
+        let mut cumulative: HashMap<u8, f64> = (1..=N_PLAYERS).map(|id| (id, 0.0)).collect();
         let mut dealer_ids: Vec<u8> = Vec::new();
 
         for _ in 0..N_PLAYERS {
@@ -137,7 +136,11 @@ mod integration {
             game.collect_deck(&deal.players, &deal.kitty.cards);
 
             // After collection the deck must always be back to 78 cards
-            assert_eq!(game.deck.len(), 78, "deck must contain 78 cards after collect_deck");
+            assert_eq!(
+                game.deck.len(),
+                78,
+                "deck must contain 78 cards after collect_deck"
+            );
 
             game.deals.push(deal);
         }
