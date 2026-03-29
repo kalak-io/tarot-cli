@@ -40,7 +40,7 @@ fn main() {
         deal.set_score();
         deal.show_score();
 
-        game.collect_deck(&deal.players);
+        game.collect_deck(&deal.players, &deal.kitty.cards);
         deals.push(deal);
 
         println!("\nPlay another deal? (yes/no)");
