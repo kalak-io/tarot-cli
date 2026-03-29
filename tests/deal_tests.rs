@@ -44,6 +44,10 @@ mod deal {
                 winner_side: Side::Attack,
             }]), Some(Side::Attack)),
             (Vec::from([Trick {
+                played_cards: vec![Card::new(1, CardSuits::Trumps)],
+                winner_side: Side::Defense,
+            }]), Some(Side::Defense)),
+            (Vec::from([Trick {
                 played_cards: vec![Card::new(1, CardSuits::Hearts)],
                 winner_side: Side::Attack,
             }]), None),

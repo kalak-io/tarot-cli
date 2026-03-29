@@ -218,6 +218,13 @@ fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Kitty) {
 
     clear_hand(players);
     while index < deck.len() {
+        // Guard: if a player deal would overshoot the deck, force a kitty deal.
+        // This can only happen when the kitty still needs cards (remaining == kitty_needed),
+        // because once the kitty is full the remaining count is always a multiple of 3.
+        let remaining = deck.len() - index;
+        if dealing == Dealing::Player && remaining < DEAL_SIZE_PLAYERS {
+            dealing = Dealing::Kitty;
+        }
         let end_of_range = index + get_deal_size(&dealing);
         let split = &deck[index..end_of_range];
         match dealing {
