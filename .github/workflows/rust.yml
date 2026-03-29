@@ -10,14 +10,14 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  fmt:
+  format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
-      - name: Fmt
+      - name: Format
         run: cargo fmt --check
 
   build-and-test:
