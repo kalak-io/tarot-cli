@@ -8,7 +8,8 @@ use crate::common::utils::display;
 use super::{
     bid::{Bid, Bids},
     card::{count_cards_by_hand, Card},
-    hand::{Hand, Side},
+    chelem::{Chelem, ChelemResult, ChelemState},
+    hand::{Hand, Poignee, Side},
     kitty::Kitty,
     player::{Player, PlayerActions},
     score::compute_score,
@@ -136,12 +137,14 @@ impl DealActions for Deal {
     }
     fn set_score(&mut self) {
         let won_cards_by_attack = merge_won_cards(&self.players);
+        let bonus_chelem = compute_chelem_result(&self.tricks, &self.players);
+        let bonus_poignee = best_poignee(&self.players);
         let attack_score = compute_score(
             &won_cards_by_attack,
             &self.taker.clone().unwrap().bid,
             self.bonus_petit_au_bout(),
-            None,
-            None,
+            bonus_chelem,
+            bonus_poignee,
         );
 
         let taker_id = self.taker.as_ref().unwrap().player.id;
@@ -215,6 +218,13 @@ fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Kitty) {
 
     clear_hand(players);
     while index < deck.len() {
+        // Guard: if a player deal would overshoot the deck, force a kitty deal.
+        // This can only happen when the kitty still needs cards (remaining == kitty_needed),
+        // because once the kitty is full the remaining count is always a multiple of 3.
+        let remaining = deck.len() - index;
+        if dealing == Dealing::Player && remaining < DEAL_SIZE_PLAYERS {
+            dealing = Dealing::Kitty;
+        }
         let end_of_range = index + get_deal_size(&dealing);
         let split = &deck[index..end_of_range];
         match dealing {
@@ -265,4 +275,47 @@ fn merge_won_cards(players: &[Player]) -> Vec<Card> {
         }
     }
     cards
+}
+
+fn compute_chelem_result(tricks: &[Trick], players: &[Player]) -> Option<Chelem> {
+    let all_won_by_attack =
+        !tricks.is_empty() && tricks.iter().all(|t| t.winner_side == Side::Attack);
+
+    let announced = players.iter().any(|p| {
+        p.hand
+            .bonus_chelem
+            .as_ref()
+            .map(|c| c.state == ChelemState::Announced)
+            .unwrap_or(false)
+    });
+
+    match (announced, all_won_by_attack) {
+        (true, true) => Some(Chelem {
+            state: ChelemState::Announced,
+            result: Some(ChelemResult::AnnouncedAndSucceed),
+        }),
+        (true, false) => Some(Chelem {
+            state: ChelemState::Announced,
+            result: Some(ChelemResult::AnnouncedAndLost),
+        }),
+        (false, true) => Some(Chelem {
+            state: ChelemState::NotAnnounced,
+            result: Some(ChelemResult::NotAnnouncedAndSucceed),
+        }),
+        (false, false) => None,
+    }
+}
+
+fn best_poignee(players: &[Player]) -> Option<Poignee> {
+    players.iter().fold(None, |best, player| {
+        let p = player.hand.bonus_poignee.clone();
+        match (&best, &p) {
+            (_, None) => best,
+            (None, Some(_)) => p,
+            (Some(Poignee::Triple), _) => best,
+            (Some(Poignee::Double), Some(Poignee::Triple)) => p,
+            (Some(Poignee::Simple), Some(Poignee::Double | Poignee::Triple)) => p,
+            _ => best,
+        }
+    })
 }

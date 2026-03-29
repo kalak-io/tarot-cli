@@ -48,7 +48,8 @@ fn multiplier(bid: &Bids) -> f64 {
 pub fn points_petit_au_bout(bonus_petit_au_bout: Option<Side>) -> f64 {
     match bonus_petit_au_bout {
         Some(Side::Attack) => 10.0,
-        _ => 0.0,
+        Some(Side::Defense) => -10.0,
+        None => 0.0,
     }
 }
 

@@ -58,26 +58,38 @@ impl KittyActions for Kitty {
     }
 
     fn human_compose(&mut self, cards: &mut Vec<Card>) -> Vec<Card> {
-        // TODO: implement way to correct the kitty
-        let mut new_kitty: Vec<Card> = Vec::new();
-        while new_kitty.len() < self.max_size {
-            println!("\nThe building kitty contains: ");
-            display(&new_kitty);
-            // get diff of vects cards and new_kitty
-            subtract(cards, &new_kitty);
-            let available_cards = cards.clone();
+        loop {
+            let mut new_kitty: Vec<Card> = Vec::new();
+            while new_kitty.len() < self.max_size {
+                println!("\nThe building kitty contains: ");
+                display(&new_kitty);
+                let mut available = cards.clone();
+                subtract(&mut available, &new_kitty);
 
-            let card = select(Some("Compose your kitty"), Some(available_cards)).unwrap();
-            if (card.suit.name != CardSuits::Trumps && card.rank == KING_RANK) || card.is_oudler() {
-                println!("You cannot select a King or an Oudler for the kitty.");
-                continue;
-            } else {
-                new_kitty.push(card);
+                let card = select(Some("Compose your kitty"), Some(available)).unwrap();
+                if (card.suit.name != CardSuits::Trumps && card.rank == KING_RANK)
+                    || card.is_oudler()
+                {
+                    println!("You cannot select a King or an Oudler for the kitty.");
+                } else {
+                    new_kitty.push(card);
+                }
+            }
+            println!("\nThe new kitty is:");
+            display(&new_kitty);
+            println!("Are you satisfied with this kitty? (yes/no)");
+            let mut input = String::new();
+            std::io::stdin()
+                .read_line(&mut input)
+                .expect("Failed to read line");
+            match input.trim().to_lowercase().as_str() {
+                "yes" | "y" => {
+                    subtract(cards, &new_kitty);
+                    self.cards = new_kitty;
+                    return self.cards.clone();
+                }
+                _ => println!("Let's redo the kitty selection."),
             }
         }
-        println!("\nThe new kitty is:");
-        display(&new_kitty);
-        self.cards = new_kitty;
-        self.cards.clone()
     }
 }
