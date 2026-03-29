@@ -278,8 +278,8 @@ fn merge_won_cards(players: &[Player]) -> Vec<Card> {
 }
 
 fn compute_chelem_result(tricks: &[Trick], players: &[Player]) -> Option<Chelem> {
-    let all_won_by_attack = !tricks.is_empty()
-        && tricks.iter().all(|t| t.winner_side == Side::Attack);
+    let all_won_by_attack =
+        !tricks.is_empty() && tricks.iter().all(|t| t.winner_side == Side::Attack);
 
     let announced = players.iter().any(|p| {
         p.hand
