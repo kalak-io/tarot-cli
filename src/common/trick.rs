@@ -42,15 +42,8 @@ impl TrickActions for Trick {
     fn human_play(&mut self, cards: &mut Vec<Card>) {
         println!("\nYour cards:");
         display(cards);
-        let card = select(
-            Some("Which card do you play?"),
-            Some(self.played_cards.to_vec()),
-        )
-        .unwrap();
-
-        if check_selected_card(self, cards, &card).is_err() {
-            self.human_play(cards);
-        }
+        let allowed = allowed_cards_to_play(self, cards);
+        let card = select(Some("Which card do you play?"), Some(allowed)).unwrap();
 
         let index = cards
             .iter()
