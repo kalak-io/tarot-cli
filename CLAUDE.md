@@ -29,12 +29,15 @@ src/
     ├── chelem.rs        # Chelem (slam) state and result types
     └── utils.rs         # RNG, circular index, CLI selection, vector helpers
 tests/
-    ├── card_test.rs
     ├── bid_test.rs
+    ├── card_test.rs
     ├── deal_tests.rs
     ├── game_tests.rs
+    ├── integration_test.rs
+    ├── kitty_tests.rs
     ├── score_tests.rs
-    └── trick_test.rs
+    ├── trick_test.rs
+    └── utils_tests.rs
 ```
 
 ## Development Commands
@@ -134,17 +137,7 @@ Card scoring: Kings/Oudlers=4.5pts, Queens=3.5pts, Knights=2.5pts, Jacks=1.5pts,
 
 ## Known Incomplete Areas (TODOs)
 
-These areas are work-in-progress — be careful not to assume they are fully implemented:
-
-- **Bot AI** (`player.rs:126-127`, `trick.rs:64-65`): Bot king calling and trick card selection are stubs (`unimplemented!()`).
-- **Score display** (`main.rs:42`, `main.rs:57-58`): Score output after each deal is incomplete.
-- **Chelem state** (`main.rs:35`, `main.rs:54`): Chelem reordering/state tracking after deals needs work.
-- **Human poignee/chelem declaration** (`hand.rs:86`, `hand.rs:91-93`): Not yet implemented for human players.
-- **Kitty correction** (`kitty.rs:41`): The mechanism for human kitty editing is a stub.
-- **Player/game submodules** (`game.rs:92`): Noted split into submodules is pending.
-- **`new()` constructors** (`main.rs:12`): Some structs use ad-hoc initialization instead of `new()`.
-
-When working on these areas, check the TODO comments and the official rules PDF for correctness.
+- **Player/game submodules** (`game.rs:98`): Split into submodules is pending.
 
 ## Dependencies
 
