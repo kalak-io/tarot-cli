@@ -177,7 +177,7 @@ fn get_suit_data(name: CardSuits) -> (char, char) {
         CardSuits::Diamonds => ('♦', 'D'),
         CardSuits::Spades => ('♠', 'S'),
         CardSuits::Hearts => ('♥', 'H'),
-        CardSuits::Trumps => ('*', 'T'),
+        CardSuits::Trumps => ('★', 'T'),
     }
 }
 

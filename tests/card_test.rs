@@ -108,4 +108,10 @@ mod card {
         let (n_players, expected) = case;
         assert_eq!(count_cards_by_hand(n_players), expected);
     }
+
+    #[test]
+    fn trump_suit_icon_is_star() {
+        let card = Card::new(5, CardSuits::Trumps);
+        assert_eq!(card.suit.icon, '★');
+    }
 }
