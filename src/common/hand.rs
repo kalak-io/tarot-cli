@@ -45,6 +45,8 @@ impl Hand {
     }
 }
 
+// Display order for hand sorting: Spades, Hearts, Diamonds, Clubs, Trumps.
+// This is the user-facing sort order and intentionally differs from CardSuits::AVAILABLE_SUITS.
 fn suit_order(suit: CardSuits) -> u8 {
     match suit {
         CardSuits::Spades => 0,

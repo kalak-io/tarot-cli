@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod hand {
+mod hand_tests {
     use tarot_cli::common::{
         card::{Card, CardSuits},
         hand::Hand,
