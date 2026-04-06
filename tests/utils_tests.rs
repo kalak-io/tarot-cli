@@ -2,7 +2,7 @@
 mod utils {
     use tarot_cli::common::{
         card::{Card, CardSuits},
-        utils::{compare, get_next_index, reorder, subtract},
+        utils::{card_box_lines, card_rank_label, compare, get_next_index, reorder, subtract},
     };
 
     // get_next_index
@@ -105,5 +105,107 @@ mod utils {
         let mut hand = vec![a, b];
         subtract(&mut hand, &[absent]);
         assert_eq!(hand, vec![a, b]);
+    }
+
+    #[test]
+    fn card_rank_label_centers_single_digit() {
+        assert_eq!(card_rank_label(&Card::new(7, CardSuits::Hearts)), " 7 ");
+        assert_eq!(card_rank_label(&Card::new(1, CardSuits::Hearts)), " 1 ");
+    }
+
+    #[test]
+    fn card_rank_label_left_aligns_double_digit() {
+        assert_eq!(card_rank_label(&Card::new(10, CardSuits::Hearts)), "10 ");
+        assert_eq!(card_rank_label(&Card::new(16, CardSuits::Trumps)), "16 ");
+        assert_eq!(card_rank_label(&Card::new(21, CardSuits::Trumps)), "21 ");
+    }
+
+    #[test]
+    fn card_rank_label_abbreviates_face_cards() {
+        assert_eq!(card_rank_label(&Card::new(11, CardSuits::Hearts)), "Jck");
+        assert_eq!(card_rank_label(&Card::new(12, CardSuits::Hearts)), "Knt");
+        assert_eq!(card_rank_label(&Card::new(13, CardSuits::Hearts)), "Que");
+        assert_eq!(card_rank_label(&Card::new(14, CardSuits::Hearts)), "Kng");
+        assert_eq!(card_rank_label(&Card::new(22, CardSuits::Trumps)), "Foo");
+    }
+
+    #[test]
+    fn card_box_lines_regular_card_uses_single_borders() {
+        let cards = vec![Card::new(10, CardSuits::Spades)];
+        let lines = card_box_lines(&cards);
+        assert_eq!(lines.len(), 4);
+        assert_eq!(lines[0], "┌───┐");
+        assert_eq!(lines[1], "│10 │");
+        assert_eq!(lines[2], "│ ♠ │");
+        assert_eq!(lines[3], "└───┘");
+    }
+
+    #[test]
+    fn card_box_lines_oudler_uses_double_borders() {
+        // Little (rank 1 trump) is an oudler
+        let cards = vec![Card::new(1, CardSuits::Trumps)];
+        let lines = card_box_lines(&cards);
+        assert_eq!(lines.len(), 4);
+        assert_eq!(lines[0], "╔═══╗");
+        assert_eq!(lines[1], "│ 1 │");
+        assert_eq!(lines[2], "│ ★ │");
+        assert_eq!(lines[3], "╚═══╝");
+    }
+
+    #[test]
+    fn card_box_lines_fool_uses_double_borders() {
+        let cards = vec![Card::new(22, CardSuits::Trumps)];
+        let lines = card_box_lines(&cards);
+        assert_eq!(lines[0], "╔═══╗");
+        assert_eq!(lines[1], "│Foo│");
+        assert_eq!(lines[2], "│ ★ │");
+        assert_eq!(lines[3], "╚═══╝");
+    }
+
+    #[test]
+    fn card_box_lines_multiple_cards_are_space_separated() {
+        let cards = vec![
+            Card::new(10, CardSuits::Spades),
+            Card::new(5, CardSuits::Hearts),
+        ];
+        let lines = card_box_lines(&cards);
+        assert_eq!(lines[0], "┌───┐ ┌───┐");
+        assert_eq!(lines[1], "│10 │ │ 5 │");
+        assert_eq!(lines[2], "│ ♠ │ │ ♥ │");
+        assert_eq!(lines[3], "└───┘ └───┘");
+    }
+
+    #[test]
+    fn card_box_lines_wraps_at_nine_cards() {
+        // 10 cards → row of 9 + row of 1 → 8 lines total
+        let cards: Vec<Card> = (1u8..=10)
+            .map(|r| Card::new(r, CardSuits::Hearts))
+            .collect();
+        let lines = card_box_lines(&cards);
+        assert_eq!(lines.len(), 8);
+    }
+
+    #[test]
+    fn card_rank_label_is_always_three_chars() {
+        for (rank, suit) in [
+            (1u8, CardSuits::Hearts),
+            (5, CardSuits::Hearts),
+            (9, CardSuits::Hearts),
+            (10, CardSuits::Hearts),
+            (16, CardSuits::Trumps),
+            (21, CardSuits::Trumps),
+            (11, CardSuits::Clubs),
+            (14, CardSuits::Spades),
+            (22, CardSuits::Trumps),
+        ] {
+            let label = card_rank_label(&Card::new(rank, suit));
+            assert_eq!(
+                label.chars().count(),
+                3,
+                "rank {} label '{}' should be 3 chars",
+                rank,
+                label
+            );
+        }
     }
 }

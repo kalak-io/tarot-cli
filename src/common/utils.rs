@@ -1,7 +1,7 @@
 use rand::Rng;
 use std::str::FromStr;
 
-use super::card::Card;
+use super::card::{Card, CardGetters};
 
 pub fn random_int_in_range(min: usize, max: usize) -> usize {
     let mut rng = rand::thread_rng();
@@ -90,4 +90,59 @@ pub fn select<T: std::fmt::Display + std::marker::Copy>(
 
 pub fn subtract(a: &mut Vec<Card>, b: &[Card]) {
     a.retain(|x| !b.contains(x));
+}
+
+pub fn card_box_lines(cards: &[Card]) -> Vec<String> {
+    let mut lines = Vec::new();
+    for chunk in cards.chunks(9) {
+        let mut top = String::new();
+        let mut rank_row = String::new();
+        let mut suit_row = String::new();
+        let mut bot = String::new();
+        for (i, card) in chunk.iter().enumerate() {
+            if i > 0 {
+                top.push(' ');
+                rank_row.push(' ');
+                suit_row.push(' ');
+                bot.push(' ');
+            }
+            if card.is_oudler() {
+                top.push_str("╔═══╗");
+                bot.push_str("╚═══╝");
+            } else {
+                top.push_str("┌───┐");
+                bot.push_str("└───┘");
+            }
+            rank_row.push_str(&format!("│{}│", card_rank_label(card)));
+            suit_row.push_str(&format!("│ {} │", card.suit.icon));
+        }
+        lines.push(top);
+        lines.push(rank_row);
+        lines.push(suit_row);
+        lines.push(bot);
+    }
+    lines
+}
+
+pub fn display_cards(cards: &[Card]) {
+    for line in card_box_lines(cards) {
+        println!("{}", line);
+    }
+}
+
+pub fn card_rank_label(card: &Card) -> String {
+    match card.name().as_str() {
+        "Fool" => "Foo".to_string(),
+        "King" => "Kng".to_string(),
+        "Queen" => "Que".to_string(),
+        "Knight" => "Knt".to_string(),
+        "Jack" => "Jck".to_string(),
+        _ => {
+            if card.rank < 10 {
+                format!(" {} ", card.rank)
+            } else {
+                format!("{} ", card.rank)
+            }
+        }
+    }
 }
