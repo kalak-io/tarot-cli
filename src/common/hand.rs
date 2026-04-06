@@ -38,6 +38,21 @@ impl Hand {
             }
         }
     }
+
+    pub fn sort_by_suit(&mut self) {
+        self.cards
+            .sort_by_key(|c| (suit_order(c.suit.name), c.rank));
+    }
+}
+
+fn suit_order(suit: CardSuits) -> u8 {
+    match suit {
+        CardSuits::Spades => 0,
+        CardSuits::Hearts => 1,
+        CardSuits::Diamonds => 2,
+        CardSuits::Clubs => 3,
+        CardSuits::Trumps => 4,
+    }
 }
 
 impl HandActions for Hand {
