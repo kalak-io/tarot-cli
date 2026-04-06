@@ -8,7 +8,7 @@ use super::{
     hand::{Hand, HandActions},
     kitty::{Kitty, KittyActions},
     trick::{Trick, TrickActions},
-    utils::display,
+    utils::display_cards,
 };
 
 #[derive(Debug, Default, Copy, Clone)]
@@ -136,6 +136,6 @@ fn bot_call_king(cards: &[Card], kings: &[Card]) -> Card {
 
 fn human_call_king(cards: &[Card], kings: &[Card]) -> Card {
     println!("\nYour cards:");
-    display(cards);
+    display_cards(cards);
     select(Some("Which king do you call?"), Some(kings.to_vec())).unwrap()
 }

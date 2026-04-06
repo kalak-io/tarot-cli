@@ -1,4 +1,4 @@
-use crate::common::utils::{display, select};
+use crate::common::utils::{display_cards, select};
 
 use super::{
     card::{Card, CardActions, CardGetters, CardSuits, CardSuitsGetters, KING_RANK},
@@ -41,7 +41,7 @@ impl TrickActions for Trick {
 
     fn human_play(&mut self, cards: &mut Vec<Card>) {
         println!("\nYour cards:");
-        display(cards);
+        display_cards(cards);
         let allowed = allowed_cards_to_play(self, cards);
         let card = select(Some("Which card do you play?"), Some(allowed)).unwrap();
 

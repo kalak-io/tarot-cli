@@ -3,7 +3,7 @@ use rand::{
     Rng,
 };
 
-use crate::common::utils::display;
+use crate::common::utils::display_cards;
 
 use super::{
     bid::{Bid, Bids},
@@ -83,7 +83,7 @@ impl DealActions for Deal {
             }
             _ => {
                 println!("\n\nThe kitty contains: ");
-                display(&self.kitty.cards);
+                display_cards(&self.kitty.cards);
                 let taker_id = self.taker.as_ref().unwrap().player.id;
                 let taker_index = self.players.iter().position(|p| p.id == taker_id).unwrap();
                 // Temporarily take kitty out to satisfy borrow checker
