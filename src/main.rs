@@ -29,9 +29,18 @@ fn main() {
             }
         }
 
+        for player in &mut deal.players {
+            player.hand.sort_by_suit();
+        }
+
         deal.call_king();
         deal.set_side();
         deal.compose_kitty();
+
+        for player in &mut deal.players {
+            player.hand.sort_by_suit();
+        }
+
         deal.take_chelem();
 
         game.reorder_players(ReorderBy::Chelem);
