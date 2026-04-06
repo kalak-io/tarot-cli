@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::common::{card::CardSuits, utils::select};
+use crate::common::{card::CardSuits, utils::select_card};
 
 use super::{
     bid::{Bid, Bids},
@@ -8,7 +8,7 @@ use super::{
     hand::{Hand, HandActions},
     kitty::{Kitty, KittyActions},
     trick::{Trick, TrickActions},
-    utils::display,
+    utils::display_cards,
 };
 
 #[derive(Debug, Default, Copy, Clone)]
@@ -94,9 +94,7 @@ impl PlayerActions for Player {
     }
     fn compose_kitty(&mut self, kitty: &mut Kitty) -> Vec<Card> {
         self.hand.cards.extend(kitty.cards.clone());
-        self.hand
-            .cards
-            .sort_unstable_by_key(|card| (card.suit.initial, card.rank));
+        self.hand.sort_by_suit();
 
         match self.kind {
             PlayerKind::Human => kitty.human_compose(&mut self.hand.cards),
@@ -136,6 +134,6 @@ fn bot_call_king(cards: &[Card], kings: &[Card]) -> Card {
 
 fn human_call_king(cards: &[Card], kings: &[Card]) -> Card {
     println!("\nYour cards:");
-    display(cards);
-    select(Some("Which king do you call?"), Some(kings.to_vec())).unwrap()
+    display_cards(cards);
+    select_card(Some("Which king do you call?"), Some(kings.to_vec())).unwrap()
 }

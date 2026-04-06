@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter, Result};
 use super::{
     card::Card,
     score::{compute_oudlers, compute_points},
-    utils::{compare, display, select},
+    utils::{compare, display_cards, select},
 };
 
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
@@ -53,7 +53,7 @@ impl Bid {
     }
     pub fn human_choose(&mut self, cards: &[Card]) -> Bids {
         println!("\nYour cards:");
-        display(cards);
+        display_cards(cards);
         let available_bids = self.get_available_bids();
         self.current = select(Some("What is your bid?"), Some(available_bids)).unwrap();
         self.current

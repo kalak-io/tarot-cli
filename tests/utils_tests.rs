@@ -1,8 +1,9 @@
 #[cfg(test)]
 mod utils {
+    use rstest::rstest;
     use tarot_cli::common::{
         card::{Card, CardSuits},
-        utils::{compare, get_next_index, reorder, subtract},
+        utils::{card_box_lines, card_rank_label, compare, get_next_index, reorder, subtract},
     };
 
     // get_next_index
@@ -105,5 +106,122 @@ mod utils {
         let mut hand = vec![a, b];
         subtract(&mut hand, &[absent]);
         assert_eq!(hand, vec![a, b]);
+    }
+
+    #[rstest]
+    fn card_rank_label_abbreviates_face_cards(
+        #[values(
+            (11u8, CardSuits::Hearts, "Jck"),
+            (12u8, CardSuits::Hearts, "Knt"),
+            (13u8, CardSuits::Hearts, "Que"),
+            (14u8, CardSuits::Hearts, "Kng"),
+            (22u8, CardSuits::Trumps, "Foo"),
+        )]
+        case: (u8, CardSuits, &str),
+    ) {
+        let (rank, suit, expected) = case;
+        assert_eq!(card_rank_label(&Card::new(rank, suit)), expected);
+    }
+
+    #[rstest]
+    fn card_rank_label_centers_single_digit(#[values(1u8, 2, 3, 4, 5, 6, 7, 8, 9)] rank: u8) {
+        let label = card_rank_label(&Card::new(rank, CardSuits::Hearts));
+        assert_eq!(label, format!(" {} ", rank));
+    }
+
+    #[rstest]
+    fn card_rank_label_left_aligns_double_digit(
+        #[values(
+            (10u8, CardSuits::Hearts),
+            (16u8, CardSuits::Trumps),
+            (21u8, CardSuits::Trumps),
+        )]
+        case: (u8, CardSuits),
+    ) {
+        let (rank, suit) = case;
+        let label = card_rank_label(&Card::new(rank, suit));
+        assert_eq!(label, format!("{} ", rank));
+    }
+
+    #[test]
+    fn card_box_lines_regular_card_uses_single_borders() {
+        let cards = vec![Card::new(10, CardSuits::Spades)];
+        let lines = card_box_lines(&cards);
+        assert_eq!(lines.len(), 4);
+        assert_eq!(lines[0], "┌───┐");
+        assert_eq!(lines[1], "│10 │");
+        assert_eq!(lines[2], "│ ♠ │");
+        assert_eq!(lines[3], "└───┘");
+    }
+
+    #[test]
+    fn card_box_lines_oudler_uses_double_borders() {
+        // Little (rank 1 trump) is an oudler
+        let cards = vec![Card::new(1, CardSuits::Trumps)];
+        let lines = card_box_lines(&cards);
+        assert_eq!(lines.len(), 4);
+        assert_eq!(lines[0], "╔═══╗");
+        assert_eq!(lines[1], "│ 1 │");
+        assert_eq!(lines[2], "│ ★ │");
+        assert_eq!(lines[3], "╚═══╝");
+    }
+
+    #[test]
+    fn card_box_lines_fool_uses_double_borders() {
+        let cards = vec![Card::new(22, CardSuits::Trumps)];
+        let lines = card_box_lines(&cards);
+        assert_eq!(lines[0], "╔═══╗");
+        assert_eq!(lines[1], "│Foo│");
+        assert_eq!(lines[2], "│ ★ │");
+        assert_eq!(lines[3], "╚═══╝");
+    }
+
+    #[test]
+    fn card_box_lines_multiple_cards_are_space_separated() {
+        let cards = vec![
+            Card::new(10, CardSuits::Spades),
+            Card::new(5, CardSuits::Hearts),
+        ];
+        let lines = card_box_lines(&cards);
+        assert_eq!(lines[0], "┌───┐ ┌───┐");
+        assert_eq!(lines[1], "│10 │ │ 5 │");
+        assert_eq!(lines[2], "│ ♠ │ │ ♥ │");
+        assert_eq!(lines[3], "└───┘ └───┘");
+    }
+
+    #[test]
+    fn card_box_lines_wraps_at_nine_cards() {
+        // 10 cards → row of 9 + row of 1 → 8 lines total
+        let cards: Vec<Card> = (1u8..=10)
+            .map(|r| Card::new(r, CardSuits::Hearts))
+            .collect();
+        let lines = card_box_lines(&cards);
+        assert_eq!(lines.len(), 8);
+    }
+
+    #[rstest]
+    fn card_rank_label_is_always_three_chars(
+        #[values(
+            (1u8,  CardSuits::Hearts),
+            (5u8,  CardSuits::Hearts),
+            (9u8,  CardSuits::Hearts),
+            (10u8, CardSuits::Hearts),
+            (16u8, CardSuits::Trumps),
+            (21u8, CardSuits::Trumps),
+            (11u8, CardSuits::Clubs),
+            (14u8, CardSuits::Spades),
+            (22u8, CardSuits::Trumps),
+        )]
+        case: (u8, CardSuits),
+    ) {
+        let (rank, suit) = case;
+        let label = card_rank_label(&Card::new(rank, suit));
+        assert_eq!(
+            label.chars().count(),
+            3,
+            "rank {} label '{}' should be 3 chars",
+            rank,
+            label
+        );
     }
 }

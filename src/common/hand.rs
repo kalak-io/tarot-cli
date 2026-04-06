@@ -38,6 +38,23 @@ impl Hand {
             }
         }
     }
+
+    pub fn sort_by_suit(&mut self) {
+        self.cards
+            .sort_by_key(|c| (suit_order(c.suit.name), c.rank));
+    }
+}
+
+// Display order for hand sorting: Spades, Hearts, Diamonds, Clubs, Trumps.
+// This is the user-facing sort order and intentionally differs from CardSuits::AVAILABLE_SUITS.
+fn suit_order(suit: CardSuits) -> u8 {
+    match suit {
+        CardSuits::Spades => 0,
+        CardSuits::Hearts => 1,
+        CardSuits::Diamonds => 2,
+        CardSuits::Clubs => 3,
+        CardSuits::Trumps => 4,
+    }
 }
 
 impl HandActions for Hand {
