@@ -130,6 +130,71 @@ pub fn display_cards(cards: &[Card]) {
     }
 }
 
+fn display_cards_enumerated(cards: &[Card]) {
+    for (chunk_idx, chunk) in cards.chunks(9).enumerate() {
+        let offset = chunk_idx * 9;
+        let mut top = String::new();
+        let mut rank_row = String::new();
+        let mut suit_row = String::new();
+        let mut bot = String::new();
+        let mut num_row = String::new();
+        for (i, card) in chunk.iter().enumerate() {
+            if i > 0 {
+                top.push(' ');
+                rank_row.push(' ');
+                suit_row.push(' ');
+                bot.push(' ');
+                num_row.push(' ');
+            }
+            if card.is_oudler() {
+                top.push_str("╔═══╗");
+                bot.push_str("╚═══╝");
+            } else {
+                top.push_str("┌───┐");
+                bot.push_str("└───┘");
+            }
+            rank_row.push_str(&format!("│{}│", card_rank_label(card)));
+            suit_row.push_str(&format!("│ {} │", card.suit.icon));
+            num_row.push_str(&format!("{:^5}", offset + i));
+        }
+        println!("{}", top);
+        println!("{}", rank_row);
+        println!("{}", suit_row);
+        println!("{}", bot);
+        println!("{}", num_row);
+    }
+}
+
+pub fn select_card(message: Option<&str>, from: Option<Vec<Card>>) -> Option<Card> {
+    if let Some(message) = message {
+        println!("\n{}", message);
+    }
+    match from {
+        Some(from) => {
+            println!("Select an option between 0 and {}", from.len() - 1);
+            display_cards_enumerated(&from);
+            match prompt_selection() {
+                Ok(index) if index < from.len() => Some(from[index]),
+                Ok(_) => {
+                    println!(
+                        "Invalid input. Please enter a number lower or equal than {}",
+                        from.len() - 1
+                    );
+                    select_card(message, Some(from))
+                }
+                Err(_) => {
+                    println!("Invalid input. Please enter a number.");
+                    select_card(message, Some(from))
+                }
+            }
+        }
+        None => {
+            println!("\nNo options available");
+            None
+        }
+    }
+}
+
 pub fn card_rank_label(card: &Card) -> String {
     match (card.rank, card.suit.name) {
         (22, CardSuits::Trumps) => "Foo".to_string(), // Fool

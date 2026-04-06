@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::common::{card::CardSuits, utils::select};
+use crate::common::{card::CardSuits, utils::select_card};
 
 use super::{
     bid::{Bid, Bids},
@@ -135,5 +135,5 @@ fn bot_call_king(cards: &[Card], kings: &[Card]) -> Card {
 fn human_call_king(cards: &[Card], kings: &[Card]) -> Card {
     println!("\nYour cards:");
     display_cards(cards);
-    select(Some("Which king do you call?"), Some(kings.to_vec())).unwrap()
+    select_card(Some("Which king do you call?"), Some(kings.to_vec())).unwrap()
 }

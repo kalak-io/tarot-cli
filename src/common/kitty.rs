@@ -5,7 +5,7 @@ use crate::common::{
 
 use super::{
     card::Card,
-    utils::{select, subtract},
+    utils::{select_card, subtract},
 };
 
 pub trait KittyActions {
@@ -66,7 +66,7 @@ impl KittyActions for Kitty {
                 let mut available = cards.clone();
                 subtract(&mut available, &new_kitty);
 
-                let card = select(Some("Compose your kitty"), Some(available)).unwrap();
+                let card = select_card(Some("Compose your kitty"), Some(available)).unwrap();
                 if (card.suit.name != CardSuits::Trumps && card.rank == KING_RANK)
                     || card.is_oudler()
                 {
