@@ -1,6 +1,6 @@
 use crate::common::{
     card::{CardGetters, CardSuits, KING_RANK},
-    utils::display,
+    utils::display_cards,
 };
 
 use super::{
@@ -62,7 +62,7 @@ impl KittyActions for Kitty {
             let mut new_kitty: Vec<Card> = Vec::new();
             while new_kitty.len() < self.max_size {
                 println!("\nThe building kitty contains: ");
-                display(&new_kitty);
+                display_cards(&new_kitty);
                 let mut available = cards.clone();
                 subtract(&mut available, &new_kitty);
 
@@ -76,7 +76,7 @@ impl KittyActions for Kitty {
                 }
             }
             println!("\nThe new kitty is:");
-            display(&new_kitty);
+            display_cards(&new_kitty);
             println!("Are you satisfied with this kitty? (yes/no)");
             let mut input = String::new();
             std::io::stdin()
