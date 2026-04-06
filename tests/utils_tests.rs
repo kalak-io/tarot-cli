@@ -124,10 +124,7 @@ mod utils {
     }
 
     #[rstest]
-    fn card_rank_label_centers_single_digit(
-        #[values(1u8, 2, 3, 4, 5, 6, 7, 8, 9)]
-        rank: u8,
-    ) {
+    fn card_rank_label_centers_single_digit(#[values(1u8, 2, 3, 4, 5, 6, 7, 8, 9)] rank: u8) {
         let label = card_rank_label(&Card::new(rank, CardSuits::Hearts));
         assert_eq!(label, format!(" {} ", rank));
     }
@@ -219,6 +216,12 @@ mod utils {
     ) {
         let (rank, suit) = case;
         let label = card_rank_label(&Card::new(rank, suit));
-        assert_eq!(label.chars().count(), 3, "rank {} label '{}' should be 3 chars", rank, label);
+        assert_eq!(
+            label.chars().count(),
+            3,
+            "rank {} label '{}' should be 3 chars",
+            rank,
+            label
+        );
     }
 }
