@@ -1,7 +1,7 @@
 use rand::Rng;
 use std::str::FromStr;
 
-use super::card::{Card, CardGetters};
+use super::card::{Card, CardGetters, CardSuits};
 
 pub fn random_int_in_range(min: usize, max: usize) -> usize {
     let mut rng = rand::thread_rng();
@@ -131,18 +131,13 @@ pub fn display_cards(cards: &[Card]) {
 }
 
 pub fn card_rank_label(card: &Card) -> String {
-    match card.name().as_str() {
-        "Fool" => "Foo".to_string(),
-        "King" => "Kng".to_string(),
-        "Queen" => "Que".to_string(),
-        "Knight" => "Knt".to_string(),
-        "Jack" => "Jck".to_string(),
-        _ => {
-            if card.rank < 10 {
-                format!(" {} ", card.rank)
-            } else {
-                format!("{} ", card.rank)
-            }
-        }
+    match (card.rank, card.suit.name) {
+        (22, CardSuits::Trumps) => "Foo".to_string(), // Fool
+        (14, _) => "Kng".to_string(),                 // King
+        (13, _) => "Que".to_string(),                 // Queen
+        (12, _) => "Knt".to_string(),                 // Knight
+        (11, _) => "Jck".to_string(),                 // Jack
+        (r, _) if r < 10 => format!(" {} ", r),
+        (r, _) => format!("{} ", r),
     }
 }

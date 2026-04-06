@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod utils {
+    use rstest::rstest;
     use tarot_cli::common::{
         card::{Card, CardSuits},
         utils::{card_box_lines, card_rank_label, compare, get_next_index, reorder, subtract},
@@ -107,26 +108,42 @@ mod utils {
         assert_eq!(hand, vec![a, b]);
     }
 
-    #[test]
-    fn card_rank_label_centers_single_digit() {
-        assert_eq!(card_rank_label(&Card::new(7, CardSuits::Hearts)), " 7 ");
-        assert_eq!(card_rank_label(&Card::new(1, CardSuits::Hearts)), " 1 ");
+    #[rstest]
+    fn card_rank_label_abbreviates_face_cards(
+        #[values(
+            (11u8, CardSuits::Hearts, "Jck"),
+            (12u8, CardSuits::Hearts, "Knt"),
+            (13u8, CardSuits::Hearts, "Que"),
+            (14u8, CardSuits::Hearts, "Kng"),
+            (22u8, CardSuits::Trumps, "Foo"),
+        )]
+        case: (u8, CardSuits, &str),
+    ) {
+        let (rank, suit, expected) = case;
+        assert_eq!(card_rank_label(&Card::new(rank, suit)), expected);
     }
 
-    #[test]
-    fn card_rank_label_left_aligns_double_digit() {
-        assert_eq!(card_rank_label(&Card::new(10, CardSuits::Hearts)), "10 ");
-        assert_eq!(card_rank_label(&Card::new(16, CardSuits::Trumps)), "16 ");
-        assert_eq!(card_rank_label(&Card::new(21, CardSuits::Trumps)), "21 ");
+    #[rstest]
+    fn card_rank_label_centers_single_digit(
+        #[values(1u8, 2, 3, 4, 5, 6, 7, 8, 9)]
+        rank: u8,
+    ) {
+        let label = card_rank_label(&Card::new(rank, CardSuits::Hearts));
+        assert_eq!(label, format!(" {} ", rank));
     }
 
-    #[test]
-    fn card_rank_label_abbreviates_face_cards() {
-        assert_eq!(card_rank_label(&Card::new(11, CardSuits::Hearts)), "Jck");
-        assert_eq!(card_rank_label(&Card::new(12, CardSuits::Hearts)), "Knt");
-        assert_eq!(card_rank_label(&Card::new(13, CardSuits::Hearts)), "Que");
-        assert_eq!(card_rank_label(&Card::new(14, CardSuits::Hearts)), "Kng");
-        assert_eq!(card_rank_label(&Card::new(22, CardSuits::Trumps)), "Foo");
+    #[rstest]
+    fn card_rank_label_left_aligns_double_digit(
+        #[values(
+            (10u8, CardSuits::Hearts),
+            (16u8, CardSuits::Trumps),
+            (21u8, CardSuits::Trumps),
+        )]
+        case: (u8, CardSuits),
+    ) {
+        let (rank, suit) = case;
+        let label = card_rank_label(&Card::new(rank, suit));
+        assert_eq!(label, format!("{} ", rank));
     }
 
     #[test]
@@ -185,27 +202,23 @@ mod utils {
         assert_eq!(lines.len(), 8);
     }
 
-    #[test]
-    fn card_rank_label_is_always_three_chars() {
-        for (rank, suit) in [
-            (1u8, CardSuits::Hearts),
-            (5, CardSuits::Hearts),
-            (9, CardSuits::Hearts),
-            (10, CardSuits::Hearts),
-            (16, CardSuits::Trumps),
-            (21, CardSuits::Trumps),
-            (11, CardSuits::Clubs),
-            (14, CardSuits::Spades),
-            (22, CardSuits::Trumps),
-        ] {
-            let label = card_rank_label(&Card::new(rank, suit));
-            assert_eq!(
-                label.chars().count(),
-                3,
-                "rank {} label '{}' should be 3 chars",
-                rank,
-                label
-            );
-        }
+    #[rstest]
+    fn card_rank_label_is_always_three_chars(
+        #[values(
+            (1u8,  CardSuits::Hearts),
+            (5u8,  CardSuits::Hearts),
+            (9u8,  CardSuits::Hearts),
+            (10u8, CardSuits::Hearts),
+            (16u8, CardSuits::Trumps),
+            (21u8, CardSuits::Trumps),
+            (11u8, CardSuits::Clubs),
+            (14u8, CardSuits::Spades),
+            (22u8, CardSuits::Trumps),
+        )]
+        case: (u8, CardSuits),
+    ) {
+        let (rank, suit) = case;
+        let label = card_rank_label(&Card::new(rank, suit));
+        assert_eq!(label.chars().count(), 3, "rank {} label '{}' should be 3 chars", rank, label);
     }
 }
