@@ -94,9 +94,7 @@ impl PlayerActions for Player {
     }
     fn compose_kitty(&mut self, kitty: &mut Kitty) -> Vec<Card> {
         self.hand.cards.extend(kitty.cards.clone());
-        self.hand
-            .cards
-            .sort_unstable_by_key(|card| (card.suit.initial, card.rank));
+        self.hand.sort_by_suit();
 
         match self.kind {
             PlayerKind::Human => kitty.human_compose(&mut self.hand.cards),
