@@ -69,6 +69,7 @@ cargo run
 The repo uses pre-commit hooks (`.pre-commit-config.yaml`). On every commit, these run automatically:
 - `cargo fmt` — enforces formatting
 - `cargo check --all-targets` — must compile
+- `cargo clippy --all-targets --all-features -- -D warnings` — same lint as CI
 - `cargo test --verbose` — all tests must pass
 - Standard file checks (trailing whitespace, EOF newlines, TOML/YAML/JSON validity, no private keys)
 
