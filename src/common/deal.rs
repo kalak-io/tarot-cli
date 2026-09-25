@@ -54,6 +54,11 @@ impl Deal {
             ..Default::default()
         }
     }
+    // Index of the taker in `self.players`; `self.taker.player` is a copy made at bid time
+    fn taker_index(&self) -> Option<usize> {
+        let taker_id = self.taker.as_ref()?.player.id;
+        self.players.iter().position(|p| p.id == taker_id)
+    }
 }
 impl DealActions for Deal {
     fn take_bids(&mut self) {
@@ -61,12 +66,12 @@ impl DealActions for Deal {
         self.taker = collect_bids(&self.players, self.taker.clone(), &mut bid);
     }
     fn take_chelem(&mut self) {
-        if let Some(taker) = &mut self.taker {
-            taker.player.declare_chelem();
-        } else {
-            for player in &mut self.players {
-                player.declare_chelem();
-            }
+        if let Some(index) = self.taker_index() {
+            self.players[index].declare_chelem();
+        }
+        // The player who announces a chelem leads the first trick
+        if let Some(index) = find_announced_chelem(&self.players) {
+            self.players = reorder(&self.players, index);
         }
     }
     fn call_king(&mut self) {
@@ -84,8 +89,7 @@ impl DealActions for Deal {
             _ => {
                 println!("\n\nThe kitty contains: ");
                 display_cards(&self.kitty.cards);
-                let taker_id = self.taker.as_ref().unwrap().player.id;
-                let taker_index = self.players.iter().position(|p| p.id == taker_id).unwrap();
+                let taker_index = self.taker_index().unwrap();
                 // Temporarily take kitty out to satisfy borrow checker
                 let mut kitty = std::mem::take(&mut self.kitty);
                 self.players[taker_index].compose_kitty(&mut kitty);
@@ -103,7 +107,7 @@ impl DealActions for Deal {
         let mut trick = Trick::default();
         for player in &mut self.players {
             if count_cards_by_hand(n_players) == player.hand.cards.len() as u8 {
-                player.declare_poignee();
+                player.declare_poignee(n_players);
             }
             player.play(&mut trick);
         }
@@ -124,30 +128,29 @@ impl DealActions for Deal {
                 player.hand.set_side_with_called_king(self.called_king);
             }
         }
-        // Set the taker's side directly in self.players (taker.player is a clone)
-        if let Some(taker) = &self.taker {
-            let taker_id = taker.player.id;
-            for player in &mut self.players {
-                if player.id == taker_id {
-                    player.hand.side = Side::Attack;
-                    break;
-                }
-            }
+        if let Some(index) = self.taker_index() {
+            self.players[index].hand.side = Side::Attack;
         }
     }
     fn set_score(&mut self) {
-        let won_cards_by_attack = merge_won_cards(&self.players);
+        let taker = self.taker.as_ref().unwrap();
+        let (taker_id, bid) = (taker.player.id, taker.bid);
+
+        let mut won_cards_by_attack = merge_won_cards(&self.players);
+        // The kitty, or the taker's discard, counts for the attack except on a Guard Against
+        if bid != Bids::GuardAgainst {
+            won_cards_by_attack.extend_from_slice(&self.kitty.cards);
+        }
         let bonus_chelem = compute_chelem_result(&self.tricks, &self.players);
         let bonus_poignee = best_poignee(&self.players);
         let attack_score = compute_score(
             &won_cards_by_attack,
-            &self.taker.clone().unwrap().bid,
+            &bid,
             self.bonus_petit_au_bout(),
             bonus_chelem,
             bonus_poignee,
         );
 
-        let taker_id = self.taker.as_ref().unwrap().player.id;
         let n_defenders = (self.players.len() - 1) as f64;
 
         for player in &mut self.players {
@@ -160,7 +163,7 @@ impl DealActions for Deal {
         }
     }
     fn show_score(&self) {
-        println!("\n--- Deal scores ---");
+        println!("\n--- Total scores ---");
         for player in &self.players {
             println!("  {}: {:.1}", player.name, player.score());
         }
@@ -281,13 +284,7 @@ fn compute_chelem_result(tricks: &[Trick], players: &[Player]) -> Option<Chelem>
     let all_won_by_attack =
         !tricks.is_empty() && tricks.iter().all(|t| t.winner_side == Side::Attack);
 
-    let announced = players.iter().any(|p| {
-        p.hand
-            .bonus_chelem
-            .as_ref()
-            .map(|c| c.state == ChelemState::Announced)
-            .unwrap_or(false)
-    });
+    let announced = find_announced_chelem(players).is_some();
 
     match (announced, all_won_by_attack) {
         (true, true) => Some(Chelem {
@@ -308,7 +305,7 @@ fn compute_chelem_result(tricks: &[Trick], players: &[Player]) -> Option<Chelem>
 
 fn best_poignee(players: &[Player]) -> Option<Poignee> {
     players.iter().fold(None, |best, player| {
-        let p = player.hand.bonus_poignee.clone();
+        let p = player.hand.bonus_poignee;
         match (&best, &p) {
             (_, None) => best,
             (None, Some(_)) => p,
@@ -317,5 +314,15 @@ fn best_poignee(players: &[Player]) -> Option<Poignee> {
             (Some(Poignee::Simple), Some(Poignee::Double | Poignee::Triple)) => p,
             _ => best,
         }
+    })
+}
+
+fn find_announced_chelem(players: &[Player]) -> Option<usize> {
+    players.iter().position(|player| {
+        player
+            .hand
+            .bonus_chelem
+            .as_ref()
+            .is_some_and(|c| c.state == ChelemState::Announced)
     })
 }

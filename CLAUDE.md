@@ -128,7 +128,7 @@ Key rules encoded in the codebase:
 | Bid multipliers | Take×1, Guard×2, GuardWithout×4, GuardAgainst×6 |
 | Base score | 25 points |
 | Kitty size | 6 cards (4 players), 3 cards (5+ players) |
-| Poignee bonus | Simple(8 trumps)=20, Double(10)=30, Triple(13)=40 |
+| Poignee bonus | Simple=20, Double=30, Triple=40. Trumps needed: 10/13/15 (4 players), 13/15/18 (3), 8/10/13 (5) |
 | Chelem bonus | Announced+succeeded=400, Not announced+succeeded=200, Announced+lost=−200 |
 | Petit au bout | Little trump won in last trick = ±10 pts (direction depends on winner side) |
 | Default players | 4 (1 human, 3 bots) |

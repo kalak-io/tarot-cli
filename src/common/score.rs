@@ -82,9 +82,15 @@ pub fn compute_score(
     bonus_poignee: Option<Poignee>,
 ) -> f64 {
     let points = diff_points(cards);
+    // The contract is won when the points are exactly met ("juste fait")
+    let sign = if points >= 0.0 { 1.0 } else { -1.0 };
     let multiplier = multiplier(bid);
     let points_petit_au_bout = points_petit_au_bout(bonus_petit_au_bout);
     let points_poignee = points_poignee(bonus_poignee);
     let points_chelem = points_chelem(bonus_chelem);
-    (BASE_SCORE + points + points_petit_au_bout) * multiplier + points_poignee + points_chelem
+    // The poignee goes to the side that wins the deal, whoever declared it.
+    // Petit au bout and chelem already carry the sign of the side that earned them.
+    sign * ((BASE_SCORE + points.abs()) * multiplier + points_poignee)
+        + points_petit_au_bout * multiplier
+        + points_chelem
 }

@@ -1,7 +1,5 @@
 #[cfg(test)]
 mod integration {
-    use std::collections::HashMap;
-
     use tarot_cli::common::{
         deal::{Deal, DealActions},
         game::{create_deck, Game, GameActions, ReorderBy},
@@ -53,7 +51,6 @@ mod integration {
         deal.set_side();
         deal.compose_kitty();
         deal.take_chelem();
-        game.reorder_players(ReorderBy::Chelem); // no-op if no chelem announced
         deal.play_tricks();
         deal.set_score();
         deal.show_score();
@@ -88,6 +85,7 @@ mod integration {
     /// 1. Dealer rotates through all players (each deals once).
     /// 2. N_PLAYERS deals are stored in game.deals.
     /// 3. Cumulative scores across all deals remain zero-sum.
+    /// 4. `game.players` carries each player's running total.
     ///
     /// Note: `game.deck` is left untouched by `draw_cards` (which takes an
     /// immutable slice), so no `collect_deck` call is needed between deals.
@@ -96,8 +94,6 @@ mod integration {
         const N_PLAYERS: u8 = 4;
         let mut game = create_all_bot_game(N_PLAYERS);
 
-        // Per-player cumulative score tracker (player id → total score)
-        let mut cumulative: HashMap<u8, f64> = (1..=N_PLAYERS).map(|id| (id, 0.0)).collect();
         let mut dealer_ids: Vec<u8> = Vec::new();
 
         for _ in 0..N_PLAYERS {
@@ -123,14 +119,14 @@ mod integration {
             deal.set_side();
             deal.compose_kitty();
             deal.take_chelem();
-            game.reorder_players(ReorderBy::Chelem);
             deal.play_tricks();
             deal.set_score();
+            game.update_scores(&deal.players);
 
-            // Each Deal clones game.players (scores start at 0.0 per deal),
-            // so we accumulate deal scores manually.
+            // 4. Deal players start from the game totals, so both hold the same total
             for player in &deal.players {
-                *cumulative.get_mut(&player.id).unwrap() += player.score();
+                let game_player = game.players.iter().find(|p| p.id == player.id).unwrap();
+                assert_eq!(game_player.score(), player.score());
             }
 
             game.collect_deck(&deal.players, &deal.kitty.cards);
@@ -159,7 +155,7 @@ mod integration {
         assert_eq!(game.deals.len(), N_PLAYERS as usize);
 
         // 3. Zero-sum across all deals
-        let grand_total: f64 = cumulative.values().sum();
+        let grand_total: f64 = game.players.iter().map(|p| p.score()).sum();
         assert!(
             grand_total.abs() < 1e-9,
             "cumulative scores must sum to zero, got {grand_total}"

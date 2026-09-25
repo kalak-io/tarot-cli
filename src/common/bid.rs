@@ -55,23 +55,23 @@ impl Bid {
         println!("\nYour cards:");
         display_cards(cards);
         let available_bids = self.get_available_bids();
-        self.current = select(Some("What is your bid?"), Some(available_bids)).unwrap();
-        self.current
+        let choice = select(Some("What is your bid?"), Some(available_bids)).unwrap();
+        self.record(choice)
     }
     pub fn bot_choose(&mut self, cards: &[Card]) -> Bids {
         let ideal_bid = taker_evaluation(cards);
-        match ideal_bid {
-            Bids::Pass => ideal_bid,
-            _ => {
-                let available_bids = self.get_available_bids();
-                if available_bids.contains(&ideal_bid) {
-                    self.current = ideal_bid;
-                    ideal_bid
-                } else {
-                    Bids::Pass
-                }
-            }
+        if self.get_available_bids().contains(&ideal_bid) {
+            self.record(ideal_bid)
+        } else {
+            Bids::Pass
         }
+    }
+    // A pass leaves the highest bid so far in place
+    pub fn record(&mut self, bid: Bids) -> Bids {
+        if bid != Bids::Pass {
+            self.current = bid;
+        }
+        bid
     }
 }
 
