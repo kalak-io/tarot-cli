@@ -37,6 +37,7 @@ pub trait DealActions {
 
 pub trait DealGetters {
     fn bonus_petit_au_bout(&self) -> Option<Side>;
+    fn attack_cards(&self) -> Vec<Card>;
 }
 #[derive(Debug, Default)]
 pub struct Deal {
@@ -179,11 +180,7 @@ impl DealActions for Deal {
         let taker = self.taker.as_ref().unwrap();
         let (taker_id, bid) = (taker.player.id, taker.bid);
 
-        let mut won_cards_by_attack = merge_won_cards(&self.players);
-        // The kitty, or the taker's discard, counts for the attack except on a Guard Against
-        if bid != Bids::GuardAgainst {
-            won_cards_by_attack.extend_from_slice(&self.kitty.cards);
-        }
+        let won_cards_by_attack = self.attack_cards();
         let bonus_chelem = compute_chelem_result(&self.tricks, &self.players);
         let bonus_poignee = best_poignee(&self.players);
         let attack_score = compute_score(
@@ -225,6 +222,18 @@ impl DealGetters for Deal {
         } else {
             None
         }
+    }
+    // Cards won by the attack, plus the kitty (or the taker's discard) except on a Guard Against
+    fn attack_cards(&self) -> Vec<Card> {
+        let mut cards = merge_won_cards(&self.players);
+        if self
+            .taker
+            .as_ref()
+            .is_some_and(|taker| taker.bid != Bids::GuardAgainst)
+        {
+            cards.extend_from_slice(&self.kitty.cards);
+        }
+        cards
     }
 }
 
