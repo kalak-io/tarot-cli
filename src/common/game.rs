@@ -1,9 +1,9 @@
-use rand::seq::SliceRandom;
+use rand::{rngs::StdRng, seq::SliceRandom, Rng, RngExt, SeedableRng};
 
 use super::{
     card::{Card, CardSuits},
     player::{Player, PlayerActions, PlayerKind},
-    utils::{get_next_index, random_int_in_range, read_input, reorder},
+    utils::{get_next_index, read_input, reorder},
 };
 
 const NUMBER_CARDS_BY_SUIT: usize = 14;
@@ -33,6 +33,8 @@ pub trait GameActions {
 pub struct Game {
     pub players: Vec<Player>,
     pub deck: Vec<Card>,
+    // Source of every random draw: shuffle, first dealer, cut and kitty positions
+    pub rng: StdRng,
 }
 impl Default for Game {
     fn default() -> Self {
@@ -41,16 +43,27 @@ impl Default for Game {
 }
 impl Game {
     pub fn new(n_players: u8) -> Self {
-        Game {
-            players: create_players(n_players),
-            deck: create_deck(),
-        }
+        Game::build(generate_players(n_players), rand::make_rng())
+    }
+    // All players are bots, and the same seed plays the same deals
+    pub fn new_bots(n_players: u8, seed: u64) -> Self {
+        let players = (1..=n_players)
+            .map(|id| Player::new(format!("Bot {id}"), id, Some(PlayerKind::Bot)))
+            .collect();
+        Game::build(players, StdRng::seed_from_u64(seed))
+    }
+    fn build(mut players: Vec<Player>, mut rng: StdRng) -> Self {
+        set_first_dealer(&mut players, &mut rng);
+        let deck = create_deck(&mut rng);
+        Game { players, deck, rng }
     }
 }
 impl GameActions for Game {
     fn split_deck(&mut self) {
         // Each part of the cut keeps more than 3 cards
-        let split_index = random_int_in_range(MIN_NUMBER_CARDS_SPLIT + 1, MAX_NUMBER_CARDS_SPLIT);
+        let split_index = self
+            .rng
+            .random_range(MIN_NUMBER_CARDS_SPLIT + 1..MAX_NUMBER_CARDS_SPLIT);
         let mut new_deck = Vec::new();
         new_deck.extend_from_slice(&self.deck[split_index..]);
         new_deck.extend_from_slice(&self.deck[..split_index]);
@@ -114,15 +127,9 @@ fn generate_players(n_players: u8) -> Vec<Player> {
     players
 }
 
-fn set_first_dealer(players: &mut [Player]) {
-    let index = random_int_in_range(0, players.len());
+fn set_first_dealer(players: &mut [Player], rng: &mut impl Rng) {
+    let index = rng.random_range(0..players.len());
     players[index].toggle_role();
-}
-
-fn create_players(n_players: u8) -> Vec<Player> {
-    let mut players = generate_players(n_players);
-    set_first_dealer(&mut players);
-    players
 }
 
 fn generate_card(n_cards: usize, suit: CardSuits) -> Vec<Card> {
@@ -144,10 +151,10 @@ fn generate_suits(deck: &mut Vec<Card>) {
     }
 }
 
-pub fn create_deck() -> Vec<Card> {
+pub fn create_deck(rng: &mut impl Rng) -> Vec<Card> {
     let mut deck = Vec::new();
     generate_suits(&mut deck);
-    deck.shuffle(&mut rand::rng());
+    deck.shuffle(rng);
     deck.to_vec()
 }
 

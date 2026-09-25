@@ -1,4 +1,4 @@
-use rand::seq::index::sample;
+use rand::{seq::index::sample, Rng};
 
 use crate::common::utils::display_cards;
 
@@ -49,9 +49,9 @@ pub struct Deal {
     pub fool_debt: Option<Side>,
 }
 impl Deal {
-    pub fn new(players: &mut Vec<Player>, deck: &mut [Card]) -> Self {
+    pub fn new(players: &mut Vec<Player>, deck: &mut [Card], rng: &mut impl Rng) -> Self {
         let mut kitty = Kitty::new(players.len());
-        draw_cards(deck, players, &mut kitty);
+        draw_cards(deck, players, &mut kitty, rng);
 
         Deal {
             players: players.to_vec(), // TODO: is it necessary ?
@@ -234,13 +234,13 @@ fn clear_hand(players: &mut Vec<Player>) {
     }
 }
 
-fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Kitty) {
+fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Kitty, rng: &mut impl Rng) {
     clear_hand(players);
     let packet_size = packet_size(players.len());
     let n_packets = (deck.len() - kitty.max_size) / packet_size;
     // One kitty card goes after some of the player packets, never after the last one,
     // so the first and the last cards of the deck never go to the kitty
-    let kitty_after = sample(&mut rand::rng(), n_packets - 1, kitty.max_size).into_vec();
+    let kitty_after = sample(rng, n_packets - 1, kitty.max_size).into_vec();
 
     let mut cards = deck.iter().copied();
     let mut player_index = 0;
