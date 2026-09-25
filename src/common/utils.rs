@@ -180,6 +180,7 @@ pub fn select_card(message: Option<&str>, from: Option<Vec<Card>>) -> Option<Car
 pub fn card_rank_label(card: &Card) -> String {
     match (card.rank, card.suit.name) {
         (22, CardSuits::Trumps) => "Foo".to_string(), // Fool
+        (r @ 11..=14, CardSuits::Trumps) => format!("{} ", r), // Trumps have no face cards
         (14, _) => "Kng".to_string(),                 // King
         (13, _) => "Que".to_string(),                 // Queen
         (12, _) => "Knt".to_string(),                 // Knight
