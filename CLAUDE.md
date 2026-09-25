@@ -33,8 +33,10 @@ tests/
     ├── card_test.rs
     ├── deal_tests.rs
     ├── game_tests.rs
+    ├── hand_tests.rs
     ├── integration_test.rs
     ├── kitty_tests.rs
+    ├── player_tests.rs
     ├── score_tests.rs
     ├── trick_test.rs
     └── utils_tests.rs

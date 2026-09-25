@@ -320,4 +320,45 @@ mod trick {
         trick.bot_play(&mut hand);
         assert_eq!(trick.played_cards, vec![Card::new(22, CardSuits::Trumps)]);
     }
+
+    // "Le jeu à 5 joueurs": the first lead is not in the called card's suit,
+    // unless it is the called card itself
+    #[rstest]
+    fn allowed_cards_first_lead_avoids_the_called_suit(
+        #[values(
+            (Vec::from([Card::new(5, CardSuits::Hearts), Card::new(7, CardSuits::Spades), Card::new(22, CardSuits::Trumps)]),
+             Vec::from([Card::new(7, CardSuits::Spades), Card::new(22, CardSuits::Trumps)])),
+            // The called card itself can lead
+            (Vec::from([Card::new(14, CardSuits::Hearts), Card::new(5, CardSuits::Hearts), Card::new(7, CardSuits::Spades)]),
+             Vec::from([Card::new(14, CardSuits::Hearts), Card::new(7, CardSuits::Spades)])),
+            // Only cards of the called suit: they can lead
+            (Vec::from([Card::new(5, CardSuits::Hearts), Card::new(6, CardSuits::Hearts)]),
+             Vec::from([Card::new(5, CardSuits::Hearts), Card::new(6, CardSuits::Hearts)])),
+        )]
+        case: (Vec<Card>, Vec<Card>),
+    ) {
+        let (hand, expected) = case;
+        let trick = Trick {
+            called_card: Some(Card::new(14, CardSuits::Hearts)),
+            ..Default::default()
+        };
+        assert_eq!(allowed_cards_to_play(&trick, &hand), expected);
+    }
+
+    #[test]
+    fn allowed_cards_called_suit_can_be_followed() {
+        let trick = Trick {
+            played_cards: vec![Card::new(8, CardSuits::Hearts)],
+            called_card: Some(Card::new(14, CardSuits::Hearts)),
+            ..Default::default()
+        };
+        let hand = vec![
+            Card::new(5, CardSuits::Hearts),
+            Card::new(7, CardSuits::Spades),
+        ];
+        assert_eq!(
+            allowed_cards_to_play(&trick, &hand),
+            vec![Card::new(5, CardSuits::Hearts)]
+        );
+    }
 }

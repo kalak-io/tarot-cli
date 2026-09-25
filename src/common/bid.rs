@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter, Result};
 
 use super::{
-    card::{Card, CardGetters, CardSuits, KING_RANK},
+    card::{Card, CardGetters, CardSuits, JACK_RANK, KING_RANK, KNIGHT_RANK, QUEEN_RANK},
     utils::{compare, display_cards, select},
 };
 
@@ -99,9 +99,9 @@ pub fn hand_strength(cards: &[Card]) -> u32 {
             (CardSuits::Trumps, 16..=20) => 3,
             (CardSuits::Trumps, _) => 2,
             (_, KING_RANK) => 6,
-            (_, 13) => 3,
-            (_, 12) => 2,
-            (_, 11) => 1,
+            (_, QUEEN_RANK) => 3,
+            (_, KNIGHT_RANK) => 2,
+            (_, JACK_RANK) => 1,
             _ => 0,
         })
         .sum();

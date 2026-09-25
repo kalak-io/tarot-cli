@@ -15,7 +15,14 @@ use super::{
     utils::{get_next_index, reorder},
 };
 
-const DEAL_SIZE_PLAYERS: usize = 3;
+// Cards dealt to a player at a time: 4 by 4 with 3 players, 3 by 3 otherwise
+fn packet_size(n_players: usize) -> usize {
+    if n_players == 3 {
+        4
+    } else {
+        3
+    }
+}
 
 pub trait DealActions {
     fn take_bids(&mut self);
@@ -37,7 +44,7 @@ pub struct Deal {
     pub players: Vec<Player>,
     pub taker: Option<Taker>,
     pub tricks: Vec<Trick>,
-    pub called_king: Option<Card>,
+    pub called_card: Option<Card>,
     // Side that owes a low card for keeping the Fool, until it wins one
     pub fool_debt: Option<Side>,
 }
@@ -77,8 +84,8 @@ impl DealActions for Deal {
     }
     fn call_king(&mut self) {
         if self.players.len() > 4 {
-            self.called_king = Some(self.taker.clone().unwrap().player.call_king());
-            println!("\nThe called king is {}", self.called_king.unwrap());
+            self.called_card = Some(self.taker.clone().unwrap().player.call_king());
+            println!("\nThe called card is {}", self.called_card.unwrap());
         }
     }
     fn compose_kitty(&mut self) {
@@ -104,7 +111,11 @@ impl DealActions for Deal {
         }
 
         let n_players = self.players.len();
-        let mut trick = Trick::default();
+        // The first lead cannot be in the called card's suit (5-player game)
+        let mut trick = Trick {
+            called_card: self.called_card.filter(|_| self.tricks.is_empty()),
+            ..Default::default()
+        };
         for player in &mut self.players {
             if count_cards_by_hand(n_players) == player.hand.cards.len() as u8 {
                 player.declare_poignee(n_players);
@@ -154,10 +165,10 @@ impl DealActions for Deal {
         self.play_tricks()
     }
     fn set_side(&mut self) {
-        // Set called-king holder's side (5-player game)
-        if self.called_king.is_some() {
+        // Set the called card holder's side (5-player game)
+        if self.called_card.is_some() {
             for player in &mut self.players {
-                player.hand.set_side_with_called_king(self.called_king);
+                player.hand.set_side_with_called_card(self.called_card);
             }
         }
         if let Some(index) = self.taker_index() {
@@ -225,7 +236,8 @@ fn clear_hand(players: &mut Vec<Player>) {
 
 fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Kitty) {
     clear_hand(players);
-    let n_packets = (deck.len() - kitty.max_size) / DEAL_SIZE_PLAYERS;
+    let packet_size = packet_size(players.len());
+    let n_packets = (deck.len() - kitty.max_size) / packet_size;
     // One kitty card goes after some of the player packets, never after the last one,
     // so the first and the last cards of the deck never go to the kitty
     let kitty_after = sample(&mut rand::thread_rng(), n_packets - 1, kitty.max_size).into_vec();
@@ -236,7 +248,7 @@ fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Kitty) {
         players[player_index]
             .hand
             .cards
-            .extend(cards.by_ref().take(DEAL_SIZE_PLAYERS));
+            .extend(cards.by_ref().take(packet_size));
         player_index = get_next_index(players, player_index);
         if kitty_after.contains(&packet) {
             kitty.cards.extend(cards.next());

@@ -31,7 +31,9 @@ mod deal {
     }
 
     #[rstest]
-    fn deals_right_number_of_cards(#[values((4, 6, 18), (5, 3, 15))] case: (u8, usize, usize)) {
+    fn deals_right_number_of_cards(
+        #[values((3, 6, 24), (4, 6, 18), (5, 3, 15))] case: (u8, usize, usize),
+    ) {
         let (n_player, expected_kitty_size, expected_n_cards_by_player) = case;
         let mut game = Game::new(n_player);
         let deal = Deal::new(&mut game.players, &mut game.deck);
@@ -63,14 +65,17 @@ mod deal {
             (Vec::from([Trick {
                 played_cards: vec![Card::new(1, CardSuits::Trumps)],
                 winner_side: Side::Attack,
+                ..Default::default()
             }]), Some(Side::Attack)),
             (Vec::from([Trick {
                 played_cards: vec![Card::new(1, CardSuits::Trumps)],
                 winner_side: Side::Defense,
+                ..Default::default()
             }]), Some(Side::Defense)),
             (Vec::from([Trick {
                 played_cards: vec![Card::new(1, CardSuits::Hearts)],
                 winner_side: Side::Attack,
+                ..Default::default()
             }]), None),
         )]
         case: (Vec<Trick>, Option<Side>),
@@ -332,5 +337,51 @@ mod deal {
         }
         let total: f64 = deal.players.iter().map(|p| p.score()).sum();
         assert_eq!(total, 0.0);
+    }
+
+    // "Le jeu à 3 joueurs": cards are dealt 4 by 4. Otherwise 3 by 3.
+    #[rstest]
+    fn first_player_gets_a_packet_of_the_right_size(
+        #[values((3, 4), (4, 3), (5, 3))] case: (u8, usize),
+    ) {
+        let (n_players, packet_size) = case;
+        let mut game = Game::new(n_players);
+        let deck = game.deck.clone();
+        let deal = Deal::new(&mut game.players, &mut game.deck);
+        let first_hand = &deal.players[0].hand.cards;
+        assert_eq!(first_hand[..packet_size], deck[..packet_size]);
+        assert!(!first_hand.contains(&deck[packet_size]));
+    }
+
+    // "Le jeu à 5 joueurs": the first lead is not in the called card's suit
+    #[test]
+    fn first_lead_avoids_the_called_suit() {
+        let called = Card::new(14, CardSuits::Hearts);
+        let mut deal = deal_with_hands([
+            // Both cards are equally cheap: the bot would lead the 5 of hearts first
+            vec![
+                Card::new(5, CardSuits::Hearts),
+                Card::new(7, CardSuits::Spades),
+            ],
+            vec![called, Card::new(2, CardSuits::Spades)],
+            vec![
+                Card::new(3, CardSuits::Hearts),
+                Card::new(3, CardSuits::Spades),
+            ],
+            vec![
+                Card::new(4, CardSuits::Hearts),
+                Card::new(4, CardSuits::Spades),
+            ],
+        ]);
+        deal.called_card = Some(called);
+
+        deal.play_tricks();
+
+        assert_eq!(deal.tricks[0].called_card, Some(called));
+        assert_eq!(
+            deal.tricks[0].played_cards[0],
+            Card::new(7, CardSuits::Spades)
+        );
+        assert_eq!(deal.tricks[1].called_card, None);
     }
 }

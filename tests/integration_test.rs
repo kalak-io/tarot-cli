@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod integration {
+    use rstest::rstest;
     use tarot_cli::common::{
         deal::{Deal, DealActions},
         game::{create_deck, Game, GameActions, ReorderBy},
@@ -22,12 +23,15 @@ mod integration {
     /// Run one complete deal (setup → bids → kitty → tricks → score) with
     /// four bots and verify the key invariants of the game:
     ///
-    /// 1. Exactly 18 tricks are played (72 cards / 4 players).
+    /// 1. Every card in the hands is played: 24, 18 or 15 tricks for 3, 4 or 5 players.
     /// 2. All 78 cards are accounted for (won_cards + kitty).
     /// 3. Scores are zero-sum across all players.
-    #[test]
-    fn full_deal_completes_and_preserves_invariants() {
-        let mut game = create_all_bot_game(4);
+    #[rstest]
+    fn full_deal_completes_and_preserves_invariants(
+        #[values((3, 24), (4, 18), (5, 15))] case: (u8, usize),
+    ) {
+        let (n_players, expected_tricks) = case;
+        let mut game = create_all_bot_game(n_players);
 
         // Retry until at least one bot bids — with random hands some deals
         // may produce an all-pass result, which is valid but unplayable.
@@ -46,7 +50,7 @@ mod integration {
             // Simply retry with a fresh shuffle on the same deck.
         };
 
-        deal.call_king(); // no-op for 4-player games
+        deal.call_king(); // 5-player games only
         deal.set_side();
         deal.compose_kitty();
         deal.take_chelem();
@@ -54,11 +58,11 @@ mod integration {
         deal.set_score();
         deal.show_score();
 
-        // 1. Correct number of tricks (78 − 6 kitty cards) / 4 players = 18
+        // 1. Every card in the hands is played
         assert_eq!(
             deal.tricks.len(),
-            18,
-            "expected 18 tricks for a 4-player deal"
+            expected_tricks,
+            "wrong number of tricks for a {n_players}-player deal"
         );
 
         // 2. All 78 cards are accounted for

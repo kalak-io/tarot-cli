@@ -1,9 +1,9 @@
 use std::fmt::{Display, Formatter, Result};
 
 pub const KING_RANK: u8 = 14;
-const QUEEN_RANK: u8 = 13;
-const KNIGHT_RANK: u8 = 12;
-const JACK_RANK: u8 = 11;
+pub const QUEEN_RANK: u8 = 13;
+pub const KNIGHT_RANK: u8 = 12;
+pub const JACK_RANK: u8 = 11;
 const LITTLE_RANK: u8 = 1;
 const BIG_RANK: u8 = 21;
 const FOOL_RANK: u8 = 22;

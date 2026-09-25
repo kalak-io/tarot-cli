@@ -20,6 +20,8 @@ pub trait TrickGetters {
 pub struct Trick {
     pub played_cards: Vec<Card>,
     pub winner_side: Side,
+    // Set on the first trick of a 5-player deal only
+    pub called_card: Option<Card>,
 }
 
 impl TrickActions for Trick {
@@ -179,7 +181,23 @@ pub fn allowed_cards_to_play(trick: &Trick, player_cards: &[Card]) -> Vec<Card> 
         .partition(|card| card.is_fool());
 
     let mut allowed_cards = match trick.played_suit() {
-        None => cards,
+        // "Le jeu à 5 joueurs": the first lead is not in the called card's suit,
+        // unless it is the called card itself
+        None => match trick.called_card {
+            Some(called) => {
+                let outside_called_suit: Vec<Card> = cards
+                    .iter()
+                    .filter(|card| card.suit.name != called.suit.name || **card == called)
+                    .copied()
+                    .collect();
+                if outside_called_suit.is_empty() {
+                    cards
+                } else {
+                    outside_called_suit
+                }
+            }
+            None => cards,
+        },
         Some(played_suit) => {
             let suit_cards: Vec<Card> = cards
                 .iter()

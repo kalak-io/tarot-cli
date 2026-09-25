@@ -62,9 +62,9 @@ pub struct Hand {
     pub bonus_chelem: Option<Chelem>,
 }
 impl Hand {
-    pub fn set_side_with_called_king(&mut self, called_king: Option<Card>) {
-        if let Some(called_king) = called_king {
-            if self.cards.contains(&called_king) {
+    pub fn set_side_with_called_card(&mut self, called_card: Option<Card>) {
+        if let Some(called_card) = called_card {
+            if self.cards.contains(&called_card) {
                 self.side = Side::Attack;
             }
         }
