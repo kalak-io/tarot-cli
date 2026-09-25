@@ -121,6 +121,9 @@ pub fn hand_strength(cards: &[Card]) -> u32 {
 // With 4 players, about 23% of hands reach a Take, 7% a Guard, 0.7% a Guard Without
 // and 0.04% a Guard Against. The 3- and 5-player cutoffs give the same shares for
 // their 24- and 15-card hands, measured over 100,000 random deals per player count.
+// Bots lose most contracts at these cutoffs. `cargo run --release --bin bench -- --calibrate`
+// shows the strengths where each bid wins often enough, but with the current bot card play
+// those strengths are so rare that most deals end with everyone passing.
 fn bid_cutoffs(n_players: usize) -> [u32; 4] {
     match n_players {
         3 => [50, 57, 65, 72],

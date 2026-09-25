@@ -69,6 +69,19 @@ mod game {
     }
 
     #[test]
+    fn shuffle_deck_keeps_the_same_cards_in_a_new_order() {
+        let mut game = Game::new_bots(4, 42);
+        let before: Vec<String> = game.deck.iter().map(|c| c.id()).collect();
+        game.shuffle_deck();
+        let after: Vec<String> = game.deck.iter().map(|c| c.id()).collect();
+        assert_ne!(before, after);
+        let (mut before, mut after) = (before, after);
+        before.sort();
+        after.sort();
+        assert_eq!(before, after);
+    }
+
+    #[test]
     fn split_deck_changes_the_order_of_cards() {
         let mut game = Game::default();
         let first_card = game.deck.first().cloned().unwrap();

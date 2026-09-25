@@ -1,14 +1,19 @@
 // Plays many all-bot deals with a fixed seed and prints statistics on the luck of the deal.
 // The game prints every deal on stdout, so the report goes to stderr:
 //     cargo run --release --bin bench -- [deals per player count] [seed] > /dev/null
+// With --calibrate, it measures for each bid the lowest hand strength at which bots win it
+// often enough, to compare with `bid_cutoffs()` in bid.rs:
+//     cargo run --release --bin bench -- --calibrate [deals per player count and bid] [seed] > /dev/null
+use std::collections::BTreeMap;
 use std::time::Instant;
 
 use tarot_cli::common::{
-    bid::{taker_evaluation, Bids},
+    bid::{hand_strength, taker_evaluation, Bids},
     deal::{Deal, DealActions, DealGetters},
     game::{Game, GameActions, ReorderBy, MAX_PLAYERS, MIN_PLAYERS},
     hand::Side,
     score::{compute_oudlers, diff_points},
+    taker::Taker,
 };
 
 const DEFAULT_DEALS: usize = 10_000;
@@ -57,6 +62,7 @@ fn run(n_players: u8, n_deals: usize, seed: u64) -> Stats {
     };
     let mut game = Game::new_bots(n_players, seed);
     while stats.deals < n_deals {
+        game.shuffle_deck();
         game.split_deck();
         game.update_dealer();
         game.reorder_players(ReorderBy::Dealer);
@@ -128,6 +134,86 @@ fn play_deal(deal: &mut Deal) {
     deal.take_chelem();
     deal.play_tricks();
     deal.set_score();
+}
+
+// Makes the strongest hand of each deal take with `bid`, whatever its strength, and plays
+// the deal. Returns the number of deals and of contracts won by the taker's hand strength.
+fn forced_results(
+    n_players: u8,
+    bid: Bids,
+    n_deals: usize,
+    seed: u64,
+) -> BTreeMap<u32, (usize, usize)> {
+    let mut results: BTreeMap<u32, (usize, usize)> = BTreeMap::new();
+    let mut game = Game::new_bots(n_players, seed);
+    for _ in 0..n_deals {
+        game.shuffle_deck();
+        game.split_deck();
+        game.update_dealer();
+        game.reorder_players(ReorderBy::Dealer);
+        let mut deal = Deal::new(&mut game.players, &mut game.deck, &mut game.rng);
+        let strengths: Vec<u32> = deal
+            .players
+            .iter()
+            .map(|p| hand_strength(&p.hand.cards))
+            .collect();
+        let strength = *strengths.iter().max().unwrap();
+        let taker_index = strengths.iter().position(|s| *s == strength).unwrap();
+        deal.taker = Some(Taker {
+            player: deal.players[taker_index].clone(),
+            bid,
+        });
+
+        play_deal(&mut deal);
+
+        let result = results.entry(strength).or_default();
+        result.0 += 1;
+        result.1 += (diff_points(&deal.attack_cards()) >= 0.0) as usize;
+        game.update_scores(&deal.players);
+        game.collect_deck(&deal.players, &deal.kitty.cards);
+    }
+    results
+}
+
+// Lowest strength from which the win rate stays at `target` or above for every stronger hand.
+// Each strength pools the strengths within 2 of it, and strengths with fewer than 500 pooled
+// deals are skipped. Scanning down from the strongest hands ignores the weakest ones, which win
+// more again because the other hands at the table are weak too.
+fn lowest_strength(results: &BTreeMap<u32, (usize, usize)>, target: f64) -> Option<u32> {
+    let mut lowest = None;
+    for strength in results.keys().rev().copied() {
+        let (deals, won) = results
+            .range(strength.saturating_sub(2)..=strength + 2)
+            .fold((0, 0), |(d, w), (_, (deals, won))| (d + deals, w + won));
+        if deals < 500 {
+            continue;
+        }
+        if (won as f64 / deals as f64) < target {
+            break;
+        }
+        lowest = Some(strength);
+    }
+    lowest
+}
+
+// A bot takes when a Take wins at least 50% of the time, and bids higher when that bid wins
+// at least 60% of the time. A Take and a Guard play the same way, so they share one run.
+fn calibrate(n_deals: usize, seed: u64) {
+    let show = |strength: Option<u32>| strength.map_or("never".to_string(), |s| s.to_string());
+    for n_players in MIN_PLAYERS..=MAX_PLAYERS {
+        let start = Instant::now();
+        let take = forced_results(n_players, Bids::Take, n_deals, seed);
+        let guard_without = forced_results(n_players, Bids::GuardWithout, n_deals, seed);
+        let guard_against = forced_results(n_players, Bids::GuardAgainst, n_deals, seed);
+        eprintln!(
+            "{n_players} players: Take {}, Guard {}, GuardWithout {}, GuardAgainst {} ({n_deals} deals per bid, seed {seed}, {:.1}s)",
+            show(lowest_strength(&take, 0.5)),
+            show(lowest_strength(&take, 0.6)),
+            show(lowest_strength(&guard_without, 0.6)),
+            show(lowest_strength(&guard_against, 0.6)),
+            start.elapsed().as_secs_f64()
+        );
+    }
 }
 
 fn percent(part: usize, total: usize) -> String {
@@ -228,19 +314,27 @@ fn parse_arg<T: std::str::FromStr>(args: &[String], index: usize, default: T) ->
         None => default,
         Some(arg) => arg.parse().unwrap_or_else(|_| {
             eprintln!("Invalid argument: {arg}");
-            eprintln!("Usage: bench [deals per player count] [seed]");
+            eprintln!("Usage: bench [--calibrate] [deals per player count] [seed]");
             std::process::exit(2);
         }),
     }
 }
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
+    let mut args: Vec<String> = std::env::args().collect();
+    let calibrating = args.get(1).is_some_and(|arg| arg == "--calibrate");
+    if calibrating {
+        args.remove(1);
+    }
     let n_deals = parse_arg(&args, 1, DEFAULT_DEALS);
     let seed = parse_arg(&args, 2, DEFAULT_SEED);
     if n_deals == 0 {
         eprintln!("The number of deals must be at least 1");
         std::process::exit(2);
+    }
+    if calibrating {
+        calibrate(n_deals, seed);
+        return;
     }
     for n_players in MIN_PLAYERS..=MAX_PLAYERS {
         let start = Instant::now();

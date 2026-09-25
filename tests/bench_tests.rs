@@ -45,6 +45,16 @@ mod bench {
     }
 
     #[test]
+    fn calibrate_reports_cutoffs_for_every_player_count() {
+        let output = run_bench(&["--calibrate", "50", "1"]);
+        assert!(output.status.success());
+        let report = String::from_utf8(output.stderr).unwrap();
+        for n_players in 3..=5 {
+            assert!(report.contains(&format!("{n_players} players: Take ")));
+        }
+    }
+
+    #[test]
     fn bench_rejects_an_invalid_argument() {
         let output = run_bench(&["many"]);
         assert_eq!(output.status.code(), Some(2));
