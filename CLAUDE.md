@@ -4,7 +4,7 @@ This file provides context for AI assistants working in this repository.
 
 ## Project Overview
 
-**tarot-cli** is a Rust CLI implementation of the French Tarot card game (78-card deck). The project covers the full game loop: deck creation, dealing, bidding, king calling, kitty composition, trick playing, and score computation.
+**tarot-cli** is a Rust CLI implementation of the French Tarot card game (78-card deck). The project covers the full game loop for 3, 4 or 5 players: deck creation, dealing, bidding, card calling (5 players), kitty composition, trick playing, and score computation.
 
 Official rules reference: `tarot-official-rules.pdf` (authoritative source for game rule questions).
 
@@ -137,7 +137,15 @@ Key rules encoded in the codebase:
 | Poignee bonus | Simple=20, Double=30, Triple=40, paid to the side that wins the deal. Trumps needed: 10/13/15 (4 players), 13/15/18 (3), 8/10/13 (5) |
 | Chelem bonus | Announced+succeeded=400, Not announced+succeeded=200, Announced+lost=−200 |
 | Petit au bout | Little trump won in last trick = ±10 pts × bid multiplier (sign follows the winning side) |
-| Players | 3, 4 or 5, chosen at startup (Enter picks 4). Player 1 is human, the others are bots |
+| Players | 3, 4 or 5, chosen at startup by `ask_player_count()` (Enter picks 4). Player 1 is human, the others are bots |
+| Dealing | 24 cards each (3 players, 4 by 4), 18 (4 players, 3 by 3), 15 (5 players, 3 by 3). Kitty cards go one at a time after random packets, never the first or last card of the deck |
+| Kitty discard | No oudler and no king |
+| Called card (5 players) | The taker calls a king. If they hold all 4 kings, they call a queen, and so on down to a jack (`callable_cards()`). The holder is the partner. A taker who holds the called card, or finds it in the kitty, plays alone |
+| First lead (5 players) | Not in the called card's suit, unless it is the called card itself |
+| Following | Follow the led suit. Without it, play a trump. When playing a trump, over-trump if possible. With neither, discard any card |
+| Excuse (Fool) | Playable any time. It stays with its side, which gives the other side a 0.5-point card in exchange. Played to the last trick, it goes to the winner. It never wins a trick, except when a side that won every trick leads it to the last one (chelem) |
+| Team scores | Each defender pays the attack score, a partner gets it once, and the taker gets the rest. The scores sum to 0 |
+| Bot bid cutoffs | Hand strength needed for Take/Guard/GuardWithout/GuardAgainst: 50/57/65/72 (3 players), 36/42/50/57 (4), 29/35/43/50 (5). See `bid_cutoffs()` in `bid.rs` |
 
 Card scoring: Kings/Oudlers=4.5pts, Queens=3.5pts, Knights=2.5pts, Jacks=1.5pts, all others=0.5pts.
 
