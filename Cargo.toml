@@ -2,6 +2,8 @@
 name = "tarot-cli"
 version = "0.1.0"
 edition = "2021"
+# src/bin/bench.rs is a second binary, so `cargo run` needs to know which one to run
+default-run = "tarot-cli"
 
 [dependencies]
 rand = "0.10.3"

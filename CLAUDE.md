@@ -14,6 +14,8 @@ Official rules reference: `tarot-official-rules.pdf` (authoritative source for g
 src/
 ├── main.rs              # Game loop entry point
 ├── lib.rs               # Crate root (re-exports common module)
+├── bin/
+│   └── bench.rs         # All-bot bench: plays many seeded deals and reports statistics
 └── common/
     ├── mod.rs           # Module exports
     ├── card.rs          # Card, Suit, CardSuits enum, scoring values
@@ -29,6 +31,7 @@ src/
     ├── chelem.rs        # Chelem (slam) state and result types
     └── utils.rs         # Circular index, CLI selection, card display, vector helpers
 tests/
+    ├── bench_tests.rs
     ├── bid_test.rs
     ├── card_test.rs
     ├── deal_tests.rs
@@ -60,8 +63,12 @@ cargo clippy --all-targets --all-features -- -D warnings
 # Security audit
 cargo audit
 
-# Run the game
+# Run the game (`default-run` in Cargo.toml picks it over the bench)
 cargo run
+
+# Bench: all-bot deals per player count (default 10000) with a seed (default 42).
+# The game prints every deal on stdout, so the report goes to stderr.
+cargo run --release --bin bench -- 100000 42 > /dev/null
 ```
 
 ## Pre-commit Hooks

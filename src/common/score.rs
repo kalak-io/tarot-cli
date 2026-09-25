@@ -19,7 +19,8 @@ fn compute_needed_points(cards: &[Card]) -> f64 {
     get_needed_points(compute_oudlers(cards))
 }
 
-fn diff_points(cards: &[Card]) -> f64 {
+// Attack points minus the points needed for its oudlers. The contract is won at 0 or more.
+pub fn diff_points(cards: &[Card]) -> f64 {
     let points = compute_points(cards);
     let needed_points = compute_needed_points(cards);
     // With 3 or 5 players, a half point goes to the side that wins the deal.
