@@ -260,7 +260,7 @@ fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Kitty) {
 fn collect_bids(players: &[Player], bid: &mut Bid) -> Option<Taker> {
     let mut taker = None;
     for player in players {
-        let new_bid = player.bid(bid);
+        let new_bid = player.bid(bid, players.len());
         if new_bid != Bids::Pass {
             taker = Some(Taker {
                 player: player.clone(),

@@ -71,7 +71,7 @@ mod bid {
 
     // hand_strength: 21 = 10, Fool = 8, Little = 5, other trumps 2 (3 from the 16 up),
     // King 6, Queen 3, Knight 2, Jack 1, +5 per suit of 5 cards or more.
-    // Pass < 36, Take < 42, Guard < 50, Guard Without < 57, then Guard Against.
+    // 4 players: Pass < 36, Take < 42, Guard < 50, Guard Without < 57, then Guard Against.
     #[rstest]
     fn taker_evaluation_returns_correct_bid(
         #[values(
@@ -93,7 +93,7 @@ mod bid {
     ) {
         let (cards, expected_strength, expected_bid) = case;
         assert_eq!(hand_strength(&cards), expected_strength);
-        assert_eq!(taker_evaluation(&cards), expected_bid);
+        assert_eq!(taker_evaluation(&cards, 4), expected_bid);
     }
 
     #[rstest]
@@ -119,5 +119,42 @@ mod bid {
         let mut bid = Bid::new(Bids::Take);
         assert_eq!(bid.record(Bids::GuardWithout), Bids::GuardWithout);
         assert_eq!(bid.current, Bids::GuardWithout);
+    }
+
+    /// Cards worth exactly `strength`: copies of the 2 of trumps (2 each), plus a Jack (1) when odd.
+    /// Cards repeat: `hand_strength` only adds card values. Trumps never count as a long suit.
+    fn hand_worth(strength: u32) -> Vec<Card> {
+        let low_trumps = (strength / 2) as usize;
+        let jacks = (strength % 2) as usize;
+        std::iter::repeat_n(Card::new(2, CardSuits::Trumps), low_trumps)
+            .chain(std::iter::repeat_n(Card::new(11, CardSuits::Clubs), jacks))
+            .collect()
+    }
+
+    // Each cutoff is the lowest strength for that bid
+    #[rstest]
+    fn taker_evaluation_uses_cutoffs_for_the_player_count(
+        #[values(
+            (3, [50, 57, 65, 72]),
+            (4, [36, 42, 50, 57]),
+            (5, [29, 35, 43, 50]),
+        )]
+        case: (usize, [u32; 4]),
+    ) {
+        let (n_players, cutoffs) = case;
+        let bids = [
+            Bids::Take,
+            Bids::Guard,
+            Bids::GuardWithout,
+            Bids::GuardAgainst,
+        ];
+        let below = [Bids::Pass, Bids::Take, Bids::Guard, Bids::GuardWithout];
+        for ((cutoff, bid), bid_below) in cutoffs.into_iter().zip(bids).zip(below) {
+            assert_eq!(taker_evaluation(&hand_worth(cutoff), n_players), bid);
+            assert_eq!(
+                taker_evaluation(&hand_worth(cutoff - 1), n_players),
+                bid_below
+            );
+        }
     }
 }
