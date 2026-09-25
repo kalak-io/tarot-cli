@@ -1,5 +1,4 @@
-use rand::prelude::SliceRandom;
-use rand::thread_rng;
+use rand::seq::SliceRandom;
 
 use super::{
     card::{Card, CardSuits},
@@ -148,7 +147,7 @@ fn generate_suits(deck: &mut Vec<Card>) {
 pub fn create_deck() -> Vec<Card> {
     let mut deck = Vec::new();
     generate_suits(&mut deck);
-    deck.shuffle(&mut thread_rng());
+    deck.shuffle(&mut rand::rng());
     deck.to_vec()
 }
 

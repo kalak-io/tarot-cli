@@ -240,7 +240,7 @@ fn draw_cards(deck: &[Card], players: &mut Vec<Player>, kitty: &mut Kitty) {
     let n_packets = (deck.len() - kitty.max_size) / packet_size;
     // One kitty card goes after some of the player packets, never after the last one,
     // so the first and the last cards of the deck never go to the kitty
-    let kitty_after = sample(&mut rand::thread_rng(), n_packets - 1, kitty.max_size).into_vec();
+    let kitty_after = sample(&mut rand::rng(), n_packets - 1, kitty.max_size).into_vec();
 
     let mut cards = deck.iter().copied();
     let mut player_index = 0;
