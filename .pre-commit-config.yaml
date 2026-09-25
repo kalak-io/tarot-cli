@@ -26,6 +26,10 @@ repos:
         name: cargocheck
         language: system
         entry: bash -c 'cargo check --all-targets'
+      - id: cargoclippy
+        name: cargoclippy
+        language: system
+        entry: bash -c 'cargo clippy --all-targets --all-features -- -D warnings'
       - id: cargotest
         name: cargotest
         language: system
