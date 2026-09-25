@@ -36,7 +36,7 @@ mod deal {
     ) {
         let (n_player, expected_kitty_size, expected_n_cards_by_player) = case;
         let mut game = Game::new(n_player);
-        let deal = Deal::new(&mut game.players, &mut game.deck);
+        let deal = Deal::new(&mut game.players, &mut game.deck, &mut game.rng);
 
         let n_cards = deal
             .players
@@ -56,7 +56,7 @@ mod deal {
     ) {
         let (n_players, expected_max_size) = case;
         let mut game = Game::new(n_players);
-        let deal = Deal::new(&mut game.players, &mut game.deck);
+        let deal = Deal::new(&mut game.players, &mut game.deck, &mut game.rng);
         assert_eq!(deal.kitty.max_size, expected_max_size);
     }
     #[rstest]
@@ -161,7 +161,7 @@ mod deal {
         let mut game = Game::new(n_players);
         for _ in 0..500 {
             let (first_card, last_card) = (game.deck[0], game.deck[77]);
-            let deal = Deal::new(&mut game.players, &mut game.deck);
+            let deal = Deal::new(&mut game.players, &mut game.deck, &mut game.rng);
             assert_eq!(deal.kitty.cards.len(), kitty_size);
             assert!(!deal.kitty.cards.contains(&first_card));
             assert!(!deal.kitty.cards.contains(&last_card));
@@ -347,7 +347,7 @@ mod deal {
         let (n_players, packet_size) = case;
         let mut game = Game::new(n_players);
         let deck = game.deck.clone();
-        let deal = Deal::new(&mut game.players, &mut game.deck);
+        let deal = Deal::new(&mut game.players, &mut game.deck, &mut game.rng);
         let first_hand = &deal.players[0].hand.cards;
         assert_eq!(first_hand[..packet_size], deck[..packet_size]);
         assert!(!first_hand.contains(&deck[packet_size]));

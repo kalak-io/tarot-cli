@@ -3,21 +3,31 @@ mod integration {
     use rstest::rstest;
     use tarot_cli::common::{
         deal::{Deal, DealActions},
-        game::{create_deck, Game, GameActions, ReorderBy},
-        player::{Player, PlayerKind},
+        game::{Game, GameActions, ReorderBy},
     };
 
-    /// Build a 4-player all-bot game without going through `Game::new`,
-    /// which always creates Player 1 as a Human (blocking stdin).
-    fn create_all_bot_game(n_players: u8) -> Game {
-        let mut players: Vec<Player> = (1..=n_players)
-            .map(|i| Player::new(format!("Bot {i}"), i, Some(PlayerKind::Bot)))
-            .collect();
-        players[0].toggle_role(); // designate an initial dealer
-        Game {
-            players,
-            deck: create_deck(),
-        }
+    const SEED: u64 = 42;
+
+    /// Deal until a bot bids, then play the deal to the end and score it
+    fn play_one_deal(game: &mut Game) -> Deal {
+        let mut deal = loop {
+            game.split_deck();
+            game.update_dealer();
+            game.reorder_players(ReorderBy::Dealer);
+
+            let mut deal = Deal::new(&mut game.players, &mut game.deck, &mut game.rng);
+            deal.take_bids();
+            if deal.taker.is_some() {
+                break deal;
+            }
+        };
+        deal.call_king(); // 5-player games only
+        deal.set_side();
+        deal.compose_kitty();
+        deal.take_chelem();
+        deal.play_tricks();
+        deal.set_score();
+        deal
     }
 
     /// Run one complete deal (setup → bids → kitty → tricks → score) with
@@ -31,31 +41,8 @@ mod integration {
         #[values((3, 24), (4, 18), (5, 15))] case: (u8, usize),
     ) {
         let (n_players, expected_tricks) = case;
-        let mut game = create_all_bot_game(n_players);
-
-        // Retry until at least one bot bids — with random hands some deals
-        // may produce an all-pass result, which is valid but unplayable.
-        let mut deal = loop {
-            game.split_deck();
-            game.update_dealer();
-            game.reorder_players(ReorderBy::Dealer);
-
-            let mut deal = Deal::new(&mut game.players, &mut game.deck);
-            deal.take_bids();
-
-            if deal.taker.is_some() {
-                break deal;
-            }
-            // No taker: cards are still in player hands; deck is untouched.
-            // Simply retry with a fresh shuffle on the same deck.
-        };
-
-        deal.call_king(); // 5-player games only
-        deal.set_side();
-        deal.compose_kitty();
-        deal.take_chelem();
-        deal.play_tricks();
-        deal.set_score();
+        let mut game = Game::new_bots(n_players, SEED);
+        let deal = play_one_deal(&mut game);
         deal.show_score();
 
         // 1. Every card in the hands is played
@@ -95,7 +82,7 @@ mod integration {
     #[test]
     fn game_round_rotates_dealer_and_scores_are_zero_sum() {
         const N_PLAYERS: u8 = 4;
-        let mut game = create_all_bot_game(N_PLAYERS);
+        let mut game = Game::new_bots(N_PLAYERS, SEED);
 
         let mut dealer_ids: Vec<u8> = Vec::new();
         let mut n_deals = 0;
@@ -113,7 +100,7 @@ mod integration {
             // (game.deck is never modified by draw_cards, so retries are free)
             let mut deal = loop {
                 game.split_deck();
-                let mut d = Deal::new(&mut game.players, &mut game.deck);
+                let mut d = Deal::new(&mut game.players, &mut game.deck, &mut game.rng);
                 d.take_bids();
                 if d.taker.is_some() {
                     break d;
@@ -197,5 +184,29 @@ mod integration {
         assert!(stdout.contains("Please enter a number from 3 to 5."));
         assert!(stdout.contains("The dealer is"));
         assert!(stdout.contains("Input closed"));
+    }
+
+    /// The same seed plays the same deal: same cards in each trick, same scores
+    #[rstest]
+    fn same_seed_plays_the_same_deal(#[values(3, 4, 5)] n_players: u8) {
+        let first = play_one_deal(&mut Game::new_bots(n_players, SEED));
+        let second = play_one_deal(&mut Game::new_bots(n_players, SEED));
+
+        let played = |deal: &Deal| -> Vec<Vec<String>> {
+            deal.tricks
+                .iter()
+                .map(|t| t.played_cards.iter().map(|c| c.to_string()).collect())
+                .collect()
+        };
+        let scores = |deal: &Deal| -> Vec<(u8, f64)> {
+            deal.players.iter().map(|p| (p.id, p.score())).collect()
+        };
+        assert_eq!(played(&first), played(&second));
+        assert_eq!(scores(&first), scores(&second));
+    }
+
+    #[test]
+    fn different_seeds_shuffle_different_decks() {
+        assert_ne!(Game::new_bots(4, 1).deck, Game::new_bots(4, 2).deck);
     }
 }

@@ -14,7 +14,7 @@ fn main() {
         game.update_dealer();
         game.reorder_players(ReorderBy::Dealer);
 
-        let mut deal = Deal::new(&mut game.players, &mut game.deck);
+        let mut deal = Deal::new(&mut game.players, &mut game.deck, &mut game.rng);
 
         deal.take_bids();
         match &deal.taker {

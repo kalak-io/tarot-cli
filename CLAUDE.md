@@ -19,7 +19,7 @@ src/
     ├── card.rs          # Card, Suit, CardSuits enum, scoring values
     ├── bid.rs           # Bids enum (Take/Guard/GuardWithout/GuardAgainst/Pass), bot bidding
     ├── deal.rs          # Deal orchestration: distribution, bids, kitty, tricks, score
-    ├── game.rs          # Game struct: deck creation, player management, dealer rotation
+    ├── game.rs          # Game struct: deck creation, player management, dealer rotation, seeded RNG
     ├── hand.rs          # Hand struct: Side (Attack/Defense), Poignee bonus
     ├── player.rs        # Player struct, PlayerKind (Human/Bot), PlayerRole (Dealer/Receiver)
     ├── score.rs         # Score computation, oudler thresholds, bid multipliers
@@ -27,7 +27,7 @@ src/
     ├── kitty.rs         # Kitty (widow) struct, size rules, discard restrictions
     ├── trick.rs         # Trick validation, card play rules, petit au bout detection
     ├── chelem.rs        # Chelem (slam) state and result types
-    └── utils.rs         # RNG, circular index, CLI selection, vector helpers
+    └── utils.rs         # Circular index, CLI selection, card display, vector helpers
 tests/
     ├── bid_test.rs
     ├── card_test.rs
@@ -115,6 +115,7 @@ Examples from history: `ADD official rules`, `UPDATE way to compute score`, `FIX
 - **`#[derive(Default)]`**: Used broadly on structs — ensure new fields have sensible defaults.
 - **`.clone()` usage**: A known issue (see `deal.rs:57`). Do not add a new `.clone()` without a reason.
 - **Taker copy**: `deal.taker.player` is a copy made at bid time. To change the real player, use `taker_index()` into `deal.players`.
+- **Randomness**: Every random draw uses `game.rng`, a `StdRng`. Do not call `rand::rng()`. `Game::new_bots(n_players, seed)` builds an all-bot game, and the same seed plays the same deals (`same_seed_plays_the_same_deal`).
 
 ### Testing
 - Use `rstest` with `#[rstest]` + `#[values(...)]` for parametrized cases.

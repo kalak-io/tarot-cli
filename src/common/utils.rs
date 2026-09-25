@@ -1,11 +1,6 @@
-use rand::RngExt;
 use std::str::FromStr;
 
 use super::card::{Card, CardGetters, CardSuits};
-
-pub fn random_int_in_range(min: usize, max: usize) -> usize {
-    rand::rng().random_range(min..max)
-}
 
 pub fn get_next_index<T>(vector: &[T], current_index: usize) -> usize {
     if current_index < vector.len() - 1 {
