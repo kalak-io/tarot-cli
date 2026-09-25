@@ -65,6 +65,7 @@ impl CardSuitsGetters for Suit {
 
 pub trait CardGetters {
     fn is_oudler(&self) -> bool;
+    fn is_fool(&self) -> bool;
     fn score(&self) -> f64;
     fn name(&self) -> String;
     fn id(&self) -> String;
@@ -134,10 +135,20 @@ impl CardGetters for Card {
             (_, _) => false,
         }
     }
+    fn is_fool(&self) -> bool {
+        self.rank == FOOL_RANK && self.suit.name == CardSuits::Trumps
+    }
 }
 
 impl CardActions for Card {
     fn is_superior_than(&self, card: &Card, played_suit: Option<CardSuits>) -> bool {
+        // The Fool (Excuse) never wins a trick, so any other card beats it
+        if self.is_fool() {
+            return false;
+        }
+        if card.is_fool() {
+            return true;
+        }
         match played_suit {
             Some(played_suit) => match (self.suit.name, card.suit.name, played_suit) {
                 (CardSuits::Trumps, _, _suit) => {

@@ -107,7 +107,7 @@ Examples from history: `ADD official rules`, `UPDATE way to compute score`, `FIX
 ### Patterns
 - **Traits for polymorphism**: Human vs Bot behavior is abstracted via traits (`PlayerActions`, `CardActions`, `DealActions`). Prefer extending traits over adding `if kind == Human` branches.
 - **Enums + exhaustive match**: Game states and decisions use enums. Always handle all variants.
-- **Recursive iteration**: `collect_bids()`, `play_tricks()`, and `select()` are recursive. Maintain this pattern for consistency.
+- **Recursive iteration**: `play_tricks()`, `select()` and `select_card()` are recursive. Maintain this pattern for consistency. `collect_bids()` is a single loop, because each player bids once.
 - **`#[derive(Default)]`**: Used broadly on structs — ensure new fields have sensible defaults.
 - **`.clone()` usage**: Noted as a known issue (see `deal.rs:51`, `main.rs:42`). Avoid introducing new `.clone()` calls without justification.
 

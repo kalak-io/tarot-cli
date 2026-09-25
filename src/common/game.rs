@@ -49,7 +49,8 @@ impl Game {
 }
 impl GameActions for Game {
     fn split_deck(&mut self) {
-        let split_index = random_int_in_range(1, MAX_NUMBER_CARDS_SPLIT);
+        // Each part of the cut keeps more than 3 cards
+        let split_index = random_int_in_range(MIN_NUMBER_CARDS_SPLIT + 1, MAX_NUMBER_CARDS_SPLIT);
         let mut new_deck = Vec::new();
         new_deck.extend_from_slice(&self.deck[split_index..]);
         new_deck.extend_from_slice(&self.deck[..split_index]);

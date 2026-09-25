@@ -161,4 +161,15 @@ mod integration {
             "cumulative scores must sum to zero, got {grand_total}"
         );
     }
+
+    /// Closing stdin (Ctrl-D) ends the game cleanly instead of looping or overflowing the stack.
+    #[test]
+    fn game_exits_cleanly_when_stdin_closes() {
+        let output = std::process::Command::new(env!("CARGO_BIN_EXE_tarot-cli"))
+            .stdin(std::process::Stdio::null())
+            .output()
+            .unwrap();
+        assert!(output.status.success(), "exit status: {}", output.status);
+        assert!(String::from_utf8_lossy(&output.stdout).contains("Input closed"));
+    }
 }

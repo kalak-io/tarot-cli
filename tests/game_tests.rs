@@ -136,4 +136,20 @@ mod game {
             assert_eq!(player.score(), player.id as f64 * 10.0 - 5.0);
         }
     }
+
+    // "La distribution": the cut takes or leaves more than 3 cards
+    #[test]
+    fn split_deck_leaves_more_than_3_cards_in_each_part() {
+        let mut game = Game::default();
+        for _ in 0..1000 {
+            let first_card = game.deck[0];
+            game.split_deck();
+            // The old first card lands after the part that moved to the top
+            let moved = game.deck.iter().position(|c| *c == first_card).unwrap();
+            assert!(
+                (4..=74).contains(&moved),
+                "cut moved {moved} cards to the top"
+            );
+        }
+    }
 }

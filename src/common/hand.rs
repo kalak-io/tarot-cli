@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter, Result};
 use super::{
     card::{Card, CardSuits},
     chelem::{Chelem, ChelemState},
-    utils::select,
+    utils::{ask_yes_no, select},
 };
 
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
@@ -104,18 +104,8 @@ impl HandActions for Hand {
         if allowed.is_empty() {
             return;
         }
-        let mut input = String::new();
-        loop {
-            println!("Do you want to declare a poignee? (yes/no)");
-            input.clear();
-            std::io::stdin()
-                .read_line(&mut input)
-                .expect("Failed to read line");
-            match input.trim().to_lowercase().as_str() {
-                "yes" | "y" => break,
-                "no" | "n" => return,
-                _ => continue,
-            }
+        if !ask_yes_no("Do you want to declare a poignee?") {
+            return;
         }
         self.bonus_poignee = select(Some("Choose a poignee"), Some(allowed));
     }
@@ -123,33 +113,15 @@ impl HandActions for Hand {
         if self.bonus_chelem.is_some() {
             return;
         }
-        let mut input = String::new();
-        loop {
-            println!("Do you want to announce a chelem? (yes/no)");
-            std::io::stdin()
-                .read_line(&mut input)
-                .expect("Failed to read line");
-            match input.trim().to_lowercase().as_str() {
-                "yes" | "y" => {
-                    self.bonus_chelem = Some(Chelem {
-                        state: ChelemState::Announced,
-                        result: None,
-                    });
-                    break;
-                }
-                "no" | "n" => {
-                    self.bonus_chelem = Some(Chelem {
-                        state: ChelemState::NotAnnounced,
-                        result: None,
-                    });
-                    break;
-                }
-                _ => {
-                    input.clear();
-                    continue;
-                }
-            }
-        }
+        let state = if ask_yes_no("Do you want to announce a chelem?") {
+            ChelemState::Announced
+        } else {
+            ChelemState::NotAnnounced
+        };
+        self.bonus_chelem = Some(Chelem {
+            state,
+            result: None,
+        });
     }
     fn bot_declare_poignee(&mut self, n_players: usize) {
         if self.bonus_poignee.is_some() {

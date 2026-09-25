@@ -43,12 +43,33 @@ fn display_enumeration<T: std::fmt::Display>(vector: &[T]) {
     println!();
 }
 
-fn prompt_selection() -> Result<usize, <usize as FromStr>::Err> {
+// Reads one line from stdin. The game ends when stdin is closed (Ctrl-D).
+pub fn read_input() -> String {
     let mut input = String::new();
-    std::io::stdin()
-        .read_line(&mut input)
-        .expect("Failed to read line");
-    input.trim().parse::<usize>()
+    match std::io::stdin().read_line(&mut input) {
+        Ok(0) => {
+            println!("\nInput closed. Thanks for playing!");
+            std::process::exit(0);
+        }
+        Ok(_) => input,
+        Err(error) => panic!("Failed to read line: {error}"),
+    }
+}
+
+// Asks until the answer is yes or no
+pub fn ask_yes_no(question: &str) -> bool {
+    loop {
+        println!("{question} (yes/no)");
+        match read_input().trim().to_lowercase().as_str() {
+            "yes" | "y" => return true,
+            "no" | "n" => return false,
+            _ => continue,
+        }
+    }
+}
+
+fn prompt_selection() -> Result<usize, <usize as FromStr>::Err> {
+    read_input().trim().parse::<usize>()
 }
 
 pub fn select<T: std::fmt::Display + std::marker::Copy>(

@@ -3,11 +3,11 @@ mod deal {
     use rstest::rstest;
     use tarot_cli::common::{
         bid::Bids,
-        card::{Card, CardSuits},
+        card::{Card, CardGetters, CardSuits},
         chelem::{Chelem, ChelemState},
         deal::{Deal, DealActions, DealGetters},
         game::Game,
-        hand::Side,
+        hand::{Hand, Side},
         kitty::Kitty,
         player::{Player, PlayerKind},
         taker::Taker,
@@ -145,5 +145,138 @@ mod deal {
         deal.take_chelem();
         let ids: Vec<u8> = deal.players.iter().map(|p| p.id).collect();
         assert_eq!(ids, vec![3, 4, 1, 2]);
+    }
+
+    // "La distribution": the first and the last cards of the deck never go to the kitty
+    #[rstest]
+    fn kitty_is_full_and_never_gets_first_or_last_card(
+        #[values((4, 6, 18), (5, 3, 15))] case: (u8, usize, usize),
+    ) {
+        let (n_players, kitty_size, hand_size) = case;
+        let mut game = Game::new(n_players);
+        for _ in 0..500 {
+            let (first_card, last_card) = (game.deck[0], game.deck[77]);
+            let deal = Deal::new(&mut game.players, &mut game.deck);
+            assert_eq!(deal.kitty.cards.len(), kitty_size);
+            assert!(!deal.kitty.cards.contains(&first_card));
+            assert!(!deal.kitty.cards.contains(&last_card));
+            for player in &deal.players {
+                assert_eq!(player.hand.cards.len(), hand_size);
+            }
+        }
+    }
+
+    /// Deal where player 1 attacks alone and every player holds `hands[i]`.
+    fn deal_with_hands(hands: [Vec<Card>; 4]) -> Deal {
+        let mut deal = deal_with_taker([PlayerKind::Bot; 4], 0, Bids::Take);
+        for (player, cards) in deal.players.iter_mut().zip(hands) {
+            player.hand = Hand {
+                cards,
+                side: player.hand.side,
+                ..Hand::default()
+            };
+        }
+        deal
+    }
+
+    fn side_points(deal: &Deal, side: Side) -> f64 {
+        deal.players
+            .iter()
+            .filter(|p| p.hand.side == side)
+            .flat_map(|p| p.hand.won_cards.iter())
+            .map(|c| c.score())
+            .sum()
+    }
+
+    // "Le jeu de la carte": the Fool stays with its side, which gives a low card in exchange
+    #[test]
+    fn fool_stays_with_its_side_for_a_low_card() {
+        let fool = Card::new(22, CardSuits::Trumps);
+        let mut deal = deal_with_hands([
+            // Player 1 (attack) leads the Fool, then wins trick 2 with the King
+            vec![fool, Card::new(14, CardSuits::Hearts)],
+            vec![
+                Card::new(2, CardSuits::Hearts),
+                Card::new(3, CardSuits::Hearts),
+            ],
+            vec![
+                Card::new(5, CardSuits::Hearts),
+                Card::new(4, CardSuits::Hearts),
+            ],
+            vec![
+                Card::new(6, CardSuits::Hearts),
+                Card::new(7, CardSuits::Hearts),
+            ],
+        ]);
+
+        deal.play_tricks();
+
+        let winners: Vec<Side> = deal.tricks.iter().map(|t| t.winner_side).collect();
+        assert_eq!(winners, vec![Side::Defense, Side::Attack]);
+        let taker = deal.players.iter().find(|p| p.id == 1).unwrap();
+        assert!(taker.hand.won_cards.contains(&fool));
+        // The attack paid its low card once it won trick 2
+        assert_eq!(deal.fool_debt, None);
+        // Attack: Fool 4.5 + King 4.5 + two low cards. Defense: four low cards.
+        assert_eq!(side_points(&deal, Side::Attack), 10.0);
+        assert_eq!(side_points(&deal, Side::Defense), 2.0);
+    }
+
+    #[rstest]
+    fn fool_led_to_last_trick(
+        // (winner of the previous trick, id of the player who gets the Fool)
+        #[values(
+            // No chelem: the Fool goes to the trick winner
+            (Side::Defense, 4),
+            // The attack won every trick: the Fool wins the last trick
+            (Side::Attack, 1),
+        )]
+        case: (Side, u8),
+    ) {
+        let (previous_winner, fool_holder) = case;
+        let fool = Card::new(22, CardSuits::Trumps);
+        let mut deal = deal_with_hands([
+            vec![fool],
+            vec![Card::new(2, CardSuits::Hearts)],
+            vec![Card::new(5, CardSuits::Hearts)],
+            vec![Card::new(6, CardSuits::Hearts)],
+        ]);
+        deal.tricks = vec![Trick {
+            winner_side: previous_winner,
+            ..Default::default()
+        }];
+
+        deal.play_tricks();
+
+        let holder = deal.players.iter().find(|p| p.id == fool_holder).unwrap();
+        assert!(holder.hand.won_cards.contains(&fool));
+        assert_eq!(holder.hand.won_cards.len(), 4);
+    }
+
+    // Each player bids once, and the last bid is the highest
+    #[test]
+    fn take_bids_gives_the_deal_to_the_highest_bid() {
+        let mut deal = deal_with_hands([
+            // 1 oudler × (8 points % 5) = 3: Take
+            vec![
+                Card::new(1, CardSuits::Trumps),
+                Card::new(13, CardSuits::Hearts),
+            ],
+            // 1 oudler × 4.5 points = 4.5: Guard
+            vec![Card::new(21, CardSuits::Trumps)],
+            // Take, which cannot beat the Guard: Pass
+            vec![
+                Card::new(22, CardSuits::Trumps),
+                Card::new(13, CardSuits::Spades),
+            ],
+            // No oudler: Pass
+            vec![Card::new(2, CardSuits::Clubs)],
+        ]);
+        deal.taker = None;
+
+        deal.take_bids();
+
+        let taker = deal.taker.unwrap();
+        assert_eq!((taker.player.id, taker.bid), (2, Bids::Guard));
     }
 }
