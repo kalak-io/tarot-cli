@@ -4,7 +4,7 @@ use rand::thread_rng;
 use super::{
     card::{Card, CardSuits},
     player::{Player, PlayerActions, PlayerKind},
-    utils::{get_next_index, random_int_in_range, reorder},
+    utils::{get_next_index, random_int_in_range, read_input, reorder},
 };
 
 const NUMBER_CARDS_BY_SUIT: usize = 14;
@@ -13,6 +13,10 @@ const NUMBER_TRUMP_CARDS: usize = 22;
 const TOTAL_CARDS: usize = 78;
 const MIN_NUMBER_CARDS_SPLIT: usize = 3;
 const MAX_NUMBER_CARDS_SPLIT: usize = TOTAL_CARDS - MIN_NUMBER_CARDS_SPLIT;
+
+pub const MIN_PLAYERS: u8 = 3;
+pub const MAX_PLAYERS: u8 = 5;
+pub const DEFAULT_PLAYERS: u8 = 4;
 
 pub enum ReorderBy {
     Dealer,
@@ -33,7 +37,7 @@ pub struct Game {
 }
 impl Default for Game {
     fn default() -> Self {
-        Game::new(4)
+        Game::new(DEFAULT_PLAYERS)
     }
 }
 impl Game {
@@ -153,4 +157,28 @@ pub fn find_dealer(players: &[Player]) -> usize {
         .iter()
         .position(|player| player.is_dealer())
         .unwrap()
+}
+
+// Reads a player count between MIN_PLAYERS and MAX_PLAYERS. Empty input picks DEFAULT_PLAYERS.
+pub fn parse_player_count(input: &str) -> Option<u8> {
+    let input = input.trim();
+    if input.is_empty() {
+        return Some(DEFAULT_PLAYERS);
+    }
+    input
+        .parse::<u8>()
+        .ok()
+        .filter(|n| (MIN_PLAYERS..=MAX_PLAYERS).contains(n))
+}
+
+pub fn ask_player_count() -> u8 {
+    loop {
+        println!(
+            "How many players? ({MIN_PLAYERS} to {MAX_PLAYERS}, press Enter for {DEFAULT_PLAYERS})"
+        );
+        match parse_player_count(&read_input()) {
+            Some(n_players) => return n_players,
+            None => println!("Please enter a number from {MIN_PLAYERS} to {MAX_PLAYERS}."),
+        }
+    }
 }

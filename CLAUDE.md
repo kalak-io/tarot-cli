@@ -133,7 +133,7 @@ Key rules encoded in the codebase:
 | Poignee bonus | Simple=20, Double=30, Triple=40. Trumps needed: 10/13/15 (4 players), 13/15/18 (3), 8/10/13 (5) |
 | Chelem bonus | Announced+succeeded=400, Not announced+succeeded=200, Announced+lost=−200 |
 | Petit au bout | Little trump won in last trick = ±10 pts (direction depends on winner side) |
-| Default players | 4 (1 human, 3 bots) |
+| Players | 3, 4 or 5, chosen at startup (Enter picks 4). Player 1 is human, the others are bots |
 
 Card scoring: Kings/Oudlers=4.5pts, Queens=3.5pts, Knights=2.5pts, Jacks=1.5pts, all others=0.5pts.
 

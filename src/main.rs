@@ -1,12 +1,13 @@
 use common::deal::{Deal, DealActions};
-use common::game::{Game, GameActions, ReorderBy};
+use common::game::{ask_player_count, Game, GameActions, ReorderBy};
 use common::utils::ask_yes_no;
 use tarot_cli::*;
 
 fn main() {
     println!("Let's play Tarot!");
 
-    let mut game = Game::default();
+    // Player 1 is the human, the others are bots
+    let mut game = Game::new(ask_player_count());
 
     loop {
         game.split_deck();

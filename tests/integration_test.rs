@@ -177,4 +177,25 @@ mod integration {
         assert!(output.status.success(), "exit status: {}", output.status);
         assert!(String::from_utf8_lossy(&output.stdout).contains("Input closed"));
     }
+
+    /// The player count prompt asks again after an invalid answer.
+    /// With a valid count, the game starts, then ends when stdin closes.
+    #[test]
+    fn player_count_prompt_asks_again_after_invalid_input() {
+        use std::io::Write;
+        let mut child = std::process::Command::new(env!("CARGO_BIN_EXE_tarot-cli"))
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        // Closing stdin after these lines ends the game at its next prompt
+        child.stdin.take().unwrap().write_all(b"9\n5\n").unwrap();
+        let output = child.wait_with_output().unwrap();
+        let stdout = String::from_utf8_lossy(&output.stdout);
+
+        assert!(output.status.success(), "exit status: {}", output.status);
+        assert!(stdout.contains("Please enter a number from 3 to 5."));
+        assert!(stdout.contains("The dealer is"));
+        assert!(stdout.contains("Input closed"));
+    }
 }
