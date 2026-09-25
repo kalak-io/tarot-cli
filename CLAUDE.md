@@ -33,6 +33,7 @@ tests/
     ├── card_test.rs
     ├── deal_tests.rs
     ├── game_tests.rs
+    ├── hand_tests.rs
     ├── integration_test.rs
     ├── kitty_tests.rs
     ├── score_tests.rs
@@ -74,11 +75,12 @@ Install hooks: `pre-commit install`
 
 ## CI/CD
 
-GitHub Actions (`.github/workflows/rust.yml`) triggers on push/PR to `main` and `develop`:
-1. `cargo build --verbose --all-targets`
-2. `cargo test --verbose --all-targets`
-3. `cargo clippy --all-targets --all-features -- -D warnings`
-4. `cargo audit`
+GitHub Actions (`.github/workflows/rust.yml`) triggers on push to `main`/`develop` and on every PR. Jobs run in parallel:
+1. `cargo fmt --check`
+2. `cargo build --verbose --all-targets`
+3. `cargo test --verbose --all-targets`
+4. `cargo clippy --all-targets --all-features -- -D warnings`
+5. `cargo audit`
 
 Clippy warnings are treated as errors — fix all lints before pushing.
 
@@ -105,11 +107,12 @@ Examples from history: `ADD official rules`, `UPDATE way to compute score`, `FIX
 - **Constants**: `UPPER_SNAKE_CASE` — `KING_RANK`, `BASE_SCORE`, `TOTAL_CARDS`
 
 ### Patterns
-- **Traits for polymorphism**: Human vs Bot behavior is abstracted via traits (`PlayerActions`, `CardActions`, `DealActions`). Prefer extending traits over adding `if kind == Human` branches.
+- **Human/Bot dispatch**: `impl PlayerActions for Player` is the only place that does `match self.kind`. Each decision is a `human_*`/`bot_*` method pair on the domain type (`Bid`, `Kitty`, `Hand`, `Trick`). A new decision adds a pair there and one match arm in `player.rs`.
 - **Enums + exhaustive match**: Game states and decisions use enums. Always handle all variants.
 - **Recursive iteration**: `collect_bids()`, `play_tricks()`, and `select()` are recursive. Maintain this pattern for consistency.
 - **`#[derive(Default)]`**: Used broadly on structs — ensure new fields have sensible defaults.
-- **`.clone()` usage**: Noted as a known issue (see `deal.rs:51`, `main.rs:42`). Avoid introducing new `.clone()` calls without justification.
+- **`.clone()` usage**: A known issue (see `deal.rs:52`). Do not add a new `.clone()` without a reason.
+- **Taker copy**: `deal.taker.player` is a copy made at bid time. To change the real player, use `taker_index()` into `deal.players`.
 
 ### Testing
 - Use `rstest` with `#[rstest]` + `#[values(...)]` for parametrized cases.
@@ -127,23 +130,24 @@ Key rules encoded in the codebase:
 | Score thresholds | 0 oudlers→56pts, 1→51pts, 2→41pts, 3→36pts needed to win |
 | Bid multipliers | Take×1, Guard×2, GuardWithout×4, GuardAgainst×6 |
 | Base score | 25 points |
-| Kitty size | 6 cards (4 players), 3 cards (5+ players) |
-| Poignee bonus | Simple=20, Double=30, Triple=40. Trumps needed: 10/13/15 (4 players), 13/15/18 (3), 8/10/13 (5) |
+| Kitty size | 6 cards (2-4 players), 3 cards (5+ players). Counts for the attack, except on Guard Against |
+| Contract won | Points minus threshold >= 0 (exactly met counts as won) |
+| Poignee bonus | Simple=20, Double=30, Triple=40, paid to the side that wins the deal. Trumps needed: 10/13/15 (4 players), 13/15/18 (3), 8/10/13 (5) |
 | Chelem bonus | Announced+succeeded=400, Not announced+succeeded=200, Announced+lost=−200 |
-| Petit au bout | Little trump won in last trick = ±10 pts (direction depends on winner side) |
+| Petit au bout | Little trump won in last trick = ±10 pts × bid multiplier (sign follows the winning side) |
 | Default players | 4 (1 human, 3 bots) |
 
 Card scoring: Kings/Oudlers=4.5pts, Queens=3.5pts, Knights=2.5pts, Jacks=1.5pts, all others=0.5pts.
 
 ## Known Incomplete Areas (TODOs)
 
-- **Player/game submodules** (`game.rs:98`): Split into submodules is pending.
+- **Player/game submodules** (`game.rs:101`): Split into submodules is pending.
 
 ## Dependencies
 
 | Crate | Version | Purpose |
 |---|---|---|
-| `rand` | 0.8.5 | Deck shuffling, bot random decisions |
-| `rstest` | 0.22.0 | Parametrized tests (`#[values(...)]`) |
+| `rand` | 0.8.6 | Deck shuffling, bot random decisions |
+| `rstest` | 0.22.0 | Parametrized tests (`#[values(...)]`). In `[dependencies]`, not `[dev-dependencies]` |
 
 Rust edition: **2021**
