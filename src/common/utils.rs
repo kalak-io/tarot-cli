@@ -16,13 +16,6 @@ pub fn get_next_index<T>(vector: &[T], current_index: usize) -> usize {
     }
 }
 
-pub fn display<T: std::fmt::Display>(vector: &[T]) {
-    for vect in vector {
-        print!("{}", vect);
-    }
-    println!();
-}
-
 pub fn compare<T>(a: &T, b: Option<&T>, comparator: fn(&T, &T) -> bool) -> bool {
     match b {
         Some(b) => comparator(a, b),
@@ -43,12 +36,33 @@ fn display_enumeration<T: std::fmt::Display>(vector: &[T]) {
     println!();
 }
 
-fn prompt_selection() -> Result<usize, <usize as FromStr>::Err> {
+// Reads one line from stdin. The game ends when stdin is closed (Ctrl-D).
+pub fn read_input() -> String {
     let mut input = String::new();
-    std::io::stdin()
-        .read_line(&mut input)
-        .expect("Failed to read line");
-    input.trim().parse::<usize>()
+    match std::io::stdin().read_line(&mut input) {
+        Ok(0) => {
+            println!("\nInput closed. Thanks for playing!");
+            std::process::exit(0);
+        }
+        Ok(_) => input,
+        Err(error) => panic!("Failed to read line: {error}"),
+    }
+}
+
+// Asks until the answer is yes or no
+pub fn ask_yes_no(question: &str) -> bool {
+    loop {
+        println!("{question} (yes/no)");
+        match read_input().trim().to_lowercase().as_str() {
+            "yes" | "y" => return true,
+            "no" | "n" => return false,
+            _ => continue,
+        }
+    }
+}
+
+fn prompt_selection() -> Result<usize, <usize as FromStr>::Err> {
+    read_input().trim().parse::<usize>()
 }
 
 pub fn select<T: std::fmt::Display + std::marker::Copy>(
@@ -92,36 +106,27 @@ pub fn subtract(a: &mut Vec<Card>, b: &[Card]) {
     a.retain(|x| !b.contains(x));
 }
 
-pub fn card_box_lines(cards: &[Card]) -> Vec<String> {
-    let mut lines = Vec::new();
-    for chunk in cards.chunks(9) {
-        let mut top = String::new();
-        let mut rank_row = String::new();
-        let mut suit_row = String::new();
-        let mut bot = String::new();
-        for (i, card) in chunk.iter().enumerate() {
-            if i > 0 {
-                top.push(' ');
-                rank_row.push(' ');
-                suit_row.push(' ');
-                bot.push(' ');
-            }
-            if card.is_oudler() {
-                top.push_str("╔═══╗");
-                bot.push_str("╚═══╝");
-            } else {
-                top.push_str("┌───┐");
-                bot.push_str("└───┘");
-            }
-            rank_row.push_str(&format!("│{}│", card_rank_label(card)));
-            suit_row.push_str(&format!("│ {} │", card.suit.icon));
-        }
-        lines.push(top);
-        lines.push(rank_row);
-        lines.push(suit_row);
-        lines.push(bot);
+const CARDS_PER_ROW: usize = 9;
+
+// Top border, rank, suit and bottom border rows for one row of cards
+fn card_box_row(cards: &[Card]) -> [String; 4] {
+    let mut rows: [Vec<String>; 4] = Default::default();
+    for card in cards {
+        let (top, bottom) = if card.is_oudler() {
+            ("╔═══╗", "╚═══╝")
+        } else {
+            ("┌───┐", "└───┘")
+        };
+        rows[0].push(top.to_string());
+        rows[1].push(format!("│{}│", card_rank_label(card)));
+        rows[2].push(format!("│ {} │", card.suit.icon));
+        rows[3].push(bottom.to_string());
     }
-    lines
+    rows.map(|row| row.join(" "))
+}
+
+pub fn card_box_lines(cards: &[Card]) -> Vec<String> {
+    cards.chunks(CARDS_PER_ROW).flat_map(card_box_row).collect()
 }
 
 pub fn display_cards(cards: &[Card]) {
@@ -130,38 +135,16 @@ pub fn display_cards(cards: &[Card]) {
     }
 }
 
+// Same as `display_cards`, with each card's selection number under it
 fn display_cards_enumerated(cards: &[Card]) {
-    for (chunk_idx, chunk) in cards.chunks(9).enumerate() {
-        let offset = chunk_idx * 9;
-        let mut top = String::new();
-        let mut rank_row = String::new();
-        let mut suit_row = String::new();
-        let mut bot = String::new();
-        let mut num_row = String::new();
-        for (i, card) in chunk.iter().enumerate() {
-            if i > 0 {
-                top.push(' ');
-                rank_row.push(' ');
-                suit_row.push(' ');
-                bot.push(' ');
-                num_row.push(' ');
-            }
-            if card.is_oudler() {
-                top.push_str("╔═══╗");
-                bot.push_str("╚═══╝");
-            } else {
-                top.push_str("┌───┐");
-                bot.push_str("└───┘");
-            }
-            rank_row.push_str(&format!("│{}│", card_rank_label(card)));
-            suit_row.push_str(&format!("│ {} │", card.suit.icon));
-            num_row.push_str(&format!("{:^5}", offset + i));
+    for (row_index, row) in cards.chunks(CARDS_PER_ROW).enumerate() {
+        for line in card_box_row(row) {
+            println!("{}", line);
         }
-        println!("{}", top);
-        println!("{}", rank_row);
-        println!("{}", suit_row);
-        println!("{}", bot);
-        println!("{}", num_row);
+        let numbers: Vec<String> = (0..row.len())
+            .map(|i| format!("{:^5}", row_index * CARDS_PER_ROW + i))
+            .collect();
+        println!("{}", numbers.join(" "));
     }
 }
 

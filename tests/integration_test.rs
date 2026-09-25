@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod integration {
+    use rstest::rstest;
     use tarot_cli::common::{
         deal::{Deal, DealActions},
         game::{create_deck, Game, GameActions, ReorderBy},
@@ -16,19 +17,21 @@ mod integration {
         Game {
             players,
             deck: create_deck(),
-            deals: Vec::new(),
         }
     }
 
     /// Run one complete deal (setup → bids → kitty → tricks → score) with
     /// four bots and verify the key invariants of the game:
     ///
-    /// 1. Exactly 18 tricks are played (72 cards / 4 players).
+    /// 1. Every card in the hands is played: 24, 18 or 15 tricks for 3, 4 or 5 players.
     /// 2. All 78 cards are accounted for (won_cards + kitty).
     /// 3. Scores are zero-sum across all players.
-    #[test]
-    fn full_deal_completes_and_preserves_invariants() {
-        let mut game = create_all_bot_game(4);
+    #[rstest]
+    fn full_deal_completes_and_preserves_invariants(
+        #[values((3, 24), (4, 18), (5, 15))] case: (u8, usize),
+    ) {
+        let (n_players, expected_tricks) = case;
+        let mut game = create_all_bot_game(n_players);
 
         // Retry until at least one bot bids — with random hands some deals
         // may produce an all-pass result, which is valid but unplayable.
@@ -47,7 +50,7 @@ mod integration {
             // Simply retry with a fresh shuffle on the same deck.
         };
 
-        deal.call_king(); // no-op for 4-player games
+        deal.call_king(); // 5-player games only
         deal.set_side();
         deal.compose_kitty();
         deal.take_chelem();
@@ -55,11 +58,11 @@ mod integration {
         deal.set_score();
         deal.show_score();
 
-        // 1. Correct number of tricks (78 − 6 kitty cards) / 4 players = 18
+        // 1. Every card in the hands is played
         assert_eq!(
             deal.tricks.len(),
-            18,
-            "expected 18 tricks for a 4-player deal"
+            expected_tricks,
+            "wrong number of tricks for a {n_players}-player deal"
         );
 
         // 2. All 78 cards are accounted for
@@ -83,7 +86,7 @@ mod integration {
     ///
     /// Verified invariants:
     /// 1. Dealer rotates through all players (each deals once).
-    /// 2. N_PLAYERS deals are stored in game.deals.
+    /// 2. N_PLAYERS deals are played.
     /// 3. Cumulative scores across all deals remain zero-sum.
     /// 4. `game.players` carries each player's running total.
     ///
@@ -95,6 +98,7 @@ mod integration {
         let mut game = create_all_bot_game(N_PLAYERS);
 
         let mut dealer_ids: Vec<u8> = Vec::new();
+        let mut n_deals = 0;
 
         for _ in 0..N_PLAYERS {
             game.split_deck();
@@ -108,6 +112,7 @@ mod integration {
             // Retry until at least one bot bids
             // (game.deck is never modified by draw_cards, so retries are free)
             let mut deal = loop {
+                game.split_deck();
                 let mut d = Deal::new(&mut game.players, &mut game.deck);
                 d.take_bids();
                 if d.taker.is_some() {
@@ -138,7 +143,7 @@ mod integration {
                 "deck must contain 78 cards after collect_deck"
             );
 
-            game.deals.push(deal);
+            n_deals += 1;
         }
 
         // 1. Every player was dealer exactly once
@@ -152,7 +157,7 @@ mod integration {
         );
 
         // 2. Correct number of deals recorded
-        assert_eq!(game.deals.len(), N_PLAYERS as usize);
+        assert_eq!(n_deals, N_PLAYERS as usize);
 
         // 3. Zero-sum across all deals
         let grand_total: f64 = game.players.iter().map(|p| p.score()).sum();
@@ -160,5 +165,37 @@ mod integration {
             grand_total.abs() < 1e-9,
             "cumulative scores must sum to zero, got {grand_total}"
         );
+    }
+
+    /// Closing stdin (Ctrl-D) ends the game cleanly instead of looping or overflowing the stack.
+    #[test]
+    fn game_exits_cleanly_when_stdin_closes() {
+        let output = std::process::Command::new(env!("CARGO_BIN_EXE_tarot-cli"))
+            .stdin(std::process::Stdio::null())
+            .output()
+            .unwrap();
+        assert!(output.status.success(), "exit status: {}", output.status);
+        assert!(String::from_utf8_lossy(&output.stdout).contains("Input closed"));
+    }
+
+    /// The player count prompt asks again after an invalid answer.
+    /// With a valid count, the game starts, then ends when stdin closes.
+    #[test]
+    fn player_count_prompt_asks_again_after_invalid_input() {
+        use std::io::Write;
+        let mut child = std::process::Command::new(env!("CARGO_BIN_EXE_tarot-cli"))
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        // Closing stdin after these lines ends the game at its next prompt
+        child.stdin.take().unwrap().write_all(b"9\n5\n").unwrap();
+        let output = child.wait_with_output().unwrap();
+        let stdout = String::from_utf8_lossy(&output.stdout);
+
+        assert!(output.status.success(), "exit status: {}", output.status);
+        assert!(stdout.contains("Please enter a number from 3 to 5."));
+        assert!(stdout.contains("The dealer is"));
+        assert!(stdout.contains("Input closed"));
     }
 }
