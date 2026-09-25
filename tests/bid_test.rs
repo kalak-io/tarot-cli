@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod bid {
     use rstest::rstest;
-    use tarot_cli::common::bid::{compare_bids, taker_evaluation, Bid, Bids};
+    use tarot_cli::common::bid::{compare_bids, hand_strength, taker_evaluation, Bid, Bids};
     use tarot_cli::common::card::{Card, CardSuits};
 
     #[test]
@@ -50,26 +50,50 @@ mod bid {
         assert!(compare_bids(&bid, &previous_bid));
     }
 
-    // taker_evaluation formula: n_oudlers * (compute_points(cards) % 5.0)
-    // 0..2 → Pass, 2..4 → Take, 4..6 → Guard, 6..8 → GuardWithout, 8+ → GuardAgainst
+    fn trumps(ranks: std::ops::RangeInclusive<u8>) -> Vec<Card> {
+        ranks
+            .map(|rank| Card::new(rank, CardSuits::Trumps))
+            .collect()
+    }
+
+    fn kings(n: usize) -> Vec<Card> {
+        [
+            CardSuits::Clubs,
+            CardSuits::Diamonds,
+            CardSuits::Hearts,
+            CardSuits::Spades,
+        ]
+        .into_iter()
+        .take(n)
+        .map(|suit| Card::new(14, suit))
+        .collect()
+    }
+
+    // hand_strength: 21 = 10, Fool = 8, Little = 5, other trumps 2 (3 from the 16 up),
+    // King 6, Queen 3, Knight 2, Jack 1, +5 per suit of 5 cards or more.
+    // Pass < 36, Take < 42, Guard < 50, Guard Without < 57, then Guard Against.
     #[rstest]
     fn taker_evaluation_returns_correct_bid(
         #[values(
-            // 0 oudlers → evaluation = 0 → Pass
-            (vec![], Bids::Pass),
-            // 1 oudler (Fool=4.5) + Queen (3.5) = 8.0 pts; 8.0 % 5 = 3.0; eval = 1 × 3.0 = 3.0 → Take
-            (vec![Card::new(22, CardSuits::Trumps), Card::new(13, CardSuits::Hearts)], Bids::Take),
-            // 1 oudler (Little=4.5) + King (4.5) = 9.0 pts; 9.0 % 5 = 4.0; eval = 1 × 4.0 = 4.0 → Guard
-            (vec![Card::new(1, CardSuits::Trumps), Card::new(14, CardSuits::Hearts)], Bids::Guard),
-            // 2 oudlers (Fool+Big=9.0) + King (4.5) = 13.5 pts; 13.5 % 5 = 3.5; eval = 2 × 3.5 = 7.0 → GuardWithout
-            (vec![Card::new(22, CardSuits::Trumps), Card::new(21, CardSuits::Trumps), Card::new(14, CardSuits::Hearts)], Bids::GuardWithout),
-            // 3 oudlers (Fool+Little+Big=13.5) + King (4.5) = 18.0 pts; 18.0 % 5 = 3.0; eval = 3 × 3.0 = 9.0 → GuardAgainst
-            (vec![Card::new(22, CardSuits::Trumps), Card::new(1, CardSuits::Trumps), Card::new(21, CardSuits::Trumps), Card::new(14, CardSuits::Hearts)], Bids::GuardAgainst),
+            (vec![], 0, Bids::Pass),
+            // 3 low trumps (6) + 1 King (6) = 12
+            ([trumps(2..=4), kings(1)].concat(), 12, Bids::Pass),
+            // 21 + Fool (18) + 6 low trumps (12) + 1 King (6) = 36
+            ([vec![Card::new(21, CardSuits::Trumps), Card::new(22, CardSuits::Trumps)], trumps(2..=7), kings(1)].concat(), 36, Bids::Take),
+            // 3 oudlers (23) + 7 low trumps (14) + 1 King (6) = 43
+            ([trumps(1..=8), vec![Card::new(21, CardSuits::Trumps), Card::new(22, CardSuits::Trumps)], kings(1)].concat(), 43, Bids::Guard),
+            // 3 oudlers (23) + 7 low trumps (14) + 3 Kings (18) = 55
+            ([trumps(1..=8), vec![Card::new(21, CardSuits::Trumps), Card::new(22, CardSuits::Trumps)], kings(3)].concat(), 55, Bids::GuardWithout),
+            // 3 oudlers (23) + trumps 12 to 20 (8 + 15) + 4 Kings (24) = 70
+            ([vec![Card::new(1, CardSuits::Trumps)], trumps(12..=22), kings(4)].concat(), 70, Bids::GuardAgainst),
+            // A suit of 5 cards adds 5: 5 low hearts (0) + 5 = 5
+            ((2..=6).map(|rank| Card::new(rank, CardSuits::Hearts)).collect(), 5, Bids::Pass),
         )]
-        case: (Vec<Card>, Bids),
+        case: (Vec<Card>, u32, Bids),
     ) {
-        let (cards, expected) = case;
-        assert_eq!(taker_evaluation(&cards), expected);
+        let (cards, expected_strength, expected_bid) = case;
+        assert_eq!(hand_strength(&cards), expected_strength);
+        assert_eq!(taker_evaluation(&cards), expected_bid);
     }
 
     #[rstest]

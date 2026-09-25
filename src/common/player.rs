@@ -42,8 +42,6 @@ pub struct Player {
     score: f64,
     kind: PlayerKind,
     role: PlayerRole,
-    pub cards: Vec<Card>,
-    pub picked_up_cards: Vec<Card>,
     pub hand: Hand,
 }
 impl Display for Player {

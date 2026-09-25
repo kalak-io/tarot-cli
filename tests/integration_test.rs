@@ -16,7 +16,6 @@ mod integration {
         Game {
             players,
             deck: create_deck(),
-            deals: Vec::new(),
         }
     }
 
@@ -83,7 +82,7 @@ mod integration {
     ///
     /// Verified invariants:
     /// 1. Dealer rotates through all players (each deals once).
-    /// 2. N_PLAYERS deals are stored in game.deals.
+    /// 2. N_PLAYERS deals are played.
     /// 3. Cumulative scores across all deals remain zero-sum.
     /// 4. `game.players` carries each player's running total.
     ///
@@ -95,6 +94,7 @@ mod integration {
         let mut game = create_all_bot_game(N_PLAYERS);
 
         let mut dealer_ids: Vec<u8> = Vec::new();
+        let mut n_deals = 0;
 
         for _ in 0..N_PLAYERS {
             game.split_deck();
@@ -108,6 +108,7 @@ mod integration {
             // Retry until at least one bot bids
             // (game.deck is never modified by draw_cards, so retries are free)
             let mut deal = loop {
+                game.split_deck();
                 let mut d = Deal::new(&mut game.players, &mut game.deck);
                 d.take_bids();
                 if d.taker.is_some() {
@@ -138,7 +139,7 @@ mod integration {
                 "deck must contain 78 cards after collect_deck"
             );
 
-            game.deals.push(deal);
+            n_deals += 1;
         }
 
         // 1. Every player was dealer exactly once
@@ -152,7 +153,7 @@ mod integration {
         );
 
         // 2. Correct number of deals recorded
-        assert_eq!(game.deals.len(), N_PLAYERS as usize);
+        assert_eq!(n_deals, N_PLAYERS as usize);
 
         // 3. Zero-sum across all deals
         let grand_total: f64 = game.players.iter().map(|p| p.score()).sum();

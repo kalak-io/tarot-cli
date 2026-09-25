@@ -3,7 +3,6 @@ use rand::thread_rng;
 
 use super::{
     card::{Card, CardSuits},
-    deal::Deal,
     player::{Player, PlayerActions, PlayerKind},
     utils::{get_next_index, random_int_in_range, reorder},
 };
@@ -31,7 +30,6 @@ pub trait GameActions {
 pub struct Game {
     pub players: Vec<Player>,
     pub deck: Vec<Card>,
-    pub deals: Vec<Deal>,
 }
 impl Default for Game {
     fn default() -> Self {
@@ -43,7 +41,6 @@ impl Game {
         Game {
             players: create_players(n_players),
             deck: create_deck(),
-            deals: Vec::new(),
         }
     }
 }

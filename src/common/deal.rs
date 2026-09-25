@@ -52,6 +52,9 @@ impl Deal {
             ..Default::default()
         }
     }
+    fn count_side(&self, side: Side) -> usize {
+        self.players.iter().filter(|p| p.hand.side == side).count()
+    }
     // Index of the taker in `self.players`; `self.taker.player` is a copy made at bid time
     fn taker_index(&self) -> Option<usize> {
         let taker_id = self.taker.as_ref()?.player.id;
@@ -97,7 +100,6 @@ impl DealActions for Deal {
     }
     fn play_tricks(&mut self) {
         if self.players[0].hand.cards.is_empty() {
-            // set_bonus_petit_au_bout()
             return;
         }
 
@@ -181,11 +183,16 @@ impl DealActions for Deal {
             bonus_poignee,
         );
 
-        let n_defenders = (self.players.len() - 1) as f64;
+        // Each defender pays or gets `attack_score`. A partner (5 players) takes one share,
+        // and the taker takes the rest, so the scores sum to 0.
+        let n_defenders = self.count_side(Side::Defense) as f64;
+        let n_partners = (self.count_side(Side::Attack) - 1) as f64;
 
         for player in &mut self.players {
             let score = if player.id == taker_id {
-                attack_score * n_defenders
+                attack_score * (n_defenders - n_partners)
+            } else if player.hand.side == Side::Attack {
+                attack_score
             } else {
                 -attack_score
             };

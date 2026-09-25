@@ -256,20 +256,29 @@ mod deal {
     // Each player bids once, and the last bid is the highest
     #[test]
     fn take_bids_gives_the_deal_to_the_highest_bid() {
+        let trumps = |ranks: std::ops::RangeInclusive<u8>| -> Vec<Card> {
+            ranks
+                .map(|rank| Card::new(rank, CardSuits::Trumps))
+                .collect()
+        };
+        let kings: Vec<Card> = [
+            CardSuits::Clubs,
+            CardSuits::Diamonds,
+            CardSuits::Hearts,
+            CardSuits::Spades,
+        ]
+        .into_iter()
+        .map(|suit| Card::new(14, suit))
+        .collect();
+        // Bots bid the same way on the same hand, so duplicate cards across hands are fine
         let mut deal = deal_with_hands([
-            // 1 oudler × (8 points % 5) = 3: Take
-            vec![
-                Card::new(1, CardSuits::Trumps),
-                Card::new(13, CardSuits::Hearts),
-            ],
-            // 1 oudler × 4.5 points = 4.5: Guard
-            vec![Card::new(21, CardSuits::Trumps)],
-            // Take, which cannot beat the Guard: Pass
-            vec![
-                Card::new(22, CardSuits::Trumps),
-                Card::new(13, CardSuits::Spades),
-            ],
-            // No oudler: Pass
+            // 21 (10) + trumps 2 to 15 (28) = 38: Take
+            [trumps(21..=21), trumps(2..=15)].concat(),
+            // Fool (8) + trumps 16 to 20 (15) + 4 Kings (24) = 47: Guard
+            [trumps(22..=22), trumps(16..=20), kings.clone()].concat(),
+            // Little (5) + trumps 2 to 15 (28) + King (6) = 39: a Take, which cannot beat the Guard
+            [trumps(1..=1), trumps(2..=15), kings[..1].to_vec()].concat(),
+            // Weak hand: Pass
             vec![Card::new(2, CardSuits::Clubs)],
         ]);
         deal.taker = None;
@@ -278,5 +287,50 @@ mod deal {
 
         let taker = deal.taker.unwrap();
         assert_eq!((taker.player.id, taker.bid), (2, Bids::Guard));
+    }
+
+    // "Le jeu à 3 joueurs" and "Le jeu à 5 joueurs": each defender pays the deal score,
+    // a partner gets one share and the taker gets the rest
+    #[rstest]
+    fn set_score_splits_the_deal_score_between_teams(
+        // (players, taker has a partner, expected taker score)
+        #[values((3, false, 50.0), (4, false, 75.0), (5, true, 50.0), (5, false, 100.0))] case: (
+            u8,
+            bool,
+            f64,
+        ),
+    ) {
+        let (n_players, has_partner, expected_taker_score) = case;
+        let mut players: Vec<Player> = (1..=n_players)
+            .map(|id| Player::new(format!("Bot {id}"), id, Some(PlayerKind::Bot)))
+            .collect();
+        players[0].hand.side = Side::Attack;
+        if has_partner {
+            players[1].hand.side = Side::Attack;
+        }
+        // 112 low cards = 56 points, exactly the 0-oudler target: the deal is worth 25
+        players[0].hand.won_cards = vec![Card::new(2, CardSuits::Clubs); 112];
+        let mut deal = Deal {
+            taker: Some(Taker {
+                player: players[0].clone(),
+                bid: Bids::Take,
+            }),
+            players,
+            ..Default::default()
+        };
+
+        deal.set_score();
+
+        assert_eq!(deal.players[0].score(), expected_taker_score);
+        for player in &deal.players[1..] {
+            let expected = if player.hand.side == Side::Attack {
+                25.0
+            } else {
+                -25.0
+            };
+            assert_eq!(player.score(), expected);
+        }
+        let total: f64 = deal.players.iter().map(|p| p.score()).sum();
+        assert_eq!(total, 0.0);
     }
 }

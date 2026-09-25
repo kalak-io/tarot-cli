@@ -1,8 +1,7 @@
 use std::fmt::{Display, Formatter, Result};
 
 use super::{
-    card::Card,
-    score::{compute_oudlers, compute_points},
+    card::{Card, CardGetters, CardSuits, KING_RANK},
     utils::{compare, display_cards, select},
 };
 
@@ -87,15 +86,44 @@ pub fn compare_bids(bid: &Bids, active_bid: &Bids) -> bool {
     }
 }
 
+// Hand strength for bot bids. This is a simple point count, not a rule from the official rules.
+// The 21 is worth 10, the Fool 8 and the Little 5. Each other trump is worth 2, plus 1 from the 16 up.
+// Kings, queens, knights and jacks are worth 6, 3, 2 and 1. Each suit of 5 cards or more adds 5.
+pub fn hand_strength(cards: &[Card]) -> u32 {
+    let card_strength: u32 = cards
+        .iter()
+        .map(|card| match (card.suit.name, card.rank) {
+            (CardSuits::Trumps, 21) => 10,
+            _ if card.is_fool() => 8,
+            (CardSuits::Trumps, 1) => 5,
+            (CardSuits::Trumps, 16..=20) => 3,
+            (CardSuits::Trumps, _) => 2,
+            (_, KING_RANK) => 6,
+            (_, 13) => 3,
+            (_, 12) => 2,
+            (_, 11) => 1,
+            _ => 0,
+        })
+        .sum();
+    let long_suits = [
+        CardSuits::Clubs,
+        CardSuits::Diamonds,
+        CardSuits::Hearts,
+        CardSuits::Spades,
+    ]
+    .into_iter()
+    .filter(|suit| cards.iter().filter(|card| card.suit.name == *suit).count() >= 5)
+    .count() as u32;
+    card_strength + 5 * long_suits
+}
+
 pub fn taker_evaluation(cards: &[Card]) -> Bids {
-    let n_oudlers = compute_oudlers(cards) as f64;
-    let hand_score = compute_points(cards) % 5.0;
-    let evaluation = n_oudlers * hand_score;
-    match evaluation {
-        0.0..2.0 => Bids::Pass,
-        2.0..4.0 => Bids::Take,
-        4.0..6.0 => Bids::Guard,
-        6.0..8.0 => Bids::GuardWithout,
+    match hand_strength(cards) {
+        // A random hand scores about 30. About 1 hand in 4 reaches a Take.
+        0..36 => Bids::Pass,
+        36..42 => Bids::Take,
+        42..50 => Bids::Guard,
+        50..57 => Bids::GuardWithout,
         _ => Bids::GuardAgainst,
     }
 }

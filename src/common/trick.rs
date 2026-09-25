@@ -86,19 +86,6 @@ impl TrickGetters for Trick {
     }
 }
 
-pub fn check_selected_card(
-    trick: &Trick,
-    player_cards: &[Card],
-    player_selected_card: &Card,
-) -> Result<bool, &'static str> {
-    let allowed_cards = allowed_cards_to_play(trick, player_cards);
-    if allowed_cards.contains(player_selected_card) {
-        Ok(true)
-    } else {
-        Err("Selected card is not allowed to be played")
-    }
-}
-
 fn is_winning_card(card: &Card, trick: &Trick) -> bool {
     let played_suit = trick.played_suit();
     match trick.get_best_played_card_index(played_suit) {

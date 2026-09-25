@@ -102,7 +102,7 @@ mod card {
     fn count_cards_by_hand_returns_correct_value(
         #[values(
             (2, 18),
-            (3, 18),
+            (3, 24),
             (4, 18),
             (5, 15),
             (6, 15),

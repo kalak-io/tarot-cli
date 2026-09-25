@@ -143,7 +143,7 @@ Card scoring: Kings/Oudlers=4.5pts, Queens=3.5pts, Knights=2.5pts, Jacks=1.5pts,
 
 | Crate | Version | Purpose |
 |---|---|---|
-| `rand` | 0.8.5 | Deck shuffling, bot random decisions |
-| `rstest` | 0.22.0 | Parametrized tests (`#[values(...)]`) |
+| `rand` | 0.8.5 | Deck shuffling, cut, kitty positions |
+| `rstest` | 0.22.0 | Parametrized tests (`#[values(...)]`), dev-dependency only |
 
 Rust edition: **2021**

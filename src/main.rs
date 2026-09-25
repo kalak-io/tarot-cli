@@ -7,7 +7,6 @@ fn main() {
     println!("Let's play Tarot!");
 
     let mut game = Game::default();
-    let mut deals = Vec::new();
 
     loop {
         game.split_deck();
@@ -50,7 +49,6 @@ fn main() {
         game.update_scores(&deal.players);
 
         game.collect_deck(&deal.players, &deal.kitty.cards);
-        deals.push(deal);
 
         println!();
         if !ask_yes_no("Play another deal?") {
