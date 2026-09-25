@@ -11,6 +11,7 @@ mod integration {
     /// Deal until a bot bids, then play the deal to the end and score it
     fn play_one_deal(game: &mut Game) -> Deal {
         let mut deal = loop {
+            game.shuffle_deck();
             game.split_deck();
             game.update_dealer();
             game.reorder_players(ReorderBy::Dealer);
@@ -88,6 +89,7 @@ mod integration {
         let mut n_deals = 0;
 
         for _ in 0..N_PLAYERS {
+            game.shuffle_deck();
             game.split_deck();
             game.update_dealer();
             game.reorder_players(ReorderBy::Dealer);
@@ -99,6 +101,7 @@ mod integration {
             // Retry until at least one bot bids
             // (game.deck is never modified by draw_cards, so retries are free)
             let mut deal = loop {
+                game.shuffle_deck();
                 game.split_deck();
                 let mut d = Deal::new(&mut game.players, &mut game.deck, &mut game.rng);
                 d.take_bids();

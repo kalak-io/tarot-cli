@@ -10,6 +10,7 @@ fn main() {
     let mut game = Game::new(ask_player_count());
 
     loop {
+        game.shuffle_deck();
         game.split_deck();
         game.update_dealer();
         game.reorder_players(ReorderBy::Dealer);

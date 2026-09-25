@@ -23,6 +23,7 @@ pub enum ReorderBy {
 
 pub trait GameActions {
     fn update_dealer(&mut self);
+    fn shuffle_deck(&mut self);
     fn split_deck(&mut self);
     fn collect_deck(&mut self, players: &[Player], kitty_cards: &[Card]);
     fn reorder_players(&mut self, by: ReorderBy);
@@ -59,6 +60,10 @@ impl Game {
     }
 }
 impl GameActions for Game {
+    // "La distribution": the deck is shuffled before every deal, then cut
+    fn shuffle_deck(&mut self) {
+        self.deck.shuffle(&mut self.rng);
+    }
     fn split_deck(&mut self) {
         // Each part of the cut keeps more than 3 cards
         let split_index = self
