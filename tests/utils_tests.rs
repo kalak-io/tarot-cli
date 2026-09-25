@@ -123,6 +123,13 @@ mod utils {
         assert_eq!(card_rank_label(&Card::new(rank, suit)), expected);
     }
 
+    // Trumps have no face cards: the 11 to 21 of trumps show their number
+    #[rstest]
+    fn card_rank_label_shows_trump_numbers(#[values(11u8, 12, 13, 14, 21)] rank: u8) {
+        let label = card_rank_label(&Card::new(rank, CardSuits::Trumps));
+        assert_eq!(label, format!("{} ", rank));
+    }
+
     #[rstest]
     fn card_rank_label_centers_single_digit(#[values(1u8, 2, 3, 4, 5, 6, 7, 8, 9)] rank: u8) {
         let label = card_rank_label(&Card::new(rank, CardSuits::Hearts));
