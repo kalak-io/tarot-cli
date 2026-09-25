@@ -3,9 +3,8 @@ use rand::thread_rng;
 
 use super::{
     card::{Card, CardSuits},
-    chelem::ChelemState,
     deal::Deal,
-    player::{Player, PlayerKind},
+    player::{Player, PlayerActions, PlayerKind},
     utils::{get_next_index, random_int_in_range, reorder},
 };
 
@@ -18,7 +17,6 @@ const MAX_NUMBER_CARDS_SPLIT: usize = TOTAL_CARDS - MIN_NUMBER_CARDS_SPLIT;
 
 pub enum ReorderBy {
     Dealer,
-    Chelem,
 }
 
 pub trait GameActions {
@@ -26,6 +24,7 @@ pub trait GameActions {
     fn split_deck(&mut self);
     fn collect_deck(&mut self, players: &[Player], kitty_cards: &[Card]);
     fn reorder_players(&mut self, by: ReorderBy);
+    fn update_scores(&mut self, players: &[Player]);
 }
 
 #[derive(Debug)]
@@ -83,14 +82,18 @@ impl GameActions for Game {
                 let dealer_index = find_dealer(&self.players);
                 get_next_index(&self.players, dealer_index)
             }
-            ReorderBy::Chelem => match find_announced_chelem(&self.players) {
-                Some(chelem_index) => chelem_index,
-                None => return,
-            },
         };
         let new_players = reorder(&self.players, start_index);
         self.players.clear();
         self.players.extend_from_slice(&new_players);
+    }
+    // Copy each player's running total back from the deal's copy of the players
+    fn update_scores(&mut self, players: &[Player]) {
+        for player in &mut self.players {
+            if let Some(deal_player) = players.iter().find(|p| p.id == player.id) {
+                player.update_score(deal_player.score() - player.score());
+            }
+        }
     }
 }
 
@@ -152,15 +155,4 @@ pub fn find_dealer(players: &[Player]) -> usize {
         .iter()
         .position(|player| player.is_dealer())
         .unwrap()
-}
-
-pub fn find_announced_chelem(players: &[Player]) -> Option<usize> {
-    players.iter().position(|player| {
-        player
-            .hand
-            .bonus_chelem
-            .as_ref()
-            .map(|c| c.state == ChelemState::Announced)
-            .unwrap_or(false)
-    })
 }

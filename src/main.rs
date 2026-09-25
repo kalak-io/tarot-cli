@@ -42,12 +42,11 @@ fn main() {
         }
 
         deal.take_chelem();
-
-        game.reorder_players(ReorderBy::Chelem);
         deal.play_tricks();
 
         deal.set_score();
         deal.show_score();
+        game.update_scores(&deal.players);
 
         game.collect_deck(&deal.players, &deal.kitty.cards);
         deals.push(deal);

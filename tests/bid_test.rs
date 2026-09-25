@@ -81,4 +81,19 @@ mod bid {
         let bid = Bid::new(bid_name);
         assert_eq!(bid.get_available_bids().len(), expected_availables_bids_len);
     }
+
+    #[test]
+    fn record_pass_keeps_the_highest_bid() {
+        let mut bid = Bid::new(Bids::Guard);
+        assert_eq!(bid.record(Bids::Pass), Bids::Pass);
+        assert_eq!(bid.current, Bids::Guard);
+        assert!(!bid.get_available_bids().contains(&Bids::Take));
+    }
+
+    #[test]
+    fn record_higher_bid_replaces_current_bid() {
+        let mut bid = Bid::new(Bids::Take);
+        assert_eq!(bid.record(Bids::GuardWithout), Bids::GuardWithout);
+        assert_eq!(bid.current, Bids::GuardWithout);
+    }
 }

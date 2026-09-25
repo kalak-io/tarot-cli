@@ -29,7 +29,7 @@ pub trait PlayerActions {
     fn bid(&self, bid: &mut Bid) -> Bids;
     fn call_king(&mut self) -> Card;
     fn compose_kitty(&mut self, kitty: &mut Kitty) -> Vec<Card>;
-    fn declare_poignee(&mut self);
+    fn declare_poignee(&mut self, n_players: usize);
     fn declare_chelem(&mut self);
     fn play(&mut self, trick: &mut Trick);
     fn update_score(&mut self, score: f64);
@@ -101,10 +101,10 @@ impl PlayerActions for Player {
             PlayerKind::Bot => kitty.bot_compose(&mut self.hand.cards),
         }
     }
-    fn declare_poignee(&mut self) {
+    fn declare_poignee(&mut self, n_players: usize) {
         match self.kind {
-            PlayerKind::Human => self.hand.human_declare_poignee(),
-            PlayerKind::Bot => self.hand.bot_declare_poignee(),
+            PlayerKind::Human => self.hand.human_declare_poignee(n_players),
+            PlayerKind::Bot => self.hand.bot_declare_poignee(n_players),
         }
     }
     fn declare_chelem(&mut self) {

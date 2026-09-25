@@ -3,6 +3,7 @@ mod game {
     use tarot_cli::common::{
         card::{Card, CardGetters, CardSuitsGetters},
         game::{find_dealer, Game, GameActions},
+        player::PlayerActions,
         utils::get_next_index,
     };
 
@@ -109,5 +110,30 @@ mod game {
         assert!(game.players[current_dealer].is_dealer());
         game.update_dealer();
         assert!(game.players[next_dealer].is_dealer());
+    }
+
+    #[test]
+    fn update_scores_copies_deal_totals_by_player_id() {
+        let mut game = Game::default();
+        // Deal players are copies in a different order (tricks reorder them)
+        let mut deal_players = game.players.clone();
+        deal_players.reverse();
+        for player in &mut deal_players {
+            player.update_score(player.id as f64 * 10.0);
+        }
+
+        game.update_scores(&deal_players);
+        for player in &game.players {
+            assert_eq!(player.score(), player.id as f64 * 10.0);
+        }
+
+        // The next deal starts from the running totals
+        for player in &mut deal_players {
+            player.update_score(-5.0);
+        }
+        game.update_scores(&deal_players);
+        for player in &game.players {
+            assert_eq!(player.score(), player.id as f64 * 10.0 - 5.0);
+        }
     }
 }

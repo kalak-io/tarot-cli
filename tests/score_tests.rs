@@ -176,4 +176,60 @@ mod score {
         );
         assert_eq!(score, 445.0);
     }
+
+    /// `oudlers` oudlers, then 0.5-point cards up to `points`.
+    /// Cards repeat: `compute_score` only reads points and oudlers.
+    fn cards_worth(oudlers: usize, points: f64) -> Vec<Card> {
+        let oudler_cards = [
+            Card::new(1, CardSuits::Trumps),
+            Card::new(21, CardSuits::Trumps),
+            Card::new(22, CardSuits::Trumps),
+        ];
+        let n_low_cards = ((points - 4.5 * oudlers as f64) * 2.0) as usize;
+        oudler_cards[..oudlers]
+            .iter()
+            .copied()
+            .chain(std::iter::repeat_n(
+                Card::new(2, CardSuits::Clubs),
+                n_low_cards,
+            ))
+            .collect()
+    }
+
+    // Examples from "Le calcul des scores" in tarot-official-rules.pdf
+    #[rstest]
+    fn compute_score_matches_official_rules_examples(
+        #[values(
+            // Guard won by 8 with 2 oudlers, simple poignee, petit au bout: (25 + 8) × 2 + 20 + 10 × 2
+            (Bids::Guard, 2, 49.0, Some(Side::Attack), Some(Poignee::Simple), None, 106.0),
+            // Guard Without won by 4, defense takes the petit au bout: (25 + 4) × 4 - 10 × 4
+            (Bids::GuardWithout, 1, 55.0, Some(Side::Defense), None, None, 76.0),
+            // Take lost by 7 with a simple poignee, attack takes the petit au bout: -(25 + 7 + 20) + 10
+            (Bids::Take, 0, 49.0, Some(Side::Attack), Some(Poignee::Simple), None, -42.0),
+            // Guard won by 11, defense declared a simple poignee: (25 + 11) × 2 + 20
+            (Bids::Guard, 2, 52.0, None, Some(Poignee::Simple), None, 92.0),
+            // Guard won by 46 with an announced chelem: (46 + 25) × 2 + 20 + 20 + 400
+            (
+                Bids::Guard, 2, 87.0, Some(Side::Attack), Some(Poignee::Simple),
+                Some(Chelem { state: ChelemState::Announced, result: Some(ChelemResult::AnnouncedAndSucceed) }),
+                582.0
+            ),
+        )]
+        case: (
+            Bids,
+            usize,
+            f64,
+            Option<Side>,
+            Option<Poignee>,
+            Option<Chelem>,
+            f64,
+        ),
+    ) {
+        let (bid, oudlers, points, petit_au_bout, poignee, chelem, expected) = case;
+        let cards = cards_worth(oudlers, points);
+        assert_eq!(
+            compute_score(&cards, &bid, petit_au_bout, chelem, poignee),
+            expected
+        );
+    }
 }
