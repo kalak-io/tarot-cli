@@ -26,7 +26,7 @@ enum PlayerRole {
 }
 
 pub trait PlayerActions {
-    fn bid(&self, bid: &mut Bid) -> Bids;
+    fn bid(&self, bid: &mut Bid, n_players: usize) -> Bids;
     fn call_king(&mut self) -> Card;
     fn compose_kitty(&mut self, kitty: &mut Kitty) -> Vec<Card>;
     fn declare_poignee(&mut self, n_players: usize);
@@ -72,10 +72,10 @@ impl Player {
     }
 }
 impl PlayerActions for Player {
-    fn bid(&self, bid: &mut Bid) -> Bids {
+    fn bid(&self, bid: &mut Bid, n_players: usize) -> Bids {
         match self.kind {
             PlayerKind::Human => bid.human_choose(&self.hand.cards),
-            PlayerKind::Bot => bid.bot_choose(&self.hand.cards),
+            PlayerKind::Bot => bid.bot_choose(&self.hand.cards, n_players),
         }
     }
     fn call_king(&mut self) -> Card {

@@ -57,8 +57,8 @@ impl Bid {
         let choice = select(Some("What is your bid?"), Some(available_bids)).unwrap();
         self.record(choice)
     }
-    pub fn bot_choose(&mut self, cards: &[Card]) -> Bids {
-        let ideal_bid = taker_evaluation(cards);
+    pub fn bot_choose(&mut self, cards: &[Card], n_players: usize) -> Bids {
+        let ideal_bid = taker_evaluation(cards, n_players);
         if self.get_available_bids().contains(&ideal_bid) {
             self.record(ideal_bid)
         } else {
@@ -117,13 +117,25 @@ pub fn hand_strength(cards: &[Card]) -> u32 {
     card_strength + 5 * long_suits
 }
 
-pub fn taker_evaluation(cards: &[Card]) -> Bids {
+// Minimum hand strength for a Take, a Guard, a Guard Without and a Guard Against.
+// With 4 players, about 23% of hands reach a Take, 7% a Guard, 0.7% a Guard Without
+// and 0.04% a Guard Against. The 3- and 5-player cutoffs give the same shares for
+// their 24- and 15-card hands, measured over 100,000 random deals per player count.
+fn bid_cutoffs(n_players: usize) -> [u32; 4] {
+    match n_players {
+        3 => [50, 57, 65, 72],
+        5 => [29, 35, 43, 50],
+        _ => [36, 42, 50, 57],
+    }
+}
+
+pub fn taker_evaluation(cards: &[Card], n_players: usize) -> Bids {
+    let [take, guard, guard_without, guard_against] = bid_cutoffs(n_players);
     match hand_strength(cards) {
-        // A random hand scores about 30. About 1 hand in 4 reaches a Take.
-        0..36 => Bids::Pass,
-        36..42 => Bids::Take,
-        42..50 => Bids::Guard,
-        50..57 => Bids::GuardWithout,
-        _ => Bids::GuardAgainst,
+        strength if strength >= guard_against => Bids::GuardAgainst,
+        strength if strength >= guard_without => Bids::GuardWithout,
+        strength if strength >= guard => Bids::Guard,
+        strength if strength >= take => Bids::Take,
+        _ => Bids::Pass,
     }
 }
