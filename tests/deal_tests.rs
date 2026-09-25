@@ -118,6 +118,55 @@ mod deal {
         }
     }
 
+    // "Le jeu a 5 joueurs": each defender pays the score, the taker gets 2/3 of the
+    // attack total and the partner 1/3. A taker alone gets the whole total.
+    #[rstest]
+    fn set_score_splits_the_attack_total_between_taker_and_partner(
+        #[values(
+            // 25 × 3 defenders = 75, split 50 / 25
+            (Some(1), 50.0, 25.0, 3),
+            // 25 × 4 defenders = 100 for the taker alone
+            (None, 100.0, 0.0, 4),
+        )]
+        case: (Option<usize>, f64, f64, usize),
+    ) {
+        let (partner_index, expected_taker, expected_partner, expected_n_defenders) = case;
+        let mut players: Vec<Player> = (1..=5)
+            .map(|id| Player::new(format!("Player {id}"), id, None))
+            .collect();
+        players[0].hand.side = Side::Attack;
+        if let Some(index) = partner_index {
+            players[index].hand.side = Side::Attack;
+        }
+        // 112 low cards at 0.5 point each = 56 points, exactly the 0-oudler target
+        players[0].hand.won_cards = vec![Card::new(2, CardSuits::Clubs); 112];
+        let mut deal = Deal {
+            taker: Some(Taker {
+                player: players[0].clone(),
+                bid: Bids::Take,
+            }),
+            players,
+            ..Default::default()
+        };
+
+        deal.set_score();
+        assert_eq!(deal.players[0].score(), expected_taker);
+        if let Some(index) = partner_index {
+            assert_eq!(deal.players[index].score(), expected_partner);
+        }
+        let defenders: Vec<&Player> = deal
+            .players
+            .iter()
+            .filter(|p| p.hand.side == Side::Defense)
+            .collect();
+        assert_eq!(defenders.len(), expected_n_defenders);
+        for defender in defenders {
+            assert_eq!(defender.score(), -25.0);
+        }
+        let total: f64 = deal.players.iter().map(|p| p.score()).sum();
+        assert_eq!(total, 0.0);
+    }
+
     #[test]
     fn take_chelem_records_the_declaration_on_the_taker_in_players() {
         let mut deal = deal_with_taker([PlayerKind::Bot; 4], 2, Bids::Guard);
