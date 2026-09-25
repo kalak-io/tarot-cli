@@ -22,7 +22,14 @@ fn compute_needed_points(cards: &[Card]) -> f64 {
 fn diff_points(cards: &[Card]) -> f64 {
     let points = compute_points(cards);
     let needed_points = compute_needed_points(cards);
-    points - needed_points
+    // With 3 or 5 players, a half point goes to the side that wins the deal.
+    // With 4 players, each side holds an even number of cards, so points are whole.
+    let diff = points - needed_points;
+    if diff >= 0.0 {
+        diff.ceil()
+    } else {
+        diff.floor()
+    }
 }
 
 fn get_needed_points(n_oudlers: usize) -> f64 {

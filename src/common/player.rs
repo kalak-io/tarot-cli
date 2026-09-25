@@ -4,7 +4,7 @@ use crate::common::{card::CardSuits, utils::select_card};
 
 use super::{
     bid::{Bid, Bids},
-    card::{Card, KING_RANK},
+    card::{Card, JACK_RANK, KING_RANK, KNIGHT_RANK, QUEEN_RANK},
     hand::{Hand, HandActions},
     kitty::{Kitty, KittyActions},
     trick::{Trick, TrickActions},
@@ -26,7 +26,7 @@ enum PlayerRole {
 }
 
 pub trait PlayerActions {
-    fn bid(&self, bid: &mut Bid) -> Bids;
+    fn bid(&self, bid: &mut Bid, n_players: usize) -> Bids;
     fn call_king(&mut self) -> Card;
     fn compose_kitty(&mut self, kitty: &mut Kitty) -> Vec<Card>;
     fn declare_poignee(&mut self, n_players: usize);
@@ -42,8 +42,6 @@ pub struct Player {
     score: f64,
     kind: PlayerKind,
     role: PlayerRole,
-    pub cards: Vec<Card>,
-    pub picked_up_cards: Vec<Card>,
     pub hand: Hand,
 }
 impl Display for Player {
@@ -74,22 +72,17 @@ impl Player {
     }
 }
 impl PlayerActions for Player {
-    fn bid(&self, bid: &mut Bid) -> Bids {
+    fn bid(&self, bid: &mut Bid, n_players: usize) -> Bids {
         match self.kind {
             PlayerKind::Human => bid.human_choose(&self.hand.cards),
-            PlayerKind::Bot => bid.bot_choose(&self.hand.cards),
+            PlayerKind::Bot => bid.bot_choose(&self.hand.cards, n_players),
         }
     }
     fn call_king(&mut self) -> Card {
-        let kings: [Card; 4] = [
-            Card::new(KING_RANK, CardSuits::Clubs),
-            Card::new(KING_RANK, CardSuits::Diamonds),
-            Card::new(KING_RANK, CardSuits::Hearts),
-            Card::new(KING_RANK, CardSuits::Spades),
-        ];
+        let callable = callable_cards(&self.hand.cards);
         match self.kind {
-            PlayerKind::Human => human_call_king(&self.hand.cards, &kings),
-            PlayerKind::Bot => bot_call_king(&self.hand.cards, &kings),
+            PlayerKind::Human => human_call_king(&self.hand.cards, &callable),
+            PlayerKind::Bot => bot_call_king(&self.hand.cards, &callable),
         }
     }
     fn compose_kitty(&mut self, kitty: &mut Kitty) -> Vec<Card> {
@@ -124,16 +117,33 @@ impl PlayerActions for Player {
     }
 }
 
-fn bot_call_king(cards: &[Card], kings: &[Card]) -> Card {
-    kings
-        .iter()
-        .find(|king| !cards.contains(king))
-        .copied()
-        .unwrap_or(kings[0])
+// "Le jeu à 5 joueurs": the taker calls a King. Holding all 4 Kings, they call a Queen,
+// then a Knight, then a Jack. Calling a card from their own hand means playing alone.
+pub fn callable_cards(cards: &[Card]) -> Vec<Card> {
+    let suits = [
+        CardSuits::Clubs,
+        CardSuits::Diamonds,
+        CardSuits::Hearts,
+        CardSuits::Spades,
+    ];
+    let by_rank = |rank: u8| -> Vec<Card> { suits.map(|suit| Card::new(rank, suit)).to_vec() };
+    [KING_RANK, QUEEN_RANK, KNIGHT_RANK]
+        .into_iter()
+        .map(by_rank)
+        .find(|candidates| !candidates.iter().all(|card| cards.contains(card)))
+        .unwrap_or_else(|| by_rank(JACK_RANK))
 }
 
-fn human_call_king(cards: &[Card], kings: &[Card]) -> Card {
+fn bot_call_king(cards: &[Card], callable: &[Card]) -> Card {
+    callable
+        .iter()
+        .find(|card| !cards.contains(card))
+        .copied()
+        .unwrap_or(callable[0])
+}
+
+fn human_call_king(cards: &[Card], callable: &[Card]) -> Card {
     println!("\nYour cards:");
     display_cards(cards);
-    select_card(Some("Which king do you call?"), Some(kings.to_vec())).unwrap()
+    select_card(Some("Which card do you call?"), Some(callable.to_vec())).unwrap()
 }

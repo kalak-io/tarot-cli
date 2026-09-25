@@ -1,12 +1,13 @@
 use common::deal::{Deal, DealActions};
-use common::game::{Game, GameActions, ReorderBy};
+use common::game::{ask_player_count, Game, GameActions, ReorderBy};
+use common::utils::ask_yes_no;
 use tarot_cli::*;
 
 fn main() {
     println!("Let's play Tarot!");
 
-    let mut game = Game::default();
-    let mut deals = Vec::new();
+    // Player 1 is the human, the others are bots
+    let mut game = Game::new(ask_player_count());
 
     loop {
         game.split_deck();
@@ -49,14 +50,9 @@ fn main() {
         game.update_scores(&deal.players);
 
         game.collect_deck(&deal.players, &deal.kitty.cards);
-        deals.push(deal);
 
-        println!("\nPlay another deal? (yes/no)");
-        let mut input = String::new();
-        std::io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
-        if !matches!(input.trim().to_lowercase().as_str(), "yes" | "y") {
+        println!();
+        if !ask_yes_no("Play another deal?") {
             break;
         }
     }

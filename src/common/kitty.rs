@@ -1,6 +1,6 @@
 use crate::common::{
     card::{CardGetters, CardSuits, KING_RANK},
-    utils::display_cards,
+    utils::{ask_yes_no, display_cards},
 };
 
 use super::{
@@ -77,19 +77,12 @@ impl KittyActions for Kitty {
             }
             println!("\nThe new kitty is:");
             display_cards(&new_kitty);
-            println!("Are you satisfied with this kitty? (yes/no)");
-            let mut input = String::new();
-            std::io::stdin()
-                .read_line(&mut input)
-                .expect("Failed to read line");
-            match input.trim().to_lowercase().as_str() {
-                "yes" | "y" => {
-                    subtract(cards, &new_kitty);
-                    self.cards = new_kitty;
-                    return self.cards.clone();
-                }
-                _ => println!("Let's redo the kitty selection."),
+            if ask_yes_no("Are you satisfied with this kitty?") {
+                subtract(cards, &new_kitty);
+                self.cards = new_kitty;
+                return self.cards.clone();
             }
+            println!("Let's redo the kitty selection.");
         }
     }
 }

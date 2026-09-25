@@ -6,6 +6,10 @@ mod card {
     fn card_is_superior_than(
         #[values(
             (Card::new(2, CardSuits::Trumps), Card::new(5, CardSuits::Hearts), Some(CardSuits::Hearts), true),
+            // The Fool (Excuse) never beats a card, and any card beats it
+            (Card::new(22, CardSuits::Trumps), Card::new(21, CardSuits::Trumps), Some(CardSuits::Trumps), false),
+            (Card::new(22, CardSuits::Trumps), Card::new(2, CardSuits::Hearts), Some(CardSuits::Hearts), false),
+            (Card::new(2, CardSuits::Hearts), Card::new(22, CardSuits::Trumps), Some(CardSuits::Clubs), true),
             (Card::new(2, CardSuits::Trumps), Card::new(5, CardSuits::Hearts), Some(CardSuits::Clubs), true),
             (Card::new(2, CardSuits::Hearts), Card::new(5, CardSuits::Hearts), Some(CardSuits::Hearts), false),
             (Card::new(2, CardSuits::Hearts), Card::new(5, CardSuits::Clubs), Some(CardSuits::Hearts), true),
@@ -98,7 +102,7 @@ mod card {
     fn count_cards_by_hand_returns_correct_value(
         #[values(
             (2, 18),
-            (3, 18),
+            (3, 24),
             (4, 18),
             (5, 15),
             (6, 15),

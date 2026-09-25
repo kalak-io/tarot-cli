@@ -232,4 +232,23 @@ mod score {
             expected
         );
     }
+
+    // "Le jeu à 3 joueurs" and "Le jeu à 5 joueurs": the half point goes to the winning side
+    #[rstest]
+    fn compute_score_gives_half_point_to_the_winning_side(
+        #[values(
+            // 40.5 with 2 oudlers: counts as 40, lost by 1
+            (40.5, -26.0),
+            // 41.5 with 2 oudlers: counts as 42, won by 1
+            (41.5, 26.0),
+        )]
+        case: (f64, f64),
+    ) {
+        let (points, expected) = case;
+        let cards = cards_worth(2, points);
+        assert_eq!(
+            compute_score(&cards, &Bids::Take, None, None, None),
+            expected
+        );
+    }
 }
