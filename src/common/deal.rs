@@ -151,11 +151,20 @@ impl DealActions for Deal {
             bonus_poignee,
         );
 
-        let n_defenders = (self.players.len() - 1) as f64;
+        // "Le jeu a 5 joueurs": each defender pays the attack score and the called-king
+        // partner receives it once. The taker gets the rest (2/3 of the attack total).
+        let n_partners = self
+            .players
+            .iter()
+            .filter(|p| p.id != taker_id && p.hand.side == Side::Attack)
+            .count() as f64;
+        let n_defenders = self.players.len() as f64 - 1.0 - n_partners;
 
         for player in &mut self.players {
             let score = if player.id == taker_id {
-                attack_score * n_defenders
+                attack_score * (n_defenders - n_partners)
+            } else if player.hand.side == Side::Attack {
+                attack_score
             } else {
                 -attack_score
             };
